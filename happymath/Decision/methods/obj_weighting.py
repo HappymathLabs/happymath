@@ -1,8 +1,9 @@
 """
-客观权重确定方法集合。
+Objective weighting method collection.
 
-本模块实现基于数据结构的权重计算方法（如 CRITIC/Entropy/MEREC/PSI 等），
-统一封装输入校验、方法调度与结果访问接口，便于在多准则场景中获取基于数据驱动的准则权重。
+Implements data-driven weighting methods (e.g., CRITIC/Entropy/MEREC/PSI) and
+exposes a unified interface for input validation, method dispatch, and results
+access in multi-criteria scenarios.
 """
 
 import numpy as np
@@ -20,10 +21,10 @@ from ..results.result_manager import ResultManager
 
 class ObjWeighting(DecisionBase):
     """
-    客观权重方法集合。
-    
-    基于原始决策矩阵的权重确定方法，通过分析数据结构来确定准则权重。
-    提供统一的调用与结果比较、聚合能力。
+    Collection of objective weighting methods.
+
+    Methods determine criterion weights from the original decision matrix by
+    analyzing data structure. Provides unified invocation and result comparison/aggregation.
     """
     
     # 客观权重方法的注册表
@@ -52,16 +53,16 @@ class ObjWeighting(DecisionBase):
     
     def __init__(self, methods: Optional[Union[str, List[str]]] = None):
         """
-        初始化客观权重方法集合。
-        
-        参数:
-            methods: 指定要执行的方法（字符串或列表）。为 None 时自动选择可用方法。
+        Initialize objective weighting method collection.
+
+        Args:
+            methods: Method name or list to execute. None to auto-select available methods.
         """
         super().__init__(methods)
         self.result_manager = ResultManager()
     
     def _validate_inputs(self, **kwargs) -> Dict[str, Any]:
-        """客观权重方法输入参数校验与标准化。"""
+        """Validate and normalize inputs for objective weighting methods."""
         validated_params = {}
         
         # 提取关键参数
@@ -89,13 +90,14 @@ class ObjWeighting(DecisionBase):
     
     def _execute_method(self, method_name: str, **kwargs) -> Any:
         """
-        调度并执行具体的客观权重计算方法。
-        
-        参数:
-            method_name: 方法名称
-            **kwargs: 该方法的入参（已经过校验）
-        返回:
-            方法执行结果
+        Dispatch and execute a specific objective weighting algorithm.
+
+        Args:
+            method_name: Method name.
+            **kwargs: Validated parameters.
+
+        Returns:
+            Execution result.
         """
         if method_name not in self._ALGORITHM_MAP:
             raise ValueError(f"Unknown objective weighting method: {method_name}")
@@ -114,22 +116,17 @@ class ObjWeighting(DecisionBase):
         return result
 
     def get_all_results(self) -> Dict[str, Any]:
-        """
-        获取所有结果的统一接口。
-        
-        Returns:
-            包含所有结果的字典
-        """
+        """Return a dictionary containing all stored results."""
         return self.result_manager.get_all_results()
     
     def get_weights(self, method: Optional[str] = None) -> Union[np.ndarray, Dict[str, np.ndarray]]:
-        """
-        获取各方法计算得到的权重向量。
-        
-        参数:
-            method: 指定方法名；None 时返回所有方法的权重字典
-        返回:
-            单个权重向量或方法名到权重的映射
+        """Get weight vectors computed by methods.
+
+        Args:
+            method: Method name. None to return a mapping for all methods.
+
+        Returns:
+            Single weight vector or mapping from method name to weight vector.
         """
         if method:
             result = self.results.get(method)
@@ -148,8 +145,6 @@ class ObjWeighting(DecisionBase):
             return self.result_manager.get_all_weights()
     
     def compare_weights(self) -> Any:
-        """
-        跨方法比较权重（返回 DataFrame）。
-        """
+        """Compare weights across methods (returns a DataFrame)."""
         return self.result_manager.compare_weights()
     

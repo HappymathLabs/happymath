@@ -86,15 +86,15 @@ def test_time_series_full_workflow(ts_series, tmp_path, monkeypatch):
     monkeypatch.setattr(ts.experiment, "plot_model", fake_plot_model)
     plot_result = ts.plot(
         plot="ts",
-        title="时间序列趋势",
-        xlabel="日期",
-        ylabel="值",
+        title="Time Series Trend",
+        xlabel="Date",
+        ylabel="Value",
         figsize=(12, 6),
         verbose=False,
     )
     assert plot_result == "plot-ok"
     fig_kwargs = captured["kwargs"]["fig_kwargs"]
-    assert fig_kwargs["title"] == "时间序列趋势"
+    assert fig_kwargs["title"] == "Time Series Trend"
     assert fig_kwargs["figsize"] == (12, 6)
 
     final_model = ts.finalize()

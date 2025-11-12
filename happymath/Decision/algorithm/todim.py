@@ -62,7 +62,6 @@ def todim(dataset, criterion_type, weights, teta = 1, graph = True, verbose = Tr
         flow = flow[np.argsort(flow[:, 1])]
         flow = flow[::-1]
         ranking(flow)
-    # 将1D评分数组转换为2D格式（方案编号 + 评分）
     num_alternatives = r.shape[0]
     indices = np.arange(1, num_alternatives + 1).reshape(-1, 1)
     scores_reshaped = r.reshape(-1, 1)

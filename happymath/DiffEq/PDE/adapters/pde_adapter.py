@@ -1,7 +1,7 @@
 """
-PDE 适配器模块
+PDE adapter module.
 
-将 ExprParser 标准化结果转换为 py-pde 可求解对象并执行求解。
+Convert standardized expressions from the expression parser into py-pde solvable objects and execute.
 """
 
 from typing import Any, Dict, Optional, Tuple, Sequence
@@ -21,18 +21,18 @@ def solve_pde(ctx,
               bc_ops: Optional[Dict] = None,
               grid_spec: Optional[Dict] = None):
     """
-    基于上下文 ctx 的标准化结果构建 py-pde 的 PDE 对象并求解。
+    Build a py-pde PDE object from the context's standardized result and solve.
 
     Args:
-        ctx: PDEModule 实例
-        state: 初始场（py-pde 支持的 Field 或数组）
-        t_range: 时间范围
-        dt: 时间步长
-        solver: 求解器名称（转发给 py-pde）
-        const_cond: 常数条件字典
+        ctx: PDEModule instance.
+        state: Initial field (py-pde Field/FieldCollection or numpy array/dict of arrays).
+        t_range: Time range.
+        dt: Time step.
+        solver: Solver name forwarded to py-pde.
+        const_cond: Constants dictionary.
 
     Returns:
-        PDESolutionResult 对象
+        PDESolutionResult
     """
     solvable_pde_dict = ctx.to_solvable_pde
 
@@ -42,22 +42,22 @@ def solve_pde(ctx,
             raise MissingParameterError("const_cond", context="PDE constants are required")
         const_dict = dict(const_cond)
 
-    # 1) 准备初始场：允许 numpy / dict[str, np.ndarray] / Field
+    # 1) Prepare initial field: allow numpy / dict[str, np.ndarray] / Field
     prepared_state = _prepare_state(state, grid_spec)
 
-    # 2) 规范化常数：标量维持不变；ndarray -> Field；向量（长度=dim）-> VectorField
+    # 2) Normalize constants: scalars unchanged; ndarray -> Field; vector (len=dim) -> VectorField
     consts_ready = _prepare_consts(const_dict, prepared_state)
 
-    # 3) 选择 RHS 形式：字符串 or 函数
+    # 3) Choose RHS representation: string or callable
     rhs = _maybe_rewrite_rhs_strings(solvable_pde_dict, prepared_state)
     if rhs is None:
-        # 使用函数形式（例如含一阶导/复杂项时）
+        # Fall back to function form (e.g., includes first-order derivatives/complex terms)
         rhs = _make_function_rhs(ctx, prepared_state, consts_ready, bc)
     else:
-        # 字符串 RHS：自动注入基向量 ex/ey/ez（若被引用）
+        # String RHS: auto-inject basis vectors ex/ey/ez when referenced
         _inject_basis_vectors(consts_ready, rhs, prepared_state)
 
-    # 4) 构建并求解
+    # 4) Build and solve
     pde_obj = pde.PDE(rhs=rhs, consts=consts_ready, bc=bc, bc_ops=bc_ops)
     raw_solution = pde_obj.solve(prepared_state, t_range, dt, solver=solver)
 
@@ -69,17 +69,17 @@ def solve_pde(ctx,
         constants=const_dict,
         rhs=rhs,
         success=True,
-        message="PDE 求解成功"
+        message="PDE solve succeeded"
     )
 
 
 def _prepare_state(state: Any, grid_spec: Optional[Dict]) -> pde.FieldBase:
-    """将多种 state 输入标准化为 py-pde 的 Field/FieldCollection。
+    """Normalize state into a py-pde Field/FieldCollection.
 
-    支持：
-    - 已是 FieldBase / FieldCollection: 原样返回；
-    - numpy.ndarray: 使用 grid_spec 构建 CartesianGrid + ScalarField；
-    - dict[str, np.ndarray]: 多场，按 key 顺序构建 FieldCollection。
+    Supports:
+    - Already FieldBase / FieldCollection: return as-is;
+    - numpy.ndarray: build CartesianGrid + ScalarField via grid_spec;
+    - dict[str, np.ndarray]: multi-field, build FieldCollection in key order.
     """
     if hasattr(state, 'grid') and hasattr(state, 'data'):
         # 已是 FieldBase 或 FieldCollection
@@ -94,7 +94,7 @@ def _prepare_state(state: Any, grid_spec: Optional[Dict]) -> pde.FieldBase:
 
     def _mk_grid_from_shape(_shape):
         if bounds is None:
-            # 默认将每个轴设置到 [0, 1]
+            # Default each axis to [0, 1]
             _bounds = tuple((0.0, 1.0) for _ in range(len(_shape)))
         else:
             _bounds = tuple(bounds)
@@ -108,7 +108,7 @@ def _prepare_state(state: Any, grid_spec: Optional[Dict]) -> pde.FieldBase:
         return pde.ScalarField(grid, data=arr)
 
     if isinstance(state, dict):
-        # 多场：要求所有数组形状一致
+        # Multi-field: require identical array shapes
         keys = list(state.keys())
         arr0 = np.asarray(state[keys[0]])
         if shape is None:
@@ -123,11 +123,11 @@ def _prepare_state(state: Any, grid_spec: Optional[Dict]) -> pde.FieldBase:
 
 
 def _prepare_consts(consts: Dict[str, Any], state_field: pde.FieldBase) -> Dict[str, Any]:
-    """常数/系数准备：
-    - 标量保持不变；
-    - 形状匹配 state 的 ndarray -> ScalarField；
-    - 1D 向量（长度=dim）-> VectorField 常量向量；
-    - 若已是 Field，则原样返回。
+    """Prepare constants/coefs:
+    - Scalars unchanged;
+    - ndarray matching state shape -> ScalarField;
+    - 1D vector (len=dim) -> constant VectorField;
+    - Existing Field -> pass-through.
     """
     if not consts:
         return {}
@@ -153,12 +153,12 @@ def _prepare_consts(consts: Dict[str, Any], state_field: pde.FieldBase) -> Dict[
 
 
 def _maybe_rewrite_rhs_strings(rhs_map: Dict[str, str], state_field: pde.FieldBase) -> Optional[Dict[str, str]]:
-    """将 solvable_format 作为字符串直接传给 py-pde。
+    """Pass solvable_format as string directly to py-pde when possible.
 
-    说明：
-    - py-pde 原生支持 d_dx/d_dy/d2_dx2/d2_dy2/laplace/gradient/dot 等算子，
-      无需强制回退到函数形式；
-    - 在 1D 情况下，可选地将 d2_dx2 替换为 laplace 以获得更紧凑的表达，但非必须。
+    Notes:
+    - py-pde natively supports operators like d_dx/d_dy/d2_dx2/d2_dy2/laplace/gradient/dot;
+      no need to fall back to callables.
+    - In 1D, optionally rewrite d2_dx2 to laplace for compactness (non-essential).
     """
     if not rhs_map:
         return None
@@ -175,12 +175,12 @@ def _maybe_rewrite_rhs_strings(rhs_map: Dict[str, str], state_field: pde.FieldBa
 
 
 def _make_function_rhs(ctx, state_field: pde.FieldBase, consts: Dict[str, Any], bc: Any):
-    """构造函数形式的 RHS，用于包含一阶导或复杂项的 PDE。
+    """Build a function-based RHS for PDEs with first-order or complex terms.
 
-    当前版本：
-    - 仅支持单场（标量场）或 FieldCollection 的逐分量处理；
-    - 自动根据 ctx.to_solvable_pde 的键顺序对 state 取分量。
-    - 支持常见项：laplace、gradient、dot(v, gradient(u))（其中 v 可为 VectorField 常量向量）。
+    Current version:
+    - Supports single scalar field or FieldCollection (component-wise);
+    - Uses key order from ctx.to_solvable_pde to pick state components;
+    - Supports common terms: laplace, gradient, dot(v, gradient(u)) where v can be constant VectorField.
     """
     # 从 ctx 得到字段顺序
     rhs_dict = ctx.to_solvable_pde
@@ -238,7 +238,7 @@ def _make_function_rhs(ctx, state_field: pde.FieldBase, consts: Dict[str, Any], 
 
 
 def _inject_basis_vectors(consts: Dict[str, Any], rhs_map: Dict[str, str], state_field: pde.FieldBase) -> None:
-    """当字符串 RHS 中使用了 ex/ey/ez 基向量时，自动在 consts 中注入对应的 VectorField。"""
+    """Auto-inject ex/ey/ez basis vectors into consts when referenced in string RHS."""
     grid = state_field.grid if hasattr(state_field, 'grid') else state_field[0].grid
     dim = grid.num_axes
     text = "\n".join(rhs_map.values())

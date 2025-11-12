@@ -1,4 +1,4 @@
-"""
+"""Module exports."""
 SymPy前端包 - 微分方程表达式处理器
 从ODEModule和PDEModule中抽离的符号处理前端包
 """

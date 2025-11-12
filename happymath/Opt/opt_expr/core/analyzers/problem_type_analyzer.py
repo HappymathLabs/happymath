@@ -1,10 +1,10 @@
 """
-问题类型分析器
+Problem type analyzer.
 
-负责识别优化问题的类型，包括：
-- Pyomo问题类型（LP/QP/NP/MILP/MIQP/MINP）
-- Pymoo问题类型（single/multi/many）
-- 问题特征（约束/离散变量等）
+Identifies problem types:
+- Pyomo types (LP/QP/NP/MILP/MIQP/MINP)
+- Pymoo types (single/multi/many)
+- Features (constraints/discrete variables, etc.)
 """
 
 from typing import Dict, Any, Optional
@@ -16,15 +16,15 @@ from ...base.analyzer_base import AnalyzerBase
 
 
 class ProblemTypeAnalyzer:
-    """问题类型分析器"""
+    """Analyzer for optimization problem types."""
 
     def __init__(self, obj_analyzer, con_analyzer=None):
         """
-        初始化问题类型分析器
+        Initialize the problem type analyzer.
 
         Args:
-            obj_analyzer: ObjectiveAnalyzer实例
-            con_analyzer: ConstraintAnalyzer实例（可选）
+            obj_analyzer: ObjectiveAnalyzer instance.
+            con_analyzer: Optional ConstraintAnalyzer instance.
         """
         self.obj_analyzer = obj_analyzer
         self.con_analyzer = con_analyzer
@@ -35,16 +35,10 @@ class ProblemTypeAnalyzer:
 
     def analyze_pyomo_problem_type(self) -> str:
         """
-        分析Pyomo问题类型
+        Analyze Pyomo problem type.
 
         Returns:
-            str: 问题类型缩写
-                - 'LP': Linear programming
-                - 'QP': Quadratic programming
-                - 'NP': Nonlinear programming
-                - 'MILP': Mixed-integer linear programming
-                - 'MIQP': Mixed-integer quadratic programming
-                - 'MINP': Mixed-integer nonlinear programming
+            str: One of 'LP', 'QP', 'NP', 'MILP', 'MIQP', 'MINP'.
         """
         if self._pyomo_type is not None:
             return self._pyomo_type
@@ -52,9 +46,9 @@ class ProblemTypeAnalyzer:
         obj_func_list = self.obj_analyzer.obj_func_list
 
         if len(obj_func_list) > 1:
-            raise ValueError("Pyomo仅支持单目标优化问题")
+            raise ValueError("Pyomo supports only single-objective problems")
 
-        # 0. 若目标/约束包含积分或导数，直接按非线性处理（更稳健，避免LP/QP误判）
+        # 0. If objectives/constraints include integrals/derivatives, treat as nonlinear
         try:
             from sympy import Integral, Derivative
             has_functional = False
@@ -85,26 +79,26 @@ class ProblemTypeAnalyzer:
                 self._pyomo_type = 'MINP' if has_integer_vars else 'NP'
                 return self._pyomo_type
         except Exception:
-            # 保守：发生任何异常，继续走常规判定
+            # Conservative: if error, continue normal classification
             pass
 
-        # 1. 检查是否存在整数/离散变量
+        # 1. Check integer/discrete variables
         has_integer_vars = False
         if self.con_analyzer:
             has_integer_vars = self.con_analyzer.has_integer_variables()
 
-        # 2. 分析目标函数的类型
+        # 2. Analyze objective type
         obj_func_type = self.obj_analyzer.analyze_expressions_type(obj_func_list)
 
-        # 3. 分析约束条件的类型
+        # 3. Analyze constraint type
         constraint_expressions = []
         if self.con_analyzer is not None:
             for con in self.con_analyzer.constraints:
                 if isinstance(con, (Eq, Ge, Gt, Le, Lt)):
-                    # 对于等式或不等式约束，提取左边减右边的表达式
+                    # For (in)equality, reduce to lhs - rhs
                     constraint_expressions.append(con.lhs - con.rhs)
                 elif isinstance(con, Contains):
-                    # Contains约束中可能包含表达式
+                    # Contains may include expressions
                     element = con.args[0]
                     if hasattr(element, 'free_symbols') and element.free_symbols:
                         constraint_expressions.append(element)
@@ -113,11 +107,10 @@ class ProblemTypeAnalyzer:
         if constraint_expressions:
             constraint_type = self.obj_analyzer.analyze_expressions_type(constraint_expressions)
 
-        # 4. 综合判断问题类型
-        # 取目标函数和约束条件中复杂度更高的类型
+        # 4. Combine: pick higher complexity between objectives and constraints
         overall_type = self._get_higher_complexity_type(obj_func_type, constraint_type)
 
-        # 凸性检测仅在候选二次连续规划时执行
+        # Convexity check only for candidate continuous QP
         self._is_convex_qp = False
         if overall_type == 'quadratic' and not has_integer_vars and constraint_type == 'linear':
             try:
@@ -127,7 +120,7 @@ class ProblemTypeAnalyzer:
             if target_expr is not None:
                 self._is_convex_qp = self._is_objective_convex_quadratic(target_expr)
 
-        # 5. 根据是否有整数变量确定最终类型
+        # 5. Final type by presence of integer variables
         if has_integer_vars:
             if overall_type == 'linear':
                 self._pyomo_type = 'MILP'
@@ -147,15 +140,15 @@ class ProblemTypeAnalyzer:
 
     def analyze_pymoo_problem_type(self) -> Dict[str, Any]:
         """
-        分析Pymoo问题类型
+        Analyze Pymoo problem type and features.
 
         Returns:
-            Dict: 包含问题特征的字典
-                - 'objective_type': 'single', 'multi', 或 'many'
-                - 'has_constraints': True/False
-                - 'n_objectives': 目标函数数量
-                - 'n_constraints': 约束数量
-                - 'has_discrete_vars': 是否有离散变量
+            Dict with keys:
+                - 'objective_type': 'single'|'multi'|'many'
+                - 'has_constraints': bool
+                - 'n_objectives': int
+                - 'n_constraints': int
+                - 'has_discrete_vars': bool
         """
         if self._pymoo_type is not None:
             return self._pymoo_type
@@ -163,19 +156,19 @@ class ProblemTypeAnalyzer:
         obj_func_list = self.obj_analyzer.obj_func_list
         n_objectives = len(obj_func_list)
 
-        # 约束数量
+        # Count constraints
         n_constraints = 0
         if self.con_analyzer:
             n_constraints = len(self.con_analyzer.parsed_con_list)
 
         has_constraints = n_constraints > 0
 
-        # 是否有离散变量
+        # Discrete variables present
         has_discrete_vars = False
         if self.con_analyzer:
             has_discrete_vars = self.con_analyzer.has_integer_variables()
 
-        # 根据目标函数数量确定问题类型
+        # Determine by number of objectives
         if n_objectives == 1:
             objective_type = 'single'
         elif n_objectives <= 3:
@@ -194,7 +187,7 @@ class ProblemTypeAnalyzer:
         return self._pymoo_type
 
     def _is_objective_convex_quadratic(self, expr) -> bool:
-        """判断目标是否为凸二次函数（Hessian 半正定）。"""
+        """Check if objective is convex quadratic (Hessian PSD)."""
         symbols = sorted(list(expr.free_symbols), key=lambda s: str(s))
         if not symbols:
             return True
@@ -217,7 +210,7 @@ class ProblemTypeAnalyzer:
 
     @staticmethod
     def _get_higher_complexity_type(type1: str, type2: str) -> str:
-        """返回两个类型中复杂度更高的类型"""
+        """Return the higher-complexity type among two types."""
         complexity_order = {'linear': 1, 'quadratic': 2, 'nonlinear': 3}
 
         if complexity_order[type1] >= complexity_order[type2]:

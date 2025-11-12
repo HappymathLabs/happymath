@@ -42,15 +42,7 @@ def fucom(criteria_rank, criteria_priority, sort_criteria = True, verbose = True
     results     = minimize(target_function, variables, method = 'SLSQP', constraints = constraints, bounds = bounds)
     weights     = results.x
     if (sort_criteria == True):
-        # 使用 argsort 对权重进行排序，以匹配原始准则顺序
-        # criteria_rank 是一个排名数组，例如 [1, 4, 3, 2, 5]
-        # argsort() 会返回原始索引，使得按这些索引排序后，数组会变为有序
-        # 例如，np.argsort([1, 4, 3, 2, 5]) -> [0, 3, 2, 1, 4]
-        # 这意味着 rank 1 的准则在原始数组的索引是 0
-        # rank 2 的准则在原始数组的索引是 3
         
-        # `weights` 数组是优化后的结果，其顺序是按照重要性从高到低排列的。
-        # 我们需要将 `weights` 的值放回对应的 C1, C2, ... 的位置。
         sorted_indices = np.argsort(criteria_rank)
         
         final_weights = np.zeros(n_criteria)

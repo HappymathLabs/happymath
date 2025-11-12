@@ -1,9 +1,9 @@
 """
-评分类决策方法。
+Scoring-based decision methods.
 
-本模块实现常见的基于评分/距离/效用的排序方法，
-通过综合决策矩阵与权重、方向等信息生成方案得分与排名，
-并提供统一的调度与结果访问接口。
+Implements common ranking methods based on scores/distances/utilities, combining
+decision matrix with weights and criterion directions to produce scores and rankings.
+Provides unified dispatch and result access.
 """
 
 import numpy as np
@@ -21,38 +21,36 @@ from ..results.result_manager import ResultManager
 
 class ScoringDecision(DecisionBase):
     """
-    评分与排序方法集合。
-    
-    基于决策矩阵和准则方向信息，计算各方案的综合得分并进行排序。
-    
-    必需参数:
-        dataset: 决策矩阵（备选方案 × 准则）
-        criterion_type: 每个准则的方向（'max' 或 'min'）
-    
-    可选参数:
-        weights: 准则权重向量（如未提供，将使用等权重或方法默认权重）
+    Collection of scoring and ranking methods.
+
+    Required parameters:
+        - dataset: Decision matrix (alternatives × criteria)
+        - criterion_type: Direction for each criterion ('max' or 'min')
+
+    Optional parameters:
+        - weights: Criterion weight vector (defaults to equal or method-specific)
     """
     
     # 评分方法注册表，用于统一筛选与调用
     _METHOD_REGISTRY = MethodRegistry.SCORING_METHODS
     
     def _validate_inputs(self, **kwargs) -> Dict[str, Any]:
-        """评分方法输入参数校验与标准化。"""
+        """Validate and normalize inputs for scoring methods."""
         validated_params = {}
         
-        # 提取关键参数
+        # Extract key parameters
         dataset = kwargs.get('dataset')
         weights = kwargs.get('weights')
         criterion_type = kwargs.get('criterion_type')
         
-        # 校验并标准化决策矩阵
+        # Validate and normalize decision matrix
         if dataset is not None:
             validation_result = ParameterValidator.validate_decision_matrix(dataset)
             if not validation_result['is_valid']:
                 raise ValueError(validation_result['error_message'])
             validated_params['dataset'] = validation_result['processed_data']
         
-        # 若提供权重，则进行维度与有效性校验
+        # Validate weights when provided
         if weights is not None:
             n_criteria = validated_params['dataset'].shape[1] if 'dataset' in validated_params else None
             weights_result = ParameterValidator.validate_weights(weights, n_criteria=n_criteria)
@@ -60,7 +58,7 @@ class ScoringDecision(DecisionBase):
                 raise ValueError(weights_result['error_message'])
             validated_params['weights'] = weights_result['processed_data']
         
-        # 若提供正负向，进行长度与取值校验
+        # Validate criterion types when provided
         if criterion_type is not None:
             n_criteria = validated_params['dataset'].shape[1] if 'dataset' in validated_params else None
             criterion_type_result = ParameterValidator.validate_criterion_type(
@@ -72,8 +70,7 @@ class ScoringDecision(DecisionBase):
         
         return validated_params
     
-    # 方法名称到必需参数列表的映射
-    # 注意：dataset和criterion_type现在是decide()函数的必需参数，weights是可选参数
+    # Mapping from method name to required parameters
     _METHOD_MAP = {
         'topsis': ['dataset', 'criterion_type'],
         'vikor': ['dataset', 'criterion_type'],

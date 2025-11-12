@@ -114,19 +114,19 @@ def test_classification_plot_kwargs(monkeypatch, iris_df):
 
     result = clf.plot(
         plot="auc",
-        title="测试标题",
-        xlabel="横轴",
-        ylabel="纵轴",
-        legend_title="图例",
+        title="Test Title",
+        xlabel="X-axis",
+        ylabel="Y-axis",
+        legend_title="Legend",
         figsize=(12, 8),
     )
 
     assert result == "OK"
     assert captured["plot"] == "auc"
-    assert captured["plot_kwargs"]["title"] == "测试标题"
-    assert captured["plot_kwargs"]["xlabel"] == "横轴"
-    assert captured["plot_kwargs"]["ylabel"] == "纵轴"
-    assert captured["plot_kwargs"]["legend_title"] == "图例"
+    assert captured["plot_kwargs"]["title"] == "Test Title"
+    assert captured["plot_kwargs"]["xlabel"] == "X-axis"
+    assert captured["plot_kwargs"]["ylabel"] == "Y-axis"
+    assert captured["plot_kwargs"]["legend_title"] == "Legend"
     assert captured["plot_kwargs"]["figsize"] == (12, 8)
 
 
@@ -238,4 +238,4 @@ def test_regression_plot_warning(monkeypatch, capsys, diabetes_df):
     )
     reg.plot(plot="auc", verbose=False)
     output = capsys.readouterr().out
-    assert "可能不适用于回归任务" in output
+    assert "may not be suitable for regression tasks" in output

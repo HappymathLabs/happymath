@@ -6,7 +6,7 @@ from happymath.AutoML.base import AutoMLBase
 
 
 class DummyExperiment:
-    """用于模拟 PyCaret Experiment 的最小实现。"""
+    """Minimal implementation for simulating PyCaret Experiment."""
 
     def __init__(self):
         self._frame = pd.DataFrame([{"Accuracy": 0.5}])
@@ -34,7 +34,7 @@ class DummyExperiment:
 
 
 class DummyAutoML(AutoMLBase):
-    """用于测试 AutoMLBase 的简单子类。"""
+    """Simple subclass for testing AutoMLBase."""
 
     def _setup_experiment(self, **kwargs):
         self.experiment = DummyExperiment()

@@ -1,29 +1,29 @@
 """
-OptBase - 清理后的轻量级协调器
+OptBase - lightweight coordinator after cleanup.
 
-删除了所有向后兼容代码，专注于核心职责：
-- 使用ExpressionProcessor处理表达式
-- 缓存ParseResult
-- 提供问题类型属性（委托给ParseResult）
-- 提供模型转换方法（委托给适配器）
+Focus on core responsibilities:
+- Use ExpressionProcessor to handle expressions
+- Cache ParseResult
+- Expose problem-type properties (delegated to ParseResult)
+- Provide model conversion via adapters
 """
 
 from ..opt_expr.processor import ExpressionProcessor
 
 class OptBase:
-    """优化问题基础类 - 清理后的轻量级协调器"""
+    """Base class for optimization problems - lightweight coordinator."""
 
     def __init__(self, obj_func, constraints=None, epsilon=1e-6, default_search_range=100, show_bound_warnings=True, tighten_bounds=None, pyomo_config=None, pymoo_config=None, **kwargs):
         """
-        初始化OptBase
+        Initialize OptBase.
 
         Args:
-            obj_func: 目标函数字典 {"min"/"max": expr}
-            constraints: 约束条件列表（可选）
-            epsilon: epsilon值（用于严格不等式）
-            default_search_range: 默认搜索范围
-            show_bound_warnings: 是否显示变量边界警告（默认True）
-            **kwargs: 其他参数（如仿真优化相关参数）
+            obj_func: Objective dict {"min"/"max": expr}.
+            constraints: Optional list of constraints.
+            epsilon: Epsilon value for strict inequalities.
+            default_search_range: Default search range.
+            show_bound_warnings: Whether to warn about variable bounds.
+            **kwargs: Extra parameters (e.g., simulation-optimization configs).
         """
         # 使用ExpressionProcessor处理表达式
         processor = ExpressionProcessor()
@@ -48,22 +48,22 @@ class OptBase:
 
     @property
     def parse_result(self):
-        """获取解析结果"""
+        """Return the parse result object."""
         return self._parse_result
 
     # === 问题类型属性（委托给ParseResult） ===
 
     @property
     def pyomo_problem_type(self):
-        """获取Pyomo问题类型"""
+        """Return Pyomo problem type."""
         return self._parse_result.get_pyomo_problem_type()
 
     @property
     def pymoo_problem_type(self):
-        """获取Pymoo问题类型"""
+        """Return Pymoo problem-type dictionary."""
         return self._parse_result.get_pymoo_problem_type()
 
     def clear_cache(self):
-        """清除模型缓存"""
+        """Clear cached models/problems."""
         self._pyomo_model_cache = None
         self._pymoo_problem_cache = None

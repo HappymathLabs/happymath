@@ -12,27 +12,27 @@ from .core import PDESolutionResult
 class PDEModule(DEBase):
     def __init__(self, sympy_obj, value_range:str="real", spatial_var_order=["x","y"]):
         """
-            【暂不支持】
-              1. 暂不支持大于2维空间的偏微分方程；
-              2. 暂不支持包含混合偏导数，例如∂²u/∂x∂t，的偏微分方程；
+        Note on current limitations:
+          1) Spatial dimensions > 2 are not supported.
+          2) Mixed derivatives (e.g., ∂²u/∂x∂t) are not supported.
         """
         
         super(PDEModule, self).__init__(sympy_obj, value_range)
-        # 基类已持有 _sympy_obj；避免写入只读 property
+        # Base class already holds _sympy_obj; avoid writing to read-only property
         self.range = self._value_range
         self.spatial_var_order = spatial_var_order
 
         if not self.is_pde:
             raise TypeError("This is not an PDE expression, or this is not a standard PDE expression.")
 
-        # 缓存（ExprParser结果）
+        # Cache (ExprParser result)
         self._cached_standard_result: Optional[Any] = None
         self._cache_invalid = True
         
         if not self._check_core_symbol(symbol_str="t"):
             raise InvalidExpressionError(sympy_obj, "The PDE must have time variable 't'.")
         
-        # 定义一个空间变量字典，根据list顺序分别存储x,y,z,...这些空间变量
+        # Collect spatial variables per list order (x, y, z, ...)
         self.spatial_var_list = []
         self.time_var = None
         for var in self.core_symbol:
@@ -44,14 +44,14 @@ class PDEModule(DEBase):
             else:
                 self.time_var = var
         
-        # 根据spatial_var_order对self.spatial_var_list进行排序
+        # Reorder spatial variables to match spatial_var_order if possible
         self.spatial_order_var_list = [var for var in self.spatial_var_order if var in self.spatial_var_list]
         if len(self.spatial_order_var_list) == len(self.spatial_var_list):
             self.spatial_var_list = self.spatial_order_var_list
         else:
             warnings.warn(f"The spatial variables in the expression do not match the specified order. Will use the order {self.spatial_var_list} as spatial variables.")
 
-    # 检查是否包含指定核心符号（如时间变量 't'）
+    # Check if a core symbol (e.g., time variable 't') exists
     def _check_core_symbol(self, symbol_str: str = "t") -> bool:
         try:
             for symbol in self.core_symbol:
@@ -61,11 +61,11 @@ class PDEModule(DEBase):
         except Exception:
             return False
 
-    # 缓存失效
+    # Invalidate cache
     def _invalidate_cache(self) -> None:
         self._cache_invalid = True
 
-    # 提供与 ODEModule 一致的 expr 属性以触发缓存失效
+    # Provide expr property consistent with ODEModule to trigger cache invalidation
     @property
     def expr(self) -> Union[sympy.Expr, list]:
         return self._sympy_obj
@@ -75,7 +75,7 @@ class PDEModule(DEBase):
         self._sympy_obj = new_expr
         self._invalidate_cache()
                        
-    # ExprParser: 统一标准化入口
+    # ExprParser: unified standardization entry
     def _compute_standard_pde(self):
         try:
             result = process_expression(self.expr, spatial_var_order=self.spatial_var_order)
@@ -84,9 +84,9 @@ class PDEModule(DEBase):
 
             return result
         except Exception as e:
-            raise ExpressionStandardizationError(self.expr, "PDE标准化", str(e))
+            raise ExpressionStandardizationError(self.expr, "PDE standardization", str(e))
 
-    # 将PDE进行标准化（与旧接口保持一致）
+    # Standardized PDE (keeps legacy interface)
     @property
     def stand_pde(self):
         if self._cache_invalid or self._cached_standard_result is None:
@@ -94,17 +94,15 @@ class PDEModule(DEBase):
             self._cache_invalid = False
         return self._cached_standard_result.standardized_expressions
     
-    # 将标准化后的PDE转换为可求解的形式（ExprParser提供）
+    # Convert standardized PDE to a solvable format (provided by ExprParser)
     @property
     def to_solvable_pde(self):
         if self._cache_invalid or self._cached_standard_result is None:
-            _ = self.stand_pde  # 触发缓存
+            _ = self.stand_pde  # trigger cache
         return self._cached_standard_result.get_solvable_format() if hasattr(self._cached_standard_result, 'get_solvable_format') else getattr(self._cached_standard_result, 'solvable_format', {})
     
     def ana_solve(self):
-        """
-            求解偏微分方程的解析解
-        """
+        """Analytical solve for PDEs (not implemented)."""
         pass
     
     def num_solve(self, 
@@ -117,22 +115,22 @@ class PDEModule(DEBase):
                   bc_ops: dict | None = None,
                   grid_spec: dict | None = None):
         """
-            求解偏微分方程的数值解（外观层接口）
+        Solve a PDE numerically (facade interface).
 
-            参数：
-            - state: 初始场。可为 py-pde 的 Field/FieldCollection，或 numpy 数组（单场），
-                     或 {name: np.ndarray}（多场）。若为数组，将使用 grid_spec 自动构建网格与场。
-            - t_range: 时间范围（如 (0, 1) 或 1.0）
-            - dt: 时间步长
-            - const_cond: 常数/系数字典，支持标量、numpy 数组（将自动转为 Field）、或已有 Field
-            - solver: 求解器类型，转发至 py-pde（如 "explicit" 等）
-            - bc: 边界条件（py-pde 兼容的 BoundariesData，如 {"x-": {"value": 0}, ...} 或 "periodic"）
-            - bc_ops: 针对表达式中各算子的专属边界条件（py-pde 的 bc_ops）
-            - grid_spec: 当 state 为 numpy 时，用于构网格的规格字典，支持键：
-                         {"bounds": ((xa, xb), ...), "shape": (Nx, ...), "periodic": False}
+        Args:
+            state: Initial field. Accepts py-pde Field/FieldCollection, numpy array (single field),
+                   or dict[name, np.ndarray] (multi-field). Arrays will use grid_spec to build grid+field.
+            t_range: Time range (e.g., (0, 1) or 1.0).
+            dt: Time step size.
+            const_cond: Constants/coefficient dict; supports scalars, numpy arrays (auto-converted to Field), or existing Field.
+            solver: Solver name forwarded to py-pde (e.g., "explicit").
+            bc: Boundary conditions (py-pde BoundariesData such as {"x-": {"value": 0}, ...} or "periodic").
+            bc_ops: Operator-specific boundary conditions (py-pde bc_ops) used in expressions.
+            grid_spec: When state is numpy, grid specification dict with keys like
+                       {"bounds": ((xa, xb), ...), "shape": (Nx, ...), "periodic": False}.
 
-            返回：
-            - py-pde 的解对象（Trajectory）
+        Returns:
+            py-pde Trajectory solution object.
         """
         detailed = solve_pde(
             ctx=self,

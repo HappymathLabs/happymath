@@ -1,7 +1,7 @@
 """
-优化问题统一中间表示（IR）定义
+Unified intermediate representation (IR) for optimization problems.
 
-解析器将 SymPy 表达式转换为 IR，对应的适配器消费 IR 构建求解器模型。
+Parsers convert SymPy expressions into IR; adapters consume IR to build solver models.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import sympy as sp
 
 
 class IROptVarType(str, Enum):
-    """变量类型枚举"""
+    """Variable type enumeration."""
 
     CONTINUOUS = "continuous"
     INTEGER = "integer"
@@ -24,7 +24,7 @@ class IROptVarType(str, Enum):
 
 @dataclass(slots=True)
 class IRDiscreteDomain:
-    """离散域信息"""
+    """Discrete domain information."""
 
     values: Tuple[Any, ...]
     labels: Optional[Tuple[str, ...]] = None
@@ -38,16 +38,16 @@ class IRDiscreteDomain:
 
 
 class IRConstraintCategory(str, Enum):
-    """约束类别"""
+    """Constraint category."""
 
-    ALGEBRAIC = "algebraic"  # 标准代数约束
-    DOMAIN = "domain"  # 区间、集合等域约束
-    FUNCTIONAL = "functional"  # 积分、微分等功能型约束
-    LOGICAL = "logical"  # 条件/分段转换后的逻辑约束
+    ALGEBRAIC = "algebraic"  # standard algebraic constraints
+    DOMAIN = "domain"        # interval/set domain constraints
+    FUNCTIONAL = "functional"# integral/derivative functional constraints
+    LOGICAL = "logical"      # logical constraints from conditional/piecewise
 
 
 class IRConstraintSense(str, Enum):
-    """约束符号"""
+    """Constraint sense."""
 
     EQ = "eq"
     LE = "le"
@@ -55,7 +55,7 @@ class IRConstraintSense(str, Enum):
 
 @dataclass(slots=True)
 class IRConstraint:
-    """统一的约束表示"""
+    """Unified constraint representation."""
 
     identifier: str
     category: IRConstraintCategory
@@ -73,7 +73,7 @@ class IRConstraint:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def iter_symbols(self) -> Iterable[sp.Symbol]:
-        """遍历涉及的符号"""
+        """Iterate symbols involved in the constraint."""
         return self.free_symbols
 
     def __post_init__(self) -> None:
@@ -83,7 +83,7 @@ class IRConstraint:
 
 @dataclass(slots=True)
 class IRObjective:
-    """目标函数定义"""
+    """Objective definition."""
 
     sense: str
     expression: sp.Expr
@@ -101,7 +101,7 @@ class IRObjective:
 
 @dataclass(slots=True)
 class IROptVariable:
-    """变量定义"""
+    """Variable definition."""
 
     symbol: sp.Symbol
     var_type: IROptVarType
@@ -117,7 +117,7 @@ class IROptVariable:
 
 @dataclass(slots=True)
 class IROptProblem:
-    """优化问题IR顶层结构"""
+    """Top-level IR structure for an optimization problem."""
 
     variables: List[IROptVariable]
     objectives: List[IRObjective]
@@ -126,11 +126,11 @@ class IROptProblem:
     all_symbols: Tuple[sp.Symbol, ...]
 
     def symbol_to_variable(self) -> Dict[sp.Symbol, IROptVariable]:
-        """提供符号到变量定义的映射"""
+        """Return mapping from symbol to variable definition."""
         return {var.symbol: var for var in self.variables}
 
     def get_variable(self, symbol: sp.Symbol) -> Optional[IROptVariable]:
-        """根据符号获取变量定义"""
+        """Return variable definition by symbol."""
         for var in self.variables:
             if var.symbol == symbol:
                 return var

@@ -1,5 +1,5 @@
 """
-测试工具函数
+Test utility functions
 """
 import numpy as np
 import pandas as pd
@@ -10,11 +10,11 @@ from typing import Any, Dict, List, Tuple, Optional, Union
 
 
 class TestHelper:
-    """测试辅助工具类"""
+    """Test helper utility class"""
     
     @staticmethod
     def suppress_warnings():
-        """抑制测试期间的警告"""
+        """Suppress warnings during testing"""
         warnings.filterwarnings("ignore", category=UserWarning)
         warnings.filterwarnings("ignore", category=RuntimeWarning)
         warnings.filterwarnings("ignore", category=FutureWarning)
@@ -22,14 +22,14 @@ class TestHelper:
     @staticmethod
     def is_valid_weights(weights: np.ndarray, tolerance: float = 1e-6) -> bool:
         """
-        检查权重是否有效
+        Check if weights are valid
         
-        参数:
-            weights: 权重向量
-            tolerance: 容差
+        Parameters:
+            weights: Weight vector
+            tolerance: Tolerance
         
-        返回:
-            bool: 权重是否有效
+        Returns:
+            bool: Whether weights are valid
         """
         if weights is None:
             return False
@@ -41,20 +41,20 @@ class TestHelper:
             return False
         if np.any(np.isnan(weights)) or np.any(np.isinf(weights)):
             return False
-        # 权重和应该约等于1（允许小的误差）
+        # Weight sum should be approximately 1 (allowing small error)
         return abs(np.sum(weights) - 1.0) < tolerance
     
     @staticmethod
     def is_valid_ranking(ranking: np.ndarray, n_alternatives: int) -> bool:
         """
-        检查排名是否有效
+        Check if ranking is valid
         
-        参数:
-            ranking: 排名数组
-            n_alternatives: 备选方案数量
+        Parameters:
+            ranking: Ranking array
+            n_alternatives: Number of alternatives
         
-        返回:
-            bool: 排名是否有效
+        Returns:
+            bool: Whether ranking is valid
         """
         if ranking is None:
             return False
@@ -64,19 +64,19 @@ class TestHelper:
             return False
         if np.any(np.isnan(ranking)) or np.any(np.isinf(ranking)):
             return False
-        # 排名应该在1到n_alternatives之间
+        # Ranking should be between 1 and n_alternatives
         return np.all(ranking >= 1) and np.all(ranking <= n_alternatives)
     
     @staticmethod
     def is_valid_scores(scores: np.ndarray) -> bool:
         """
-        检查得分是否有效
+        Check if scores are valid
         
-        参数:
-            scores: 得分数组
+        Parameters:
+            scores: Scores array
         
-        返回:
-            bool: 得分是否有效
+        Returns:
+            bool: Whether scores are valid
         """
         if scores is None:
             return False
@@ -84,21 +84,21 @@ class TestHelper:
             return False
         if len(scores.shape) != 1:
             return False
-        # 允许NaN值（某些方法可能产生NaN）
+        # Allow NaN values (some methods may produce NaN)
         return not np.all(np.isinf(scores))
     
     @staticmethod
     def measure_execution_time(func, *args, **kwargs) -> Tuple[Any, float]:
         """
-        测量函数执行时间
+        Measure function execution time
         
-        参数:
-            func: 要测量的函数
-            *args: 函数参数
-            **kwargs: 函数关键字参数
+        Parameters:
+            func: Function to measure
+            *args: Function arguments
+            **kwargs: Function keyword arguments
         
-        返回:
-            Tuple: (函数结果, 执行时间)
+        Returns:
+            Tuple: (function result, execution time)
         """
         start_time = time.time()
         try:
@@ -112,14 +112,14 @@ class TestHelper:
     @staticmethod
     def capture_method_calls(decision_object, method_names: List[str]) -> Dict[str, bool]:
         """
-        检查决策对象的方法是否被成功调用
+        Check if decision object methods were successfully called
         
-        参数:
-            decision_object: 决策对象
-            method_names: 要检查的方法名列表
+        Parameters:
+            decision_object: Decision object
+            method_names: List of method names to check
         
-        返回:
-            Dict: 方法名到调用成功状态的映射
+        Returns:
+            Dict: Mapping of method names to call success status
         """
         call_status = {}
         
@@ -128,7 +128,7 @@ class TestHelper:
                 if hasattr(decision_object, method_name):
                     method = getattr(decision_object, method_name)
                     if callable(method):
-                        # 尝试调用方法（无参数）
+                        # Try calling the method (no parameters)
                         if method_name in ['get_all_results', 'compare_weights', 'compare_rankings', 'compare_scores']:
                             result = method()
                             call_status[method_name] = result is not None
@@ -146,13 +146,13 @@ class TestHelper:
     @staticmethod
     def validate_decision_results(results: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         """
-        验证决策结果的有效性
+        Validate decision results
         
-        参数:
-            results: 决策结果字典
+        Parameters:
+            results: Decision results dictionary
         
-        返回:
-            Dict: 验证结果
+        Returns:
+            Dict: Validation results
         """
         validation_report = {}
         
@@ -169,20 +169,20 @@ class TestHelper:
             }
             
             if isinstance(result, dict):
-                # 检查权重
+                # Check weights
                 if 'weights' in result:
                     method_validation['has_weights'] = True
                     if isinstance(result['weights'], np.ndarray):
                         method_validation['weights_valid'] = TestHelper.is_valid_weights(result['weights'])
                 
-                # 检查排名
+                # Check ranking
                 if 'ranking' in result:
                     method_validation['has_ranking'] = True
                     if isinstance(result['ranking'], np.ndarray):
                         n_alternatives = len(result['ranking'])
                         method_validation['ranking_valid'] = TestHelper.is_valid_ranking(result['ranking'], n_alternatives)
                 
-                # 检查得分
+                # Check scores
                 if 'scores' in result:
                     method_validation['has_scores'] = True
                     if isinstance(result['scores'], np.ndarray):
@@ -195,15 +195,15 @@ class TestHelper:
     @staticmethod
     def generate_error_report(test_results: Dict[str, Dict]) -> str:
         """
-        生成错误报告
+        Generate error report
         
-        参数:
-            test_results: 测试结果字典
+        Parameters:
+            test_results: Test results dictionary
         
-        返回:
-            str: 错误报告
+        Returns:
+            str: Error report
         """
-        report_lines = ["## 测试错误报告\n"]
+        report_lines = ["## Test Error Report\n"]
         
         has_errors = False
         for test_category, category_results in test_results.items():
@@ -212,7 +212,7 @@ class TestHelper:
             for test_name, test_result in category_results.items():
                 if isinstance(test_result, dict) and test_result.get('status') == 'failed':
                     has_errors = True
-                    error_info = test_result.get('error', '未知错误')
+                    error_info = test_result.get('error', 'Unknown error')
                     category_errors.append(f"- **{test_name}**: {error_info}")
             
             if category_errors:
@@ -221,51 +221,51 @@ class TestHelper:
                 report_lines.append("")
         
         if not has_errors:
-            report_lines.append("✅ 所有测试都通过了！没有发现错误。")
+            report_lines.append("✅ All tests passed! No errors found.")
         
         return "\n".join(report_lines)
     
     @staticmethod
     def compare_execution_times(times_dict: Dict[str, float], threshold: float = 1.0) -> Dict[str, str]:
         """
-        比较执行时间并给出评估
+        Compare execution times and provide evaluation
         
-        参数:
-            times_dict: 方法名到执行时间的映射
-            threshold: 时间阈值（秒）
+        Parameters:
+            times_dict: Mapping of method names to execution times
+            threshold: Time threshold (seconds)
         
-        返回:
-            Dict: 方法名到性能评估的映射
+        Returns:
+            Dict: Mapping of method names to performance evaluation
         """
         performance_report = {}
         
         for method_name, execution_time in times_dict.items():
             if execution_time < 0.01:
-                performance_report[method_name] = "极快"
+                performance_report[method_name] = "Very Fast"
             elif execution_time < 0.1:
-                performance_report[method_name] = "快"
+                performance_report[method_name] = "Fast"
             elif execution_time < threshold:
-                performance_report[method_name] = "正常"
+                performance_report[method_name] = "Normal"
             elif execution_time < threshold * 3:
-                performance_report[method_name] = "较慢"
+                performance_report[method_name] = "Slow"
             else:
-                performance_report[method_name] = "很慢"
+                performance_report[method_name] = "Very Slow"
         
         return performance_report
     
     @staticmethod
     def matrix_properties(matrix: np.ndarray) -> Dict[str, Any]:
         """
-        分析矩阵属性
+        Analyze matrix properties
         
-        参数:
-            matrix: 输入矩阵
+        Parameters:
+            matrix: Input matrix
         
-        返回:
-            Dict: 矩阵属性字典
+        Returns:
+            Dict: Matrix properties dictionary
         """
         if matrix is None or matrix.size == 0:
-            return {'valid': False, 'reason': '矩阵为空'}
+            return {'valid': False, 'reason': 'Matrix is empty'}
         
         properties = {
             'valid': True,
@@ -284,27 +284,27 @@ class TestHelper:
 
 
 class MethodTester:
-    """方法测试器"""
+    """Method tester"""
     
     def __init__(self, decision_class):
         """
-        初始化方法测试器
+        Initialize method tester
         
-        参数:
-            decision_class: 决策类
+        Parameters:
+            decision_class: Decision class
         """
         self.decision_class = decision_class
         self.test_results = {}
     
     def test_basic_functionality(self, test_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        测试基础功能
+        Test basic functionality
         
-        参数:
-            test_data: 测试数据
+        Parameters:
+            test_data: Test data
         
-        返回:
-            Dict: 测试结果
+        Returns:
+            Dict: Test results
         """
         result = {
             'status': 'unknown',
@@ -315,7 +315,7 @@ class MethodTester:
         }
         
         try:
-            # 创建决策对象并执行
+            # Create decision object and execute
             decision_obj, execution_time = TestHelper.measure_execution_time(
                 self.decision_class
             )
@@ -325,7 +325,7 @@ class MethodTester:
                 result['error'] = str(decision_obj)
                 return result
             
-            # 调用decide方法
+            # Call decide method
             decide_result, decide_time = TestHelper.measure_execution_time(
                 decision_obj.decide, **test_data
             )
@@ -335,7 +335,7 @@ class MethodTester:
                 result['error'] = str(decide_result)
                 return result
             
-            # 获取结果
+            # Get results
             all_results = decision_obj.get_all_results()
             
             result['status'] = 'passed'
@@ -352,13 +352,13 @@ class MethodTester:
     
     def test_boundary_conditions(self, boundary_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        测试边界条件
+        Test boundary conditions
         
-        参数:
-            boundary_data: 边界测试数据
+        Parameters:
+            boundary_data: Boundary test data
         
-        返回:
-            Dict: 测试结果
+        Returns:
+            Dict: Test results
         """
         boundary_results = {}
         
@@ -373,12 +373,12 @@ class MethodTester:
                 decision_obj = self.decision_class()
                 decision_obj.decide(**data)
                 
-                # 如果没有抛出异常，说明处理了边界条件
+                # If no exception is raised, boundary condition was handled
                 result['status'] = 'passed'
                 result['handles_condition'] = True
                 
             except Exception as e:
-                # 某些边界条件应该抛出异常，这是正常的
+                # Some boundary conditions should raise exceptions, which is normal
                 result['status'] = 'handled_with_exception'
                 result['error'] = str(e)
                 result['handles_condition'] = True

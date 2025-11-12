@@ -9,7 +9,7 @@ from happymath.Opt.opt_expr.processor import ExpressionProcessor
 
 
 def build_problem_with_param_and_deriv():
-    # x'(t) = -a*x(t), x(0)=1，目标 min ∫ x'(t)^2 dt（导数出现在 integrand）
+    # x'(t) = -a*x(t), x(0)=1, objective min ∫ x'(t)^2 dt (derivatives appear in integrand)
     t = sp.symbols('t', real=True)
     x = sp.Function('x')
     a = sp.symbols('a', real=True)
@@ -34,8 +34,8 @@ def test_pyomo_dae_derivative_and_param():
     adapter = PyomoDAEAdapter(pr, func_cfg)
     m = adapter.convert()
     assert isinstance(m, pyo.ConcreteModel)
-    # 检查导数变量与参数变量存在
+    # Check that derivative variables and parameter variables exist
     assert any(name.startswith('dx') and name.endswith('_dt') for name, obj in m.component_map(pyo.Var, active=True).items())
-    # 参数变量存在（p_a）
+    # Parameter variables exist (p_a)
     assert any(name.startswith('p_') for name, obj in m.component_map(pyo.Var, active=True).items())
 

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-阶段B：PDE 扩展能力测试
+Stage B: PDE Extended Capability Tests
 
-场景：
-- 2D 对流-扩散（vx, vy 标量系数）
-- 1D Burgers-like（u*u_x + nu*u_xx）
-- 1D 波动方程（二阶时间导替代为一阶系统）
-- 2场 Gray-Scott 反应-扩散（小规模、短步长）
+Scenarios:
+- 2D convection-diffusion (vx, vy scalar coefficients)
+- 1D Burgers-like (u*u_x + nu*u_xx)
+- 1D wave equation (second-order time derivative replaced with first-order system)
+- 2-field Gray-Scott reaction-diffusion (small scale, short time steps)
 """
 
 import numpy as np
@@ -81,21 +81,21 @@ def test_1d_burgers_like():
 
 @pytest.mark.timeout(120)
 def test_1d_wave_equation_second_time():
-    # u_tt = c^2*u_xx -> 通过时间替代形成一阶系统
+    # u_tt = c^2*u_xx -> forms first-order system through time substitution
     x, t = sp.symbols('x t')
     u = sp.Function('u')
     c = sp.symbols('c')
     expr = sp.Eq(sp.Derivative(u(x, t), (t, 2)), c**2 * sp.Derivative(u(x, t), (x, 2)))
     m = PDEModule(expr)
     solvable = m.to_solvable_pde
-    # 应该变为两变量系统（u 与某个 Y_*）
+    # Should become two-variable system (u and some Y_*)
     assert len(solvable) >= 2
     keys = list(solvable.keys())
 
-    # 构造初值：u=sin(x)，其一阶时间导=0
+    # Construct initial conditions: u=sin(x), first-order time derivative=0
     N = 64
     base = np.sin(np.linspace(0, 2*np.pi, N, endpoint=False))
-    # 自动填充每个字段：u 用 base，其他替代场用 0
+    # Auto-fill each field: u uses base, other substitute fields use 0
     state = {}
     for k in keys:
         if k == 'u':
@@ -118,7 +118,7 @@ def test_1d_wave_equation_second_time():
 
 @pytest.mark.timeout(180)
 def test_2field_gray_scott_small():
-    # Gray-Scott 模型（简化小网格、短步长）
+    # Gray-Scott model (simplified small grid, short time steps)
     x, y, t = sp.symbols('x y t')
     u = sp.Function('u')
     v = sp.Function('v')
@@ -144,7 +144,7 @@ def test_2field_gray_scott_small():
         np.linspace(0, 1, N, endpoint=False),
         indexing='ij'
     )
-    # 初值：u 接近1，v 近0，中间加一个小扰动
+    # Initial conditions: u close to 1, v close to 0, with small perturbation in the middle
     u0 = np.ones((N, N))
     v0 = np.zeros((N, N))
     cx, cy = N//2, N//2

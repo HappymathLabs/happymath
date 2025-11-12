@@ -1,8 +1,8 @@
 """
-AutoML 基类定义。
+AutoML base classes.
 
-该模块包含 HappyMath AutoML 框架的核心基类，实现数据加载、实验初始化、
-模型存储与评估等通用能力，后续所有任务类都将继承此基类。
+Core base for the HappyMath AutoML framework: data loading, experiment setup,
+model storage and evaluation utilities; all task wrappers derive from this.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ TargetLike = Union[str, int, None]
 
 @dataclass
 class StoredModel:
-    """用于存储模型相关信息的简单数据结构。"""
+    """Simple container to store model-related information."""
 
     model: Any
     metrics: Dict[str, Any]
@@ -33,9 +33,9 @@ class StoredModel:
 
 class AutoMLBase:
     """
-    HappyMath AutoML 基类。
+    HappyMath AutoML base class.
 
-    负责封装 PyCaret 的实验生命周期，提供统一的数据加载、指标判断以及模型管理能力。
+    Encapsulates the PyCaret experiment lifecycle and provides unified data loading, metric handling, and model management.
     """
 
     primary_metric: Optional[str] = None
@@ -81,7 +81,7 @@ class AutoMLBase:
         target: TargetLike,
     ) -> Tuple[pd.DataFrame, Optional[str]]:
         """
-        将多种数据格式统一转换为 DataFrame，并处理目标列。
+        Normalize various input data formats into a DataFrame and handle target column.
         """
         if isinstance(data, str):
             if data.lower().endswith(".csv"):
@@ -89,7 +89,7 @@ class AutoMLBase:
             elif data.lower().endswith((".xlsx", ".xls")):
                 df = pd.read_excel(data)
             else:
-                raise ValueError(f"不支持的文件格式: {data}")
+                raise ValueError(f"Unsupported file format: {data}")
         elif isinstance(data, pd.Series):
             df = data.to_frame()
         elif isinstance(data, pd.DataFrame):
@@ -98,22 +98,22 @@ class AutoMLBase:
             # 数组模式下目标列在转换函数中处理
             return self._convert_array_to_frame(data, target)
         else:
-            raise TypeError("data 参数必须是文件路径、DataFrame 或 NumPy 数组")
+            raise TypeError("data must be a file path, DataFrame, or NumPy array")
 
         target_name: Optional[str]
         if target is None:
             target_name = None
         elif isinstance(target, str):
             if target not in df.columns:
-                raise ValueError(f"目标列 '{target}' 不存在于数据集中")
+                raise ValueError(f"target column '{target}' not found in data")
             target_name = target
         elif isinstance(target, int):
             try:
                 target_name = df.columns[target]
             except IndexError as exc:
-                raise ValueError(f"目标列索引 {target} 超出范围") from exc
+                raise ValueError(f"target column index {target} out of range") from exc
         else:
-            raise TypeError("target 参数必须是列名、列索引或 None")
+            raise TypeError("target must be a column name, index, or None")
 
         return df, target_name
 
@@ -122,9 +122,9 @@ class AutoMLBase:
         array: np.ndarray,
         target: TargetLike,
     ) -> Tuple[pd.DataFrame, Optional[str]]:
-        """将 NumPy 数组转换为 DataFrame，并根据索引设置目标列。"""
+        """Convert a NumPy array to a DataFrame and set the target column by index."""
         if array.ndim != 2:
-            raise ValueError("仅支持二维数组作为数据输入")
+            raise ValueError("Only 2-D arrays are supported as data input")
 
         columns = [f"feature_{idx}" for idx in range(array.shape[1])]
         df = pd.DataFrame(array, columns=columns)
@@ -133,32 +133,32 @@ class AutoMLBase:
             return df, None
 
         if not isinstance(target, int):
-            raise TypeError("NumPy 数组模式下 target 必须为整数索引")
+            raise TypeError("In NumPy array mode, target must be an integer index")
 
         try:
             target_column = columns[target]
         except IndexError as exc:
-            raise ValueError(f"目标列索引 {target} 超出范围") from exc
+            raise ValueError(f"target column index {target} out of range") from exc
 
         df.rename(columns={target_column: "target"}, inplace=True)
         return df, "target"
 
     def _validate_data(self, data: pd.DataFrame, target: Optional[str]) -> None:
-        """基础数据校验，确保目标列存在并且无重复列名。"""
+        """Basic data validation to ensure target exists and no duplicate columns."""
         if not isinstance(data, pd.DataFrame):
-            raise TypeError("内部数据必须是 pandas.DataFrame 类型")
+            raise TypeError("internal data must be a pandas.DataFrame")
 
         if data.columns.duplicated().any():
-            raise ValueError("数据集中存在重复的列名，请先进行处理")
+            raise ValueError("duplicate column names found; please resolve them first")
 
         if target is not None and target not in data.columns:
-            raise ValueError("指定的目标列未在数据中找到")
+            raise ValueError("specified target column not found in data")
 
     # ------------------------------------------------------------------
     # 指标相关工具
     # ------------------------------------------------------------------
     def _get_metric_direction(self, metric: str) -> str:
-        """根据常见指标名称判断优化方向。"""
+        """Determine metric optimization direction from common names."""
         lower_better = {
             "MAE",
             "MSE",
@@ -194,11 +194,11 @@ class AutoMLBase:
         if metric in higher_better:
             return "higher_better"
 
-        print(f"警告: 未知指标 '{metric}'，默认按越大越好处理")
+        print(f"Warning: unknown metric '{metric}', defaulting to higher-is-better")
         return "higher_better"
 
     def _is_better_score(self, new_score: float, current_best: Optional[float]) -> bool:
-        """根据指标方向判断新分数是否更优。"""
+        """Determine whether a new score is better based on metric direction."""
         if current_best is None:
             return True
 
@@ -208,7 +208,7 @@ class AutoMLBase:
         return new_score < current_best
 
     def _safe_get_model_name(self, model: Any) -> str:
-        """获取模型的可读名称，优先使用实验内部提供的方法。"""
+        """Get a readable model name, preferring experiment-provided helpers."""
         if self.experiment and hasattr(self.experiment, "_get_model_name"):
             try:
                 return self.experiment._get_model_name(model)
@@ -221,7 +221,7 @@ class AutoMLBase:
         results: Optional[Any],
         model_label: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """从 PyCaret 的 pull 结果中提取指标信息。"""
+        """Extract metrics from PyCaret's pull() output."""
         if results is None:
             return {}
 
@@ -252,7 +252,7 @@ class AutoMLBase:
         return {}
 
     def _filter_kwargs_for(self, func: Any, base_kwargs: Dict[str, Any]) -> Dict[str, Any]:
-        """根据函数签名过滤不被支持的参数。"""
+        """Filter unsupported kwargs by function signature."""
         params = inspect.signature(func).parameters
         return {key: value for key, value in base_kwargs.items() if key in params}
 
@@ -265,7 +265,7 @@ class AutoMLBase:
         legend_labels: Optional[List[str]],
         font_sizes: Optional[Dict[str, Union[int, float]]],
     ):
-        """根据自定义文本或字体控制构造绘图上下文，未提供时返回空上下文。"""
+        """Build a plotting customization context; returns a null context when not provided."""
         has_custom_text = any([title, xlabel, ylabel, legend_title, legend_labels])
         has_font_customization = font_sizes is not None and len(font_sizes) > 0
         if not (has_custom_text or has_font_customization):
@@ -289,7 +289,7 @@ class AutoMLBase:
         legend_labels: Optional[List[str]],
         font_sizes: Optional[Dict[str, Union[int, float]]],
     ):
-        """临时重写 Matplotlib 的标题、坐标轴与图例设置，确保自定义参数及字体生效。"""
+        """Temporarily override Matplotlib labels/titles/legend to apply custom text and fonts."""
         import matplotlib.pyplot as plt
         from matplotlib.axes import Axes
         from matplotlib import rcParams
@@ -394,7 +394,7 @@ class AutoMLBase:
                         texts = legend.get_texts()
                         if len(legend_labels) != len(texts):
                             warnings.warn(
-                                "legend_labels 长度与实际图例数量不匹配，将按最小长度截断处理",
+                                "legend_labels length mismatches legend entries; will truncate to the minimal length",
                                 UserWarning,
                             )
                         for text_obj, label in zip(texts, legend_labels):
@@ -419,7 +419,7 @@ class AutoMLBase:
                         texts = legend.get_texts()
                         if len(legend_labels) != len(texts):
                             warnings.warn(
-                                "legend_labels 长度与实际图例数量不匹配，将按最小长度截断处理",
+                                "legend_labels length mismatches legend entries; will truncate to the minimal length",
                                 UserWarning,
                             )
                         for text_obj, label in zip(texts, legend_labels):
@@ -469,7 +469,7 @@ class AutoMLBase:
         model_label: Optional[str] = None,
         additional_info: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """记录模型对象及对应指标，方便后续查询。"""
+        """Record model object with metrics for later reference."""
         metrics: Dict[str, Any] = {}
 
         if results_df is None:
@@ -491,9 +491,9 @@ class AutoMLBase:
         self.models[model_name] = info
 
     def get_best_model(self) -> Tuple[Any, Dict[str, Any]]:
-        """基于 primary_metric 返回性能最佳的模型。"""
+        """Return the best model based on primary_metric."""
         if not self.models:
-            raise ValueError("没有可比较的模型，请先创建或比较模型")
+            raise ValueError("No comparable models; please create or compare models first")
 
         best_name = None
         best_info: Optional[StoredModel] = None
@@ -511,7 +511,7 @@ class AutoMLBase:
         if best_info is None:
             fallback = list(self.models.values())[-1]
             print(
-                f"警告: 未找到包含主指标 '{self.primary_metric}' 的模型，将返回最近的模型 '{fallback.name}'"
+                f"Warning: No model contains the primary metric '{self.primary_metric}', will return the most recent model '{fallback.name}'"
             )
             self.current_model = fallback.model
             return fallback.model, fallback.metrics
@@ -531,7 +531,7 @@ class AutoMLBase:
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
-        """比较已支持模型并选取表现最优的模型。"""
+        """Compare supported models and select the best performer."""
         self._ensure_setup()
         verbose_flag = self.verbose if verbose is None else verbose
         metric = sort or self.primary_metric
@@ -565,7 +565,7 @@ class AutoMLBase:
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
-        """基于指定算法创建模型。"""
+        """Create a model with the specified algorithm."""
         self._ensure_setup()
         verbose_flag = self.verbose if verbose is None else verbose
 
@@ -599,12 +599,12 @@ class AutoMLBase:
         tuner_verbose: Union[int, bool] = True,
         **kwargs: Any,
     ) -> Any:
-        """对当前模型或指定模型执行超参数搜索。"""
+        """Tune hyperparameters for the current or a specified model."""
         self._ensure_setup()
 
         base_model = estimator or self.current_model
         if base_model is None:
-            raise ValueError("没有可调优的模型，请先通过 compare 或 create 生成模型")
+            raise ValueError("No model to tune; please run compare or create first")
 
         metric = optimize or self.primary_metric
         verbose_flag = self.verbose if verbose is None else verbose
@@ -641,11 +641,11 @@ class AutoMLBase:
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
-        """对模型执行 Bagging 或 Boosting 集成。"""
+        """Apply bagging/boosting ensembling to the model."""
         self._ensure_setup()
         base_model = estimator or self.current_model
         if base_model is None:
-            raise ValueError("没有可用于集成的模型")
+            raise ValueError("No model available for ensembling")
 
         metric = optimize or self.primary_metric
         verbose_flag = self.verbose if verbose is None else verbose
@@ -688,12 +688,12 @@ class AutoMLBase:
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
-        """对多个模型执行投票/平均混合。"""
+        """Blend multiple models via voting/averaging."""
         self._ensure_setup()
 
         if estimator_list is None:
             if len(self.models) < 2:
-                raise ValueError("混合模型前至少需要准备两个基础模型")
+                raise ValueError("At least two base models are required to blend")
             estimator_list = [info.model for info in self.models.values()]
 
         metric = optimize or self.primary_metric
@@ -739,12 +739,12 @@ class AutoMLBase:
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
-        """执行模型堆叠，构建两层结构的集成模型。"""
+        """Stack models to build a two-layer ensemble."""
         self._ensure_setup()
 
         if estimator_list is None:
             if len(self.models) < 2:
-                raise ValueError("堆叠模型前至少需要准备两个基础模型")
+                raise ValueError("At least two base models are required to stack")
             estimator_list = [info.model for info in self.models.values()]
 
         metric = optimize or self.primary_metric
@@ -799,13 +799,13 @@ class AutoMLBase:
         font_sizes: Optional[Dict[str, Union[int, float]]] = None,
         verbose: Optional[bool] = None,
     ) -> Optional[str]:
-        """调用 PyCaret 可视化能力，并提供友好的默认标题。"""
+        """Call PyCaret plotting with friendly default titles."""
         import warnings
 
         self._ensure_setup()
         estimator = estimator or self.current_model
         if estimator is None:
-            raise ValueError("没有可用于绘图的模型")
+            raise ValueError("No model available for plotting")
 
         verbose_flag = self.verbose if verbose is None else verbose
         effective_title = title or self._get_default_plot_title(plot, estimator)
@@ -857,7 +857,7 @@ class AutoMLBase:
             try:
                 return self.experiment.plot_model(**filtered_call)
             except Exception as exc:
-                warnings.warn(f"使用自定义参数绘图失败，将回退到默认绘图。错误信息: {exc}")
+                warnings.warn(f"Plotting with custom parameters failed, falling back to default. Error: {exc}")
                 fallback = {
                     "estimator": estimator,
                     "plot": plot,
@@ -871,21 +871,21 @@ class AutoMLBase:
                 return self.experiment.plot_model(**fallback_filtered)
 
     def _get_default_plot_title(self, plot: str, estimator: Any) -> str:
-        """根据图表类型生成默认标题。"""
+        """Generate default plot titles by plot type."""
         model_name = self._safe_get_model_name(estimator)
         mapping = {
-            "auc": f"{model_name} - ROC曲线",
-            "pr": f"{model_name} - 精准率-召回率曲线",
-            "confusion_matrix": f"{model_name} - 混淆矩阵",
-            "error": f"{model_name} - 预测误差",
-            "feature": f"{model_name} - 特征重要性",
-            "feature_all": f"{model_name} - 全量特征重要性",
-            "learning": f"{model_name} - 学习曲线",
-            "vc": f"{model_name} - 验证曲线",
-            "residuals": f"{model_name} - 残差图",
-            "cooks": f"{model_name} - Cook距离图",
+            "auc": f"{model_name} - ROC Curve",
+            "pr": f"{model_name} - Precision-Recall Curve",
+            "confusion_matrix": f"{model_name} - Confusion Matrix",
+            "error": f"{model_name} - Prediction Error",
+            "feature": f"{model_name} - Feature Importance",
+            "feature_all": f"{model_name} - All Features Importance",
+            "learning": f"{model_name} - Learning Curve",
+            "vc": f"{model_name} - Validation Curve",
+            "residuals": f"{model_name} - Residuals",
+            "cooks": f"{model_name} - Cook's Distance",
         }
-        return mapping.get(plot, f"{model_name} - {plot.upper()} 可视化")
+        return mapping.get(plot, f"{model_name} - {plot.upper()} visualization")
 
     def predict(
         self,
@@ -895,11 +895,11 @@ class AutoMLBase:
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
-        """使用指定模型进行预测，默认利用测试集。"""
+        """Predict with the specified model or the test set by default."""
         self._ensure_setup()
         predictor = estimator or self.current_model
         if predictor is None:
-            raise ValueError("没有可用于预测的模型")
+            raise ValueError("No model available for prediction")
 
         data_to_use = data if data is not None else self.test_data
         verbose_flag = self.verbose if verbose is None else verbose
@@ -915,16 +915,16 @@ class AutoMLBase:
         if "raw_score" in signature.parameters:
             call_kwargs["raw_score"] = raw_score
         elif raw_score:
-            print("警告: 当前任务不支持 raw_score 参数，该设置将被忽略")
+            print("Warning: current task does not support raw_score; it will be ignored")
 
         return predict_fn(**call_kwargs)
 
     def finalize(self, estimator: Optional[Any] = None) -> Any:
-        """在全量数据上重新训练模型。"""
+        """Finalize model by training on the full dataset."""
         self._ensure_setup()
         target_model = estimator or self.current_model
         if target_model is None:
-            raise ValueError("没有可最终化的模型")
+            raise ValueError("No model available to finalize")
 
         final_model = self.experiment.finalize_model(target_model)
         results = self.experiment.pull()
@@ -940,22 +940,22 @@ class AutoMLBase:
         return final_model
 
     def evaluate(self, estimator: Optional[Any] = None) -> None:
-        """启动交互式评估界面。"""
+        """Start interactive evaluation UI."""
         self._ensure_setup()
         target_model = estimator or self.current_model
         if target_model is None:
-            raise ValueError("没有可评估的模型")
+            raise ValueError("No model available for evaluation")
         self.experiment.evaluate_model(target_model)
 
     # ------------------------------------------------------------------
     # 对外辅助接口
     # ------------------------------------------------------------------
     def get_models(self) -> Iterable[str]:
-        """返回已存储模型的名称列表。"""
+        """Return the list of stored model names."""
         return list(self.models.keys())
 
     def get_metrics(self) -> Any:
-        """返回实验支持的评价指标列表。"""
+        """Return the list of supported metrics."""
         self._ensure_setup()
         if hasattr(self.experiment, "get_metrics"):
             return self.experiment.get_metrics()
@@ -966,20 +966,20 @@ class AutoMLBase:
                 display = getattr(container, "display_name", key)
                 rows.append({"ID": key, "Display Name": display})
             return pd.DataFrame(rows)
-        raise AttributeError("当前实验不支持 get_metrics 接口")
+        raise AttributeError("Current experiment does not support get_metrics")
 
     def get_results(self) -> pd.DataFrame:
-        """获取最近一次操作的结果表。"""
+        """Get the latest results table."""
         self._ensure_setup()
         if self.results is not None:
             return self.results
         pulled = self.experiment.pull()
         if pulled is None:
-            raise ValueError("当前没有可用的结果表")
+            raise ValueError("No results table available")
         return pulled
 
     def get_leaderboard(self) -> pd.DataFrame:
-        """获取模型排行榜。"""
+        """Get the model leaderboard."""
         self._ensure_setup()
         if hasattr(self.experiment, "get_leaderboard"):
             return self.experiment.get_leaderboard()
@@ -988,23 +988,23 @@ class AutoMLBase:
         pulled = self.experiment.pull()
         if pulled is not None and not pulled.empty:
             return pulled
-        raise ValueError("当前实验暂无排行榜数据")
+        raise ValueError("No leaderboard data available")
 
     def save(self, model_name: str, model: Optional[Any] = None) -> None:
-        """保存模型到本地。"""
+        """Save the model to disk."""
         self._ensure_setup()
         model_to_save = model or self.current_model
         if model_to_save is None:
-            raise ValueError("没有可用模型可以保存")
+            raise ValueError("No model available to save")
         self.experiment.save_model(model_to_save, model_name)
 
     def load(self, model_name: str) -> Any:
-        """从本地加载模型。"""
+        """Load a model from disk."""
         self._ensure_setup()
         return self.experiment.load_model(model_name)
 
     def get_config(self, key: Optional[str] = None) -> Any:
-        """读取实验配置。"""
+        """Read experiment configuration."""
         self._ensure_setup()
         return self.experiment.get_config(key)
 
@@ -1012,10 +1012,10 @@ class AutoMLBase:
     # 辅助工具
     # ------------------------------------------------------------------
     def _ensure_setup(self) -> None:
-        """确保实验已经完成 setup。"""
+        """Ensure the experiment has been set up."""
         if not self.is_setup:
-            raise RuntimeError("请先完成实验初始化（setup）")
+            raise RuntimeError("Please complete experiment setup first")
 
     def _setup_experiment(self, **kwargs: Any) -> None:
-        """基类不实现具体 setup，需在子类中自定义。"""
-        raise NotImplementedError("子类必须实现 _setup_experiment 方法")
+        """Setup is not implemented in the base class; override in subclass."""
+        raise NotImplementedError("Subclass must implement _setup_experiment")

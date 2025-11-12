@@ -1,9 +1,9 @@
 """
-符号管理器抽象基类
-职责：
-  - 计算替代需求与生成替代符号/对象
-  - 维护映射与冲突验证
-  - 提供表达式组件分解工具
+Abstract base class for symbol managers.
+Responsibilities:
+  - Compute substitution requirements and generate substitute symbols/objects
+  - Maintain mappings and validate conflicts
+  - Provide utilities to split expression components
 """
 
 from abc import ABC, abstractmethod
@@ -11,14 +11,14 @@ from typing import List, Dict
 
 
 class AbstractSymbolManager(ABC):
-    """符号管理器抽象基类"""
+    """Abstract symbol manager."""
     
     def __init__(self, analyzer_result):
         """
-        初始化符号管理器
-        
+        Initialize the symbol manager.
+
         Args:
-            analyzer_result: 分析器结果对象
+            analyzer_result: Analyzer result object.
         """
         self.analyzer_result = analyzer_result
         self.symbol_mappings: Dict = {}
@@ -27,60 +27,57 @@ class AbstractSymbolManager(ABC):
     @abstractmethod
     def generate_substitute_symbols(self, count: int, prefix: str = 'Y', mode: str = 'symbol') -> List:
         """
-        生成替代符号/对象
-        
+        Generate substitute symbols/objects.
+
         Args:
-            count: 需要生成的符号数量
-            prefix: 符号前缀
-            mode: 生成模式，'symbol' 或 'function'
-            
+            count: Number of symbols to generate.
+            prefix: Symbol prefix.
+            mode: 'symbol' or 'function'.
+
         Returns:
-            替代符号/对象列表
+            List of substitute symbols/objects.
         """
         pass
 
     @abstractmethod
     def create_symbol_mappings(self) -> Dict:
         """
-        创建符号映射关系
-        
+        Create symbol mapping dictionary.
+
         Returns:
-            符号映射字典
+            Mapping of symbols.
         """
         pass
 
     @abstractmethod
     def validate_symbol_conflicts(self, symbols: List) -> bool:
         """
-        验证符号冲突
-        
+        Validate symbol conflicts.
+
         Args:
-            symbols: 待验证的符号列表
-            
+            symbols: Symbols to check.
+
         Returns:
-            是否存在冲突
+            True if conflicts exist, else False.
         """
         pass
 
     @abstractmethod
     def get_substitution_count(self) -> int:
         """
-        获取需要的替代符号数量
-        
-        Returns:
-            替代符号数量
+        Return number of required substitute symbols.
         """
         pass
 
     @abstractmethod
     def split_expression_components(self, expr) -> Dict:
         """
-        分解表达式组件
-        
+        Split expression into components.
+
         Args:
-            expr: 表达式
-            
+            expr: Expression to split.
+
         Returns:
-            分解后的组件字典
+            Dictionary of components.
         """
         pass

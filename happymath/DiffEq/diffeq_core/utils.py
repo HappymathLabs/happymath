@@ -1,21 +1,21 @@
 import sympy
 
 sympy_assumptions = [
-            "real",  # 实数
-            "imaginary",  # 虚数
-            "integer",  # 整数
-            "rational",  # 有理数
-            "irrational",  # 无理数
-            "positive",  # 正数
-            "negative",  # 负数
-            "nonpositive",  # 非正数
-            "nonnegative",  # 非负数
-            "even",  # 偶数
-            "odd",  # 奇数
-            "prime",  # 质数
-            "finite",  # 有限数
-            "infinite",  # 无限数
-            "complex",  # 复数
+            "real",       # real
+            "imaginary",  # imaginary
+            "integer",    # integer
+            "rational",   # rational
+            "irrational", # irrational
+            "positive",   # positive
+            "negative",   # negative
+            "nonpositive",# non-positive
+            "nonnegative",# non-negative
+            "even",       # even
+            "odd",        # odd
+            "prime",      # prime
+            "finite",     # finite
+            "infinite",   # infinite
+            "complex",    # complex
         ]
 
 def check_symbol_type(symbol):
@@ -85,7 +85,6 @@ def forced_trans_type(org_symbol, new_symbol_type:str):
         return sympy.Symbol(str(org_symbol), complex=True)
     else:
         raise ValueError(f"Unknown symbol type: {new_symbol_type}")
-
 
 
 

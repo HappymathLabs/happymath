@@ -53,7 +53,6 @@ def cradis(dataset, criterion_type, weights, graph = True, verbose = True):
         flow = np.insert(flow, 0, list(range(1, Q.shape[0]+1)), axis = 1)
         flow = flow[np.argsort(flow[:, 1])]
         ranking(flow)
-    # 将1D评分数组转换为2D格式（方案编号 + 评分）
     num_alternatives = Q.shape[0]
     indices = np.arange(1, num_alternatives + 1).reshape(-1, 1)
     scores_reshaped = Q.reshape(-1, 1)

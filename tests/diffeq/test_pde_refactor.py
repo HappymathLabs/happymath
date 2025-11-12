@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 基础PDE功能回归测试（第一阶段重构后）
+# Basic PDE functionality regression tests (after first phase refactor)
 
 import numpy as np
 import sympy as sp
@@ -16,10 +16,10 @@ def test_1d_advection_diffusion_periodic():
     D, v = sp.symbols('D v')
     expr = sp.Eq(sp.Derivative(u(x, t), t), D*sp.Derivative(u(x, t), (x, 2)) - v*sp.Derivative(u(x, t), x))
     m = PDEModule(expr)
-    # 检查字符串RHS
+    # Check string RHS
     solvable = m.to_solvable_pde
     assert 'u' in solvable and 'd2_dx2(u)' in solvable['u'] and 'd_dx(u)' in solvable['u']
-    # 数值求解（周期）
+    # Numerical solution (periodic)
     N = 64
     state = np.sin(np.linspace(0, 2*np.pi, N, endpoint=False))
     res = solve_pde(
@@ -43,7 +43,7 @@ def test_1d_reaction_diffusion_periodic():
     expr = sp.Eq(sp.Derivative(u(x, t), t), D*sp.Derivative(u(x, t), (x, 2)) + r*u(x, t)*(1 - u(x, t)))
     m = PDEModule(expr)
     solvable = m.to_solvable_pde
-    # 反应项应无 u(x,t) 调用
+    # Reaction terms should have no u(x,t) calls
     assert 'u**2' in solvable['u'] and 'u(x, t)' not in solvable['u']
 
     N = 64
@@ -69,7 +69,7 @@ def test_2d_isotropic_diffusion_periodic():
     expr = sp.Eq(sp.Derivative(u(x, y, t), t), a*(sp.Derivative(u(x, y, t), (x, 2)) + sp.Derivative(u(x, y, t), (y, 2))))
     m = PDEModule(expr)
     solvable = m.to_solvable_pde
-    # 应为 d2_dx2 与 d2_dy2 组合
+    # Should be combination of d2_dx2 and d2_dy2
     assert 'd2_dx2(u)' in solvable['u'] and 'd2_dy2(u)' in solvable['u']
 
     N = 32
@@ -95,7 +95,7 @@ def test_2d_mixed_derivative_periodic():
     expr = sp.Eq(sp.Derivative(u(x, y, t), t), sp.Derivative(u(x, y, t), x, y))
     m = PDEModule(expr)
     solvable = m.to_solvable_pde
-    # 应被映射成嵌套一阶导数
+    # Should be mapped to nested first-order derivatives
     assert solvable['u'] == 'd_dy(d_dx(u))' or solvable['u'] == 'd_dx(d_dy(u))'
 
     N = 32
@@ -124,7 +124,7 @@ def test_1d_coupled_two_fields():
     expr_v = sp.Eq(sp.Derivative(vfun(x, t), t), D2*sp.Derivative(vfun(x, t), (x, 2)) - u(x, t))
     m = PDEModule([expr_u, expr_v])
     solvable = m.to_solvable_pde
-    # 多场名应为 'u','v'
+    # Multi-field names should be 'u','v'
     assert set(solvable.keys()) == {'u', 'v'}
     assert 'v' in solvable['u'] and 'u' in solvable['v']
 

@@ -1,7 +1,7 @@
 """
-分析器抽象基类
+Abstract analyzer base class.
 
-定义所有表达式分析器的标准接口。
+Defines the standard interfaces for all expression analyzers.
 """
 
 from abc import ABC, abstractmethod
@@ -9,51 +9,51 @@ from typing import Any, Dict
 
 
 class AnalyzerBase(ABC):
-    """表达式分析器抽象基类"""
+    """Abstract expression analyzer base class."""
 
     def __init__(self, sympy_obj, value_range='real', **kwargs):
         """
-        初始化分析器
+        Initialize the analyzer.
 
         Args:
-            sympy_obj: SymPy表达式或表达式集合
-            value_range: 变量取值范围 ('real', 'complex', 'integer'等)
-            **kwargs: 其他参数
+            sympy_obj: SymPy expression or list of expressions.
+            value_range: Symbol assumptions ('real', 'complex', 'integer', etc.).
+            **kwargs: Extra parameters.
         """
         self.sympy_obj = sympy_obj
         self.value_range = value_range
-        self._analysis_cache = {}  # 缓存分析结果
+        self._analysis_cache = {}  # cache analysis results
         self._analyzed = False
 
     @abstractmethod
     def analyze(self) -> Dict[str, Any]:
         """
-        执行分析，返回分析结果字典
+        Run analysis and return a result dictionary.
 
         Returns:
-            Dict[str, Any]: 分析结果字典
+            Dict[str, Any]: Analysis results.
         """
         pass
 
     @abstractmethod
     def get_symbols(self):
         """
-        获取所有符号变量
+        Get all symbolic variables.
 
         Returns:
-            set: 符号变量集合
+            set: Set of symbols.
         """
         pass
 
     def _cache_result(self, key: str, value: Any):
-        """缓存分析结果"""
+        """Cache analysis results."""
         self._analysis_cache[key] = value
 
     def _get_cached_result(self, key: str, default=None):
-        """获取缓存的分析结果"""
+        """Get cached analysis result."""
         return self._analysis_cache.get(key, default)
 
     def _clear_cache(self):
-        """清空缓存"""
+        """Clear cache and reset analysis flag."""
         self._analysis_cache.clear()
         self._analyzed = False

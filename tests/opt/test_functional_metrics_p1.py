@@ -16,10 +16,10 @@ def _build_cfg_with_metrics():
     ode = [sp.Eq(sp.diff(x(t), t, 1), -x(t) + u(t))]
     coeffs = sp.symbols('c0:4', real=True)
 
-    # 自定义 metrics：
+    # Custom metrics:
     #  - J1 = \int_{0.5}^{1.0} u^2 dt
-    #  - J2 = 末端 x(1)
-    #  - J3 = 路径 l2_norm(x)
+    #  - J2 = terminal x(1)
+    #  - J3 = path l2_norm(x)
     metrics = [
         MetricSpec(
             id='obj:J1',
@@ -45,7 +45,7 @@ def _build_cfg_with_metrics():
 
 def test_metrics_window_integral_and_terminal():
     cfg, coeffs = _build_cfg_with_metrics()
-    # 目标占位，走 Pymoo evaluator
+    # Objective placeholder, goes through Pymoo evaluator
     obj = {"min": sp.Integer(0)}
 
     cons = []
@@ -54,7 +54,7 @@ def test_metrics_window_integral_and_terminal():
         cons.append(c >= -2.0)
 
     opt = OptModule(obj, cons, mode='pymoo', default_search_range=2.0, functional_config=cfg)
-    # 缩短单测预算
+    # Reduce unit test budget
     try:
         opt.pymoo_solver._budget_override = 80
     except Exception:
@@ -66,7 +66,7 @@ def test_metrics_window_integral_and_terminal():
 
 
 def test_evaluator_derivative_combo_delta_v():
-    # 双状态示例：x_f, x_s；构造 Δv = x_s' - x_f' 并在窗口积分 Δv^2
+    # Dual-state example: x_f, x_s; construct Δv = x_s' - x_f' and integrate Δv^2 in window
     t = sp.symbols('t', real=True)
     x_f = sp.Function('x_f')
     x_s = sp.Function('x_s')

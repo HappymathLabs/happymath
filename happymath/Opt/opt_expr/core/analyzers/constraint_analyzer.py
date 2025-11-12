@@ -1,12 +1,12 @@
 """
-约束分析器
+Constraint analyzer.
 
-负责解析和分析优化问题的约束条件，包括：
-- 解析各类约束（Eq, Ge, Gt, Le, Lt, Contains）
-- 识别简单边界约束 vs 复杂约束
-- 识别离散变量约束（FiniteSet）
-- 分类约束类型
-- 转换为lambda函数
+Parses and analyzes optimization constraints:
+- Parse types: Eq, Ge, Gt, Le, Lt, Contains
+- Distinguish simple bound vs complex constraints
+- Detect discrete variable constraints (FiniteSet)
+- Classify constraint categories
+- Convert to lambda functions
 """
 
 from typing import List, Tuple, Set, Any, Dict, Optional
@@ -27,15 +27,14 @@ from ....ir import (
 
 
 class ConstraintAnalyzer(AnalyzerBase):
-    """约束条件分析器"""
+    """Analyzer for constraints."""
 
     def __init__(self, constraints):
         """
-        初始化约束分析器
+        Initialize the constraint analyzer.
 
         Args:
-            constraints: 约束条件，可以是单个约束或约束列表
-            
+            constraints: Single constraint or list of constraints.
         """
         if constraints is None:
             constraints = []
@@ -45,98 +44,79 @@ class ConstraintAnalyzer(AnalyzerBase):
         super().__init__(constraints)
 
         self.constraints = list(constraints)
-        self._parsed_con_list = []  # 解析后的约束列表
+        self._parsed_con_list = []  # parsed constraints list
         self._constraint_counter = 0
 
-        # 验证
+        # Validate
         self._validate_constraints()
         self._validate_finite_set_numeric()
 
-        # 解析
+        # Parse
         self._parse_constraints()
 
     def _validate_constraints(self):
-        """检查约束条件是否是支持的类型"""
+        """Check that constraints are of supported types."""
         for i, con in enumerate(self.constraints):
-            # 检测BooleanTrue/BooleanFalse（通常由数值约束简化而来）
+            # Detect BooleanTrue/BooleanFalse (often from simplified numeric constraints)
             if isinstance(con, (BooleanTrue, BooleanFalse)):
                 self._raise_boolean_constraint_error(con, i)
 
-            # 允许包含微分/积分的功能型约束，改由 FUNCTIONAL 路径处理
+            # Allow differential/integral constraints handled by FUNCTIONAL path
 
-            # 检查是否为支持的约束类型
+            # Check supported constraint types
             if not isinstance(con, (Eq, Ge, Gt, Le, Lt, Contains, Piecewise)):
                 raise InvalidExpressionError(
                     expression=con,
-                    message=f"不支持的约束类型: {type(con)}. "
-                           f"支持的类型: Eq, Ge, Gt, Le, Lt, Contains, Piecewise"
+                    message=f"Unsupported constraint type: {type(con)}. "
+                           f"Supported: Eq, Ge, Gt, Le, Lt, Contains, Piecewise"
                 )
 
     def _contains_differential(self, constraint) -> bool:
-        """检查约束是否包含微分表达式"""
+        """Check whether constraint contains derivatives."""
         return constraint.has(sympy.Derivative)
 
     def _contains_integral(self, constraint) -> bool:
-        """检查约束是否包含积分表达式"""
+        """Check whether constraint contains integrals."""
         return constraint.has(sympy.Integral)
 
     def _raise_boolean_constraint_error(self, con, index):
         """
-        为布尔约束错误提供详细的错误信息和修复建议
+        Raise detailed error with hints when constraint simplifies to a boolean.
 
         Args:
-            con: 布尔约束
-            index: 约束索引
+            con: Boolean constraint
+            index: Constraint index
         """
         is_true = isinstance(con, BooleanTrue)
 
-        # 构建详细的错误信息
-        error_msg = """
-约束[{index}]包含数值，导致约束简化为布尔值 ({type_name})
+        # Compose detailed error message in English
+        error_msg = f"""
+Constraint[{index}] simplifies to a boolean ({type_name}) due to numeric values.
 
-问题说明:
-    当约束表达式中包含具体数值时，SymPy会自动简化约束。
-    例如: 如果 Q[i] = 190.76（数值），则 Q[i] <= B[i] 会被简化为 {type_name}
+Explanation:
+    When constraints contain concrete numbers, SymPy may evaluate and simplify them.
+    Example: If Q[i] = 190.76 (numeric), then Q[i] <= B[i] simplifies to {type_name}.
 
-    原始约束: {con}
-    简化结果: {is_true}
+    Original: {con}
+    Simplified: {is_true}
 
-原因分析:
-    这通常发生在以下情况：
-    1. 约束中的某个变量实际上是数值而非符号变量
-    2. 约束被SymPy自动求值和简化了
-    3. 约束中混合了数值列表和符号变量
+Common reasons:
+    1) A variable inside the constraint is actually numeric, not a symbolic variable;
+    2) SymPy auto-evaluated the expression;
+    3) Mixing numeric lists and symbolic variables in constraints.
 
-修复建议:
-    1. 将数值约束转换为变量边界:
-       不推荐: Q[i] <= B[i]  # 如果 Q[i] 是数值
-       推荐:   B[i] >= 190.76  # 直接使用数值作为边界
+Suggestions:
+    1) Convert numeric comparisons into bound constraints:
+       Not recommended: Q[i] <= B[i]  (if Q[i] is numeric)
+       Recommended:     B[i] >= 190.76  (use numeric as a bound)
 
-    2. 或者使用符号变量代替数值:
-       n = 6  # 定义变量数量
-       Q_symbols = symbols('Q0:{{}}{{}}{{}}' + str(n))  # 创建符号变量数组
-       constraints.append(Q_symbols[i] <= B[i])
+    2) Use symbolic variables instead of numbers where appropriate.
 
-    3. 检查约束构建代码:
-       - 确保所有变量都是符号变量（使用 symbols() 创建）
-       - 避免在约束中直接使用数值变量
+    3) Inspect constraint construction:
+       - Ensure variables are created by symbols();
+        - Avoid directly using numeric arrays in relational constraints.
 
-示例代码:
-    # 方法1: 直接使用数值边界（推荐）
-    from sympy import symbols
-    B = symbols('B0:6')
-    Q_pred = [190.76, 28.62, ...]  # 数值列表
-
-    constraints = []
-    for i in range(6):
-        constraints.append(B[i] >= Q_pred[i])  # 正确
-        # 不要写: constraints.append(Q_pred[i] <= B[i])  # 错误
-
-    # 方法2: 使用符号变量
-    Q, B = symbols('Q0:6'), symbols('B0:6')
-    constraints = [Q[i] <= B[i] for i in range(6)]
-
-详细文档: https://docs.sympy.org/latest/modules/core.html#module-sympy.core.relational
+Docs: https://docs.sympy.org/latest/modules/core.html#module-sympy.core.relational
 """.format(
             index=index,
             type_name=type(con).__name__,
@@ -150,14 +130,14 @@ class ConstraintAnalyzer(AnalyzerBase):
         )
 
     def _validate_finite_set_numeric(self):
-        """检查所有FiniteSet约束中的值是否都可以转换为数值类型"""
+        """Ensure values in FiniteSet constraints can be converted to numbers."""
         for con in self.constraints:
             if isinstance(con, Contains):
                 element = con.args[0]
                 set_obj = con.args[1]
 
                 if isinstance(set_obj, FiniteSet):
-                    # 检查每个值是否可以转换为数值
+                    # Check each value convertible to numeric
                     non_numeric_values = []
                     for value in set_obj.args:
                         try:
@@ -168,27 +148,29 @@ class ConstraintAnalyzer(AnalyzerBase):
                     if non_numeric_values:
                         raise ConstraintError(
                             constraint=con,
-                            message=f"FiniteSet约束中的变量 '{element}' 包含非数值值: {non_numeric_values}. "
-                                   f"所有值必须可转换为数值类型(int, float). "
-                                   f"当前值: {list(set_obj.args)}"
+                            message=(
+                                f"Variable '{element}' in FiniteSet contains non-numeric values: {non_numeric_values}. "
+                                f"All values must be convertible to numeric (int/float). "
+                                f"Current values: {list(set_obj.args)}"
+                            )
                         )
 
     def _parse_constraints(self):
-        """解析所有约束条件（代数/域/逻辑）"""
+        """Parse all constraints (algebraic/domain/logical)."""
         for con in self.constraints:
             parsed = self._parse_single_constraint(con)
             self._parsed_con_list.extend(parsed)
 
-    # 已移除对微分/积分约束的处理逻辑
+    # Differential/integral constraints handled elsewhere (removed here)
 
     def _next_identifier(self) -> str:
-        """生成约束唯一标识"""
+        """Generate unique constraint identifier."""
         identifier = f"con_{self._constraint_counter}"
         self._constraint_counter += 1
         return identifier
 
     def _build_relational_constraint(self, constraint) -> IRConstraint:
-        """将对称关系约束转换为IR对象"""
+        """Transform relational constraint into an IR object."""
         con_type = type(constraint)
         free_symbols = tuple(sorted(list(constraint.free_symbols), key=lambda s: str(s)))
         normalized_expr = (constraint.lhs - constraint.rhs).expand()
@@ -196,7 +178,7 @@ class ConstraintAnalyzer(AnalyzerBase):
         if free_symbols:
             lambda_func = lambdify(free_symbols, normalized_expr, "numpy")
         else:
-            # 常数约束仍提供lambda，便于统一处理
+            # For constant constraints, still provide a lambda for uniform handling
             value = float(normalized_expr.evalf())
 
             def lambda_func(*_args):

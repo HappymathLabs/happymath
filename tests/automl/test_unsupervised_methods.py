@@ -59,7 +59,7 @@ def test_clustering_workflow(cluster_df, tmp_path, monkeypatch):
         return "cluster-plot"
 
     monkeypatch.setattr(clu.experiment, "plot_model", fake_plot_model)
-    result = clu.plot(plot="cluster", title="聚类图", verbose=False)
+    result = clu.plot(plot="cluster", title="Clustering Plot", verbose=False)
     assert result == "cluster-plot"
     assert "kwargs" in captured
 

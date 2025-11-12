@@ -51,17 +51,13 @@ def waspas(dataset, criterion_type, weights, lambda_value, graph = True, verbose
     wpm_scores    = np.prod(x**weights, axis = 1)
     waspas_scores = (lambda_value)*wsm_scores + (1 - lambda_value)*wpm_scores
     
-    # 将三个得分都转换为标准格式（方案编号 + 得分）
     num_alternatives = wsm_scores.shape[0]
     indices = np.arange(1, num_alternatives + 1).reshape(-1, 1)
     
-    # WSM - 加权和得分
     wsm = np.hstack((indices, wsm_scores.reshape(-1, 1)))
     
-    # WPM - 加权积得分
     wpm = np.hstack((indices, wpm_scores.reshape(-1, 1)))
     
-    # WASPAS - 最终得分
     waspas = np.hstack((indices, waspas_scores.reshape(-1, 1)))
     
     if (verbose == True):
@@ -75,7 +71,6 @@ def waspas(dataset, criterion_type, weights, lambda_value, graph = True, verbose
         for i in range(0, waspas.shape[0]):
             print('a' + str(int(waspas[i,0])) + ': ' + str(round(waspas[i,1], 3)))
     
-    # 图形显示功能
     if (graph == True):
         ranking_m(wsm[np.argsort(wsm[:, 1])[::-1]], wpm[np.argsort(wpm[:, 1])[::-1]], waspas[np.argsort(waspas[:, 1])[::-1]])
     

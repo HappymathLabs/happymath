@@ -1,7 +1,7 @@
 """
-接口健壮性测试
+Interface Robustness Tests
 
-测试异常输入、错误处理、数值稳定性等，验证系统的容错能力和稳定性
+Test abnormal inputs, error handling, numerical stability, etc., to verify system's fault tolerance and stability
 """
 import pytest
 import numpy as np
@@ -20,15 +20,15 @@ warnings.filterwarnings("ignore")
 
 
 class TestRobustnessTests:
-    """健壮性测试类"""
+    """Robustness test class"""
     
     def setup_method(self):
-        """测试方法设置"""
+        """Test method setup"""
         TestHelper.suppress_warnings()
     
     @pytest.mark.robustness
     def test_none_input_handling(self):
-        """测试None输入处理"""
+        """Test None input handling"""
         invalid_inputs = RobustnessTestData.INVALID_INPUTS['none_values']
         
         decision_classes = [
@@ -42,7 +42,7 @@ class TestRobustnessTests:
             try:
                 instance = decision_class()
                 
-                # 测试传入None参数
+                # Test passing None parameters
                 with pytest.raises((ValueError, TypeError, AttributeError)):
                     instance.decide(
                         dataset=invalid_inputs['matrix'],
@@ -50,18 +50,18 @@ class TestRobustnessTests:
                         weights=invalid_inputs['weights']
                     )
                 
-                print(f"✅ {class_name} - None输入处理正确（抛出异常）")
+                print(f"✅ {class_name} - None input handling correct (exception thrown)")
                 
             except Exception as e:
-                # 如果没有抛出预期异常，可能是参数校验不够严格
-                print(f"⚠️ {class_name} - None输入处理异常: {e}")
+                # If expected exception not thrown, parameter validation might not be strict enough
+                print(f"⚠️ {class_name} - None input handling exception: {e}")
     
     @pytest.mark.robustness
     def test_empty_input_handling(self):
-        """测试空输入处理"""
+        """Test empty input handling"""
         invalid_inputs = RobustnessTestData.INVALID_INPUTS['empty_arrays']
         
-        # 测试客观权重方法（对输入要求相对严格）
+        # Test objective weighting methods (relatively strict input requirements)
         obj_weighting = ObjWeighting()
         
         try:
@@ -70,12 +70,12 @@ class TestRobustnessTests:
                     dataset=invalid_inputs['matrix'],
                     criterion_type=invalid_inputs['criterion_type']
                 )
-            print("✅ 空数组输入处理正确（抛出异常）")
+            print("✅ Empty array input handling correct (exception thrown)")
             
         except Exception as e:
-            print(f"⚠️ 空数组输入处理异常: {e}")
+            print(f"⚠️ Empty array input handling exception: {e}")
         
-        # 测试评分决策方法
+        # Test scoring decision methods
         scoring = ScoringDecision()
         
         try:
@@ -85,31 +85,31 @@ class TestRobustnessTests:
                     criterion_type=invalid_inputs['criterion_type'],
                     weights=invalid_inputs['weights']
                 )
-            print("✅ 评分决策空输入处理正确（抛出异常）")
+            print("✅ Scoring decision empty input handling correct (exception thrown)")
             
         except Exception as e:
-            print(f"⚠️ 评分决策空输入处理异常: {e}")
+            print(f"⚠️ Scoring decision empty input handling exception: {e}")
     
     @pytest.mark.robustness
     def test_wrong_type_input_handling(self):
-        """测试错误类型输入处理"""
+        """Test wrong type input handling"""
         invalid_inputs = RobustnessTestData.INVALID_INPUTS['wrong_types']
         
-        # 测试字符串作为矩阵输入
+        # Test string as matrix input
         obj_weighting = ObjWeighting()
         
         try:
             with pytest.raises((ValueError, TypeError)):
                 obj_weighting.decide(
-                    dataset=invalid_inputs['matrix'],  # 字符串
+                    dataset=invalid_inputs['matrix'],  # String
                     criterion_type=['min', 'max']
                 )
-            print("✅ 字符串矩阵输入处理正确（抛出异常）")
+            print("✅ String matrix input handling correct (exception thrown)")
             
         except Exception as e:
-            print(f"⚠️ 字符串矩阵输入处理异常: {e}")
+            print(f"⚠️ String matrix input handling exception: {e}")
         
-        # 测试错误的权重类型
+        # Test wrong weight type
         scoring = ScoringDecision()
         test_matrix = np.array([[1, 2], [3, 4]])
         
@@ -118,56 +118,56 @@ class TestRobustnessTests:
                 scoring.decide(
                     dataset=test_matrix,
                     criterion_type=['min', 'max'],
-                    weights=invalid_inputs['weights']  # 字符串
+                    weights=invalid_inputs['weights']  # String
                 )
-            print("✅ 字符串权重输入处理正确（抛出异常）")
+            print("✅ String weight input handling correct (exception thrown)")
             
         except Exception as e:
-            print(f"⚠️ 字符串权重输入处理异常: {e}")
+            print(f"⚠️ String weight input handling exception: {e}")
     
     @pytest.mark.robustness
     def test_dimension_mismatch_handling(self):
-        """测试维度不匹配处理"""
+        """Test dimension mismatch handling"""
         invalid_inputs = RobustnessTestData.INVALID_INPUTS['dimension_mismatch']
         
-        # 权重数量与准则数不匹配
+        # Weight count doesn't match criterion count
         scoring = ScoringDecision()
         
         try:
             with pytest.raises(ValueError):
                 scoring.decide(
-                    dataset=invalid_inputs['matrix'],      # 3个准则
-                    criterion_type=invalid_inputs['criterion_type'],  # 2个类型
-                    weights=invalid_inputs['weights']      # 2个权重
+                    dataset=invalid_inputs['matrix'],      # 3 criteria
+                    criterion_type=invalid_inputs['criterion_type'],  # 2 types
+                    weights=invalid_inputs['weights']      # 2 weights
                 )
-            print("✅ 维度不匹配处理正确（抛出异常）")
+            print("✅ Dimension mismatch handling correct (exception thrown)")
             
         except Exception as e:
-            print(f"⚠️ 维度不匹配处理异常: {e}")
+            print(f"⚠️ Dimension mismatch handling exception: {e}")
         
-        # 测试成对比较矩阵非方阵
+        # Test pairwise comparison matrix non-square
         try:
-            non_square_matrix = np.array([[1, 2, 3], [4, 5, 6]])  # 2x3矩阵
+            non_square_matrix = np.array([[1, 2, 3], [4, 5, 6]])  # 2x3 matrix
             sub_weighting = SubWeighting(methods=['ahp'])
             
             with pytest.raises(ValueError):
                 sub_weighting.decide(dataset=non_square_matrix)
-            print("✅ 非方阵处理正确（抛出异常）")
+            print("✅ Non-square matrix handling correct (exception thrown)")
             
         except Exception as e:
-            print(f"⚠️ 非方阵处理异常: {e}")
+            print(f"⚠️ Non-square matrix handling exception: {e}")
     
     @pytest.mark.robustness
     def test_numerical_issues_handling(self):
-        """测试数值问题处理"""
+        """Test numerical issues handling"""
         numerical_issues = RobustnessTestData.NUMERICAL_ISSUES
         criterion_types = ['min', 'max', 'min']
         
-        # 测试包含NaN的矩阵
+        # Test matrix containing NaN
         try:
-            obj_weighting = ObjWeighting(methods=['critic'])  # 选择相对稳定的方法
+            obj_weighting = ObjWeighting(methods=['critic'])  # Choose relatively stable method
             
-            # 对于包含NaN的情况，系统应该要么处理，要么优雅地失败
+            # For matrices containing NaN, system should either handle or fail gracefully
             try:
                 obj_weighting.decide(
                     dataset=numerical_issues['nan_matrix'],
@@ -176,17 +176,17 @@ class TestRobustnessTests:
                 
                 results = obj_weighting.get_all_results()
                 if results:
-                    print("✅ NaN矩阵被正确处理")
+                    print("✅ NaN matrix handled correctly")
                 else:
-                    print("⚠️ NaN矩阵无法产生结果")
+                    print("⚠️ NaN matrix cannot produce results")
                     
             except Exception:
-                print("✅ NaN矩阵正确抛出异常")
+                print("✅ NaN matrix correctly throws exception")
                 
         except Exception as e:
-            print(f"⚠️ NaN矩阵处理出现问题: {e}")
+            print(f"⚠️ NaN matrix handling issue: {e}")
         
-        # 测试包含无穷大的矩阵
+        # Test matrix containing infinity
         try:
             obj_weighting = ObjWeighting(methods=['entropy'])
             
@@ -198,17 +198,17 @@ class TestRobustnessTests:
                 
                 results = obj_weighting.get_all_results()
                 if results:
-                    print("✅ 无穷大矩阵被正确处理")
+                    print("✅ Infinity matrix handled correctly")
                 else:
-                    print("⚠️ 无穷大矩阵无法产生结果")
+                    print("⚠️ Infinity matrix cannot produce results")
                     
             except Exception:
-                print("✅ 无穷大矩阵正确抛出异常")
+                print("✅ Infinity matrix correctly throws exception")
                 
         except Exception as e:
-            print(f"⚠️ 无穷大矩阵处理出现问题: {e}")
+            print(f"⚠️ Infinity matrix handling issue: {e}")
         
-        # 测试极大值矩阵
+        # Test very large values matrix
         try:
             obj_weighting = ObjWeighting(methods=['critic'])
             
@@ -219,19 +219,19 @@ class TestRobustnessTests:
             
             results = obj_weighting.get_all_results()
             
-            # 检查结果是否包含异常值
+            # Check if results contain abnormal values
             for method_name, result in results.items():
                 if 'weights' in result:
                     weights = result['weights']
                     if not (np.any(np.isnan(weights)) or np.any(np.isinf(weights))):
-                        print(f"✅ 极大值矩阵处理正确 - {method_name}")
+                        print(f"✅ Very large values matrix handled correctly - {method_name}")
                     else:
-                        print(f"⚠️ 极大值矩阵导致异常值 - {method_name}")
+                        print(f"⚠️ Very large values matrix causes abnormal values - {method_name}")
                         
         except Exception as e:
-            print(f"✅ 极大值矩阵正确抛出异常: {e}")
+            print(f"✅ Very large values matrix correctly throws exception: {e}")
         
-        # 测试极小值矩阵
+        # Test very small values matrix
         try:
             obj_weighting = ObjWeighting(methods=['seca'])
             
@@ -246,32 +246,32 @@ class TestRobustnessTests:
                 if 'weights' in result:
                     weights = result['weights']
                     if TestHelper.is_valid_weights(weights):
-                        print(f"✅ 极小值矩阵处理正确 - {method_name}")
+                        print(f"✅ Very small values matrix handled correctly - {method_name}")
                     else:
-                        print(f"⚠️ 极小值矩阵权重无效 - {method_name}")
+                        print(f"⚠️ Very small values matrix weights invalid - {method_name}")
                         
         except Exception as e:
-            print(f"✅ 极小值矩阵正确抛出异常: {e}")
+            print(f"✅ Very small values matrix correctly throws exception: {e}")
     
     @pytest.mark.robustness
     def test_weight_issues_handling(self):
-        """测试权重相关问题处理"""
+        """Test weight-related issues handling"""
         weight_issues = RobustnessTestData.WEIGHT_ISSUES
         test_matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         criterion_types = ['min', 'max', 'max']
         
         weight_tests = [
-            ('负权重', weight_issues['negative_weights']),
-            ('零权重', weight_issues['zero_weights']),
-            ('权重和不为1', weight_issues['sum_not_one']),
-            ('单一权重为1', weight_issues['single_weight_one']),
-            ('包含NaN权重', weight_issues['nan_weights']),
-            ('包含无穷权重', weight_issues['inf_weights'])
+            ('Negative weights', weight_issues['negative_weights']),
+            ('Zero weights', weight_issues['zero_weights']),
+            ('Weights sum not equal to 1', weight_issues['sum_not_one']),
+            ('Single weight equals 1', weight_issues['single_weight_one']),
+            ('Contains NaN weights', weight_issues['nan_weights']),
+            ('Contains infinite weights', weight_issues['inf_weights'])
         ]
         
         for weight_name, weights in weight_tests:
             try:
-                scoring = ScoringDecision(methods=['saw'])  # 使用简单方法
+                scoring = ScoringDecision(methods=['saw'])  # Use simple method
                 
                 try:
                     scoring.decide(
@@ -283,7 +283,7 @@ class TestRobustnessTests:
                     results = scoring.get_all_results()
                     
                     if results:
-                        # 检查结果是否合理
+                        # Check if results are reasonable
                         valid_results = True
                         for method_name, result in results.items():
                             if 'ranking' in result:
@@ -292,36 +292,36 @@ class TestRobustnessTests:
                                     valid_results = False
                         
                         if valid_results:
-                            print(f"✅ {weight_name}被正确处理")
+                            print(f"✅ {weight_name} handled correctly")
                         else:
-                            print(f"⚠️ {weight_name}产生无效结果")
+                            print(f"⚠️ {weight_name} produces invalid results")
                     else:
-                        print(f"⚠️ {weight_name}无法产生结果")
+                        print(f"⚠️ {weight_name} cannot produce results")
                 
                 except Exception:
-                    print(f"✅ {weight_name}正确抛出异常")
+                    print(f"✅ {weight_name} correctly throws exception")
                     
             except Exception as e:
-                print(f"⚠️ {weight_name}处理出现问题: {e}")
+                print(f"⚠️ {weight_name} handling issue: {e}")
     
     @pytest.mark.robustness
     def test_memory_stress(self):
-        """测试内存压力"""
-        # 生成较大的矩阵来测试内存使用
+        """Test memory stress"""
+        # Generate larger matrix to test memory usage
         np.random.seed(42)
         
         try:
-            # 创建大矩阵但不至于耗尽内存
+            # Create large matrix but not too large to exhaust memory
             large_matrix = np.random.rand(200, 30) * 100
             criterion_types = ['min', 'max'] * 15
             
-            # 测试客观权重方法（相对节省内存）
+            # Test objective weighting methods (relatively memory efficient)
             obj_weighting = ObjWeighting(methods=['entropy'])
             
             import psutil
             import os
             
-            # 获取内存使用情况
+            # Get memory usage
             process = psutil.Process(os.getpid())
             memory_before = process.memory_info().rss / 1024 / 1024  # MB
             
@@ -333,22 +333,22 @@ class TestRobustnessTests:
             memory_after = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = memory_after - memory_before
             
-            # 内存增长应该在合理范围内（小于200MB）
-            assert memory_increase < 200, f"内存使用增长过多: {memory_increase:.1f}MB"
+            # Memory increase should be within reasonable range (less than 200MB)
+            assert memory_increase < 200, f"Memory usage increase too much: {memory_increase:.1f}MB"
             
             results = obj_weighting.get_all_results()
-            assert len(results) > 0, "大矩阵应该能产生结果"
+            assert len(results) > 0, "Large matrix should produce results"
             
-            print(f"✅ 内存压力测试通过 - 内存增长: {memory_increase:.1f}MB")
+            print(f"✅ Memory stress test passed - Memory increase: {memory_increase:.1f}MB")
             
         except ImportError:
-            print("⚠️ psutil未安装，跳过内存测试")
+            print("⚠️ psutil not installed, skipping memory test")
         except Exception as e:
-            print(f"⚠️ 内存压力测试异常: {e}")
+            print(f"⚠️ Memory stress test exception: {e}")
     
     @pytest.mark.robustness
     def test_concurrent_access(self):
-        """测试并发访问"""
+        """Test concurrent access"""
         import threading
         import time
         
@@ -360,9 +360,9 @@ class TestRobustnessTests:
         errors_container = []
         
         def worker_function(worker_id):
-            """工作线程函数"""
+            """Worker thread function"""
             try:
-                # 每个线程创建自己的实例
+                # Each thread creates its own instance
                 scoring = ScoringDecision(methods=['topsis'])
                 scoring.decide(
                     dataset=test_matrix,
@@ -376,7 +376,7 @@ class TestRobustnessTests:
             except Exception as e:
                 errors_container.append((worker_id, str(e)))
         
-        # 创建多个线程
+        # Create multiple threads
         threads = []
         num_threads = 5
         
@@ -385,39 +385,39 @@ class TestRobustnessTests:
             threads.append(thread)
             thread.start()
         
-        # 等待所有线程完成
+        # Wait for all threads to complete
         for thread in threads:
             thread.join()
         
-        # 检查结果
+        # Check results
         if len(errors_container) == 0:
-            print(f"✅ 并发访问测试通过 - {len(results_container)}个线程成功完成")
+            print(f"✅ Concurrent access test passed - {len(results_container)} threads completed successfully")
             
-            # 验证结果一致性
+            # Verify result consistency
             if len(results_container) > 1:
                 first_result = results_container[0][1]
                 for worker_id, result in results_container[1:]:
                     for method_name in first_result:
                         if method_name in result:
-                            # 比较排名是否一致
+                            # Compare if rankings are consistent
                             if 'ranking' in first_result[method_name] and 'ranking' in result[method_name]:
                                 if not np.array_equal(first_result[method_name]['ranking'], result[method_name]['ranking']):
-                                    print(f"⚠️ 线程{worker_id}结果与基准不一致")
+                                    print(f"⚠️ Thread {worker_id} result inconsistent with baseline")
                 
-                print("✅ 并发结果一致性验证通过")
+                print("✅ Concurrent result consistency verification passed")
         else:
-            print(f"⚠️ 并发访问出现{len(errors_container)}个错误:")
+            print(f"⚠️ Concurrent access had {len(errors_container)} errors:")
             for worker_id, error in errors_container:
-                print(f"  线程{worker_id}: {error}")
+                print(f"  Thread {worker_id}: {error}")
     
     @pytest.mark.robustness
     def test_repeated_execution_stability(self):
-        """测试重复执行稳定性"""
+        """Test repeated execution stability"""
         test_matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         criterion_types = ['min', 'max', 'max']
         weights = np.array([0.3, 0.4, 0.3])
         
-        # 重复执行同一个计算多次
+        # Repeatedly execute the same computation multiple times
         num_runs = 10
         all_results = []
         
@@ -432,7 +432,7 @@ class TestRobustnessTests:
             results = scoring.get_all_results()
             all_results.append(results)
         
-        # 验证结果一致性
+        # Verify result consistency
         if len(all_results) > 1:
             baseline_results = all_results[0]
             
@@ -444,17 +444,17 @@ class TestRobustnessTests:
                         
                         if baseline_ranking is not None and current_ranking is not None:
                             if not np.array_equal(baseline_ranking, current_ranking):
-                                print(f"⚠️ 第{run_idx+1}次运行的{method_name}结果不一致")
-                                print(f"  基准排名: {baseline_ranking}")
-                                print(f"  当前排名: {current_ranking}")
+                                print(f"⚠️ Run {run_idx+1} {method_name} results inconsistent")
+                                print(f"  Baseline ranking: {baseline_ranking}")
+                                print(f"  Current ranking: {current_ranking}")
                                 return
             
-            print(f"✅ 重复执行稳定性测试通过 - {num_runs}次运行结果一致")
+            print(f"✅ Repeated execution stability test passed - {num_runs} runs consistent")
         
     @pytest.mark.robustness
     def test_error_recovery(self):
-        """测试错误恢复能力"""
-        # 创建一个可能导致某些方法失败的矩阵
+        """Test error recovery capability"""
+        # Create a matrix that might cause some methods to fail
         problematic_matrix = np.array([
             [0, 1, 2],
             [1, 0, 1], 
@@ -462,8 +462,8 @@ class TestRobustnessTests:
         ])
         criterion_types = ['min', 'max', 'min']
         
-        # 测试系统是否能在部分方法失败时继续执行其他方法
-        scoring = ScoringDecision()  # 使用所有方法
+        # Test if system can continue executing other methods when some methods fail
+        scoring = ScoringDecision()  # Use all methods
         
         try:
             scoring.decide(
@@ -479,23 +479,23 @@ class TestRobustnessTests:
                 
                 success_rate = successful_methods / total_available_methods if total_available_methods > 0 else 0
                 
-                print(f"✅ 错误恢复测试通过 - {successful_methods}/{total_available_methods}方法成功 ({success_rate:.1%})")
+                print(f"✅ Error recovery test passed - {successful_methods}/{total_available_methods} methods successful ({success_rate:.1%})")
                 
-                # 至少应该有一些方法成功
-                assert successful_methods > 0, "至少应该有一些方法能够成功执行"
+                # At least some methods should succeed
+                assert successful_methods > 0, "At least some methods should be able to succeed"
             else:
-                print("⚠️ 所有方法都失败了")
+                print("⚠️ All methods failed")
                 
         except Exception as e:
-            print(f"⚠️ 错误恢复测试异常: {e}")
+            print(f"⚠️ Error recovery test exception: {e}")
     
     @pytest.mark.robustness
     def test_resource_cleanup(self):
-        """测试资源清理"""
+        """Test resource cleanup"""
         import gc
         import weakref
         
-        # 创建多个对象实例
+        # Create multiple object instances
         instances = []
         weak_refs = []
         
@@ -504,30 +504,30 @@ class TestRobustnessTests:
             instances.append(obj)
             weak_refs.append(weakref.ref(obj))
         
-        # 使用这些实例
+        # Use these instances
         test_matrix = np.array([[1, 2], [3, 4]])
         criterion_types = ['min', 'max']
         
         for obj in instances:
             obj.decide(dataset=test_matrix, criterion_type=criterion_types)
         
-        # 清除引用
+        # Clear references
         instances.clear()
         
-        # 强制垃圾回收
+        # Force garbage collection
         gc.collect()
         
-        # 检查对象是否被正确清理
+        # Check if objects are properly cleaned up
         alive_objects = sum(1 for ref in weak_refs if ref() is not None)
         
         if alive_objects == 0:
-            print("✅ 资源清理测试通过 - 所有对象都被正确清理")
+            print("✅ Resource cleanup test passed - All objects properly cleaned up")
         else:
-            print(f"⚠️ 有{alive_objects}个对象未被清理")
+            print(f"⚠️ {alive_objects} objects not cleaned up")
 
 
 if __name__ == "__main__":
-    # 直接运行时的快速测试
+    # Quick test when running directly
     test_instance = TestRobustnessTests()
     test_instance.setup_method()
     
@@ -541,8 +541,8 @@ if __name__ == "__main__":
         test_instance.test_repeated_execution_stability()
         test_instance.test_error_recovery()
         test_instance.test_resource_cleanup()
-        print("\n🎉 所有健壮性测试通过！")
+        print("\n🎉 All robustness tests passed!")
     except Exception as e:
-        print(f"\n❌ 测试失败: {e}")
+        print(f"\n❌ Test failed: {e}")
         import traceback
         traceback.print_exc()

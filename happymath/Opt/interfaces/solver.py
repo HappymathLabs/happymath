@@ -1,7 +1,7 @@
 """
-求解器接口
+Solver interfaces.
 
-定义了优化求解器的标准接口，支持不同类型的求解器实现。
+Standard interfaces for optimization solvers supporting various backends.
 """
 
 from abc import ABC, abstractmethod
@@ -10,7 +10,7 @@ from .problem_definition import IProblemDefinition
 
 
 class ISolver(ABC):
-    """求解器接口"""
+    """Solver interface."""
 
     @abstractmethod
     def solve(
@@ -20,49 +20,49 @@ class ISolver(ABC):
         max_solvers: Union[int, str] = 3
     ) -> List[Dict[str, Any]]:
         """
-        求解优化问题
+        Solve an optimization problem.
 
         Args:
-            solver: 求解器设置
-                - None: 自动根据问题类型选择求解器
-                - str: 使用指定的单个求解器
-                - list: 使用指定的多个求解器
-            use_auto_solvers: 是否使用多个求解器
-            max_solvers: 最大求解器数量
+            solver: Solver selection
+                - None: auto-select by problem type
+                - str: use a specific solver
+                - list: try multiple solvers
+            use_auto_solvers: Whether to try multiple solvers.
+            max_solvers: Max number of solvers to try.
 
         Returns:
-            求解结果字典列表
+            List of solver result dictionaries.
         """
         pass
 
     @abstractmethod
     def get_available_solvers(self) -> List[str]:
-        """获取可用求解器列表"""
+        """Return the list of available solver names."""
         pass
 
     @abstractmethod
     def get_solver_type(self) -> str:
-        """获取求解器类型 ('pyomo' 或 'pymoo')"""
+        """Return solver type ('pyomo' or 'pymoo')."""
         pass
 
 
 class ISolverFactory(ABC):
-    """求解器工厂接口"""
+    """Solver factory interface."""
 
     @abstractmethod
     def create_solvers_for(self, problem: IProblemDefinition) -> List[ISolver]:
         """
-        为给定问题创建合适的求解器列表
+        Create suitable solvers for a given problem.
 
         Args:
-            problem: 问题定义
+            problem: Problem definition.
 
         Returns:
-            求解器列表
+            List of solver instances.
         """
         pass
 
     @abstractmethod
     def get_supported_problem_types(self) -> List[str]:
-        """获取支持的问题类型列表"""
+        """Return supported problem type list."""
         pass

@@ -33,9 +33,9 @@ def test_pyomo_dae_control_parameterization_builds():
     adapter = PyomoDAEAdapter(pr, cfg)
     m = adapter.convert()
     assert isinstance(m, pyo.ConcreteModel)
-    # 控制段变量和按时刻值变量存在
+    # Control segment variables and per-time-point value variables exist
     assert any(name.endswith('_seg') for name, obj in m.component_map(pyo.Var, active=True).items())
     assert any(name.endswith('_val') for name, obj in m.component_map(pyo.Var, active=True).items())
-    # 绑定约束存在
+    # Binding constraints exist
     assert any(name.endswith('_link') for name, obj in m.component_map(pyo.Constraint, active=True).items())
 

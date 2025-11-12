@@ -8,7 +8,7 @@ from happymath.Opt.functional.pde_evaluator import PDEEvaluator
 
 
 def test_pde_evaluator_heat_eq_terminal_l2():
-    # 1D 热方程：u_t = u_xx，初值 sin(pi x)，[0,1]，短时间演化，终端 L2 应小于初值 L2
+    # 1D Heat equation: u_t = u_xx, initial sin(pi x), [0,1], short time evolution, terminal L2 should be less than initial L2
     t = sp.symbols('t', real=True)
     x = sp.symbols('x', real=True)
     u = sp.Function('u')
@@ -30,5 +30,5 @@ def test_pde_evaluator_heat_eq_terminal_l2():
     ev = PDEEvaluator(cfg)
     vals = ev.evaluate_all({}, cfg.metrics)
     assert 'obj:0' in vals
-    # 仅检查返回可用标量（不同 py-pde 版本的归一化差异较大，此处不做绝对值判定）
+    # Only check that a usable scalar is returned (different py-pde versions have different normalizations, so no absolute value check here)
     assert np.isfinite(vals['obj:0'])

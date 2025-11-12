@@ -1,8 +1,8 @@
 """
-监督学习任务封装。
+Supervised learning task wrappers.
 
-该模块提供分类与回归两类初学者友好的接口，通过继承 AutoMLBase
-来统一管理 PyCaret 实验生命周期。
+Beginner-friendly interfaces for classification and regression by extending
+AutoMLBase to manage the full PyCaret experiment lifecycle.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from .base import AutoMLBase
 
 
 class ClassificationML(AutoMLBase):
-    """面向分类任务的 AutoML 封装。"""
+    """AutoML wrapper for classification tasks."""
 
     def __init__(
         self,
@@ -68,7 +68,7 @@ class ClassificationML(AutoMLBase):
 
 
 class RegressionML(AutoMLBase):
-    """面向回归任务的 AutoML 封装。"""
+    """AutoML wrapper for regression tasks."""
 
     def __init__(
         self,
@@ -132,10 +132,10 @@ class RegressionML(AutoMLBase):
         plot_kwargs: Optional[dict] = None,
         verbose: Optional[bool] = None,
     ):
-        """在回归情境下增加图表适用性的提示。"""
+        """Issue a gentle hint when plot type is not typical for regression."""
         regression_plots = {"residuals", "error", "cooks", "feature", "learning"}
         if plot not in regression_plots:
-            print(f"警告: 图表类型 '{plot}' 可能不适用于回归任务")
+            print(f"Warning: plot type '{plot}' may not be suited for regression (可能不适用于回归任务)")
         return super().plot(
             estimator=estimator,
             plot=plot,

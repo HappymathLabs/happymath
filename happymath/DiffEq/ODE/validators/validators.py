@@ -1,7 +1,5 @@
 """
-validators 模块
-
-提供统一的参数与条件验证功能。
+Validators module providing unified parameter and condition checks.
 """
 
 from collections.abc import Iterable
@@ -120,5 +118,4 @@ __all__ = [
     "ErrorCalculationError",
     "CacheError",
 ]
-
 

@@ -1,7 +1,7 @@
 """
-模型适配器接口
+Model adapter interfaces.
 
-定义了将问题定义转换为特定框架模型的标准接口。
+Defines the standard interface to convert problem definitions into framework-specific models.
 """
 
 from abc import ABC, abstractmethod
@@ -10,37 +10,34 @@ from .problem_definition import IProblemDefinition
 
 
 class IModelAdapter(ABC):
-    """模型适配器接口"""
+    """Model adapter interface."""
 
     @abstractmethod
     def convert(self) -> Any:
         """
-        将问题定义转换为特定框架的模型
+        Convert the problem definition to a model for a specific framework.
 
         Returns:
-            转换后的模型对象
+            The converted model object.
         """
         pass
 
     @abstractmethod
     def get_target_framework(self) -> str:
         """
-        获取目标框架名称
-
-        Returns:
-            框架名称 ('pyomo', 'pymoo', 等)
+        Return the target framework name (e.g., 'pyomo', 'pymoo').
         """
         pass
 
     @abstractmethod
     def validate_problem(self, problem: IProblemDefinition) -> bool:
         """
-        验证问题是否适合当前适配器
+        Validate whether the problem is suitable for this adapter.
 
         Args:
-            problem: 问题定义
+            problem: Problem definition instance.
 
         Returns:
-            是否适合转换
+            True if convertible, else False.
         """
         pass

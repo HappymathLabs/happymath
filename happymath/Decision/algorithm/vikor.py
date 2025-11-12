@@ -50,7 +50,6 @@ def vikor(dataset, weights, criterion_type, strategy_coefficient = 0.5, graph = 
     r_worst = np.max(r_i)
     q_i = strategy_coefficient*( (s_i - s_best) / (s_worst - s_best) ) + (1 - strategy_coefficient)*( (r_i - r_best) / (r_worst - r_best) )
     dq = 1 /(X.shape[0] - 1)
-    # 创建未排序的结果矩阵（与其他方法保持一致的格式）
     flow_s = np.copy(s_i)
     flow_s = np.reshape(flow_s, (s_i.shape[0], 1))
     flow_s = np.insert(flow_s, 0, list(range(1, s_i.shape[0]+1)), axis = 1)
@@ -63,13 +62,11 @@ def vikor(dataset, weights, criterion_type, strategy_coefficient = 0.5, graph = 
     flow_q = np.reshape(flow_q, (q_i.shape[0], 1))
     flow_q = np.insert(flow_q, 0, list(range(1, q_i.shape[0]+1)), axis = 1)
     
-    # 为图形显示和solution计算创建排序版本
     flow_q_sorted = flow_q[np.argsort(flow_q[:, 1])]
     condition_1 = False
     condition_2 = False
     if (flow_q_sorted[1, 1] - flow_q_sorted[0, 1] >= dq):
         condition_1 = True
-    # 为condition_2检查创建排序版本
     flow_s_sorted = flow_s[np.argsort(flow_s[:, 1])]
     flow_r_sorted = flow_r[np.argsort(flow_r[:, 1])]
     if (flow_q_sorted[0,0] == flow_s_sorted[0,0] or flow_q_sorted[0,0] == flow_r_sorted[0,0]):

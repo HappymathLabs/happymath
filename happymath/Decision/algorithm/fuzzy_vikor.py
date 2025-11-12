@@ -94,7 +94,6 @@ def fuzzy_vikor(dataset, weights, criterion_type, strategy_coefficient = 0.5, gr
     r_i = (1/3)*(r_i_A + r_i_B + r_i_C)
     q_i = (1/3)*(q_i_A + q_i_B + q_i_C)
     dq = 1 /(dataset_A.shape[0] - 1)
-    # 创建未排序的结果矩阵（与其他方法保持一致的格式）
     flow_s = np.copy(s_i)
     flow_s = np.reshape(flow_s, (s_i.shape[0], 1))
     flow_s = np.insert(flow_s, 0, list(range(1, s_i.shape[0]+1)), axis = 1)
@@ -107,7 +106,6 @@ def fuzzy_vikor(dataset, weights, criterion_type, strategy_coefficient = 0.5, gr
     flow_q = np.reshape(flow_q, (q_i.shape[0], 1))
     flow_q = np.insert(flow_q, 0, list(range(1, q_i.shape[0]+1)), axis = 1)
     
-    # 为condition检查和solution计算创建排序版本
     flow_s_sorted = flow_s[np.argsort(flow_s[:, 1])]
     flow_r_sorted = flow_r[np.argsort(flow_r[:, 1])]
     flow_q_sorted = flow_q[np.argsort(flow_q[:, 1])]

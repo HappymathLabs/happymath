@@ -125,7 +125,7 @@ class BVPConditionTransformer:
             raise ConditionValidationError(
                 condition=str(cond_expr),
                 validation_type="derivative_format",
-                reason="请使用 '.diff().subs()' 形式定义包含导数项的条件"
+                reason="Please define derivative conditions using the form '.diff(...).subs(...)'"
             )
         else:
             self._process_simple_condition(ctx, cond_expr, cond_value, function_conds, value_conds)
@@ -193,7 +193,7 @@ class BVPConditionTransformer:
             raise ConditionValidationError(
                 condition="third type boundary conditions",
                 validation_type="boundary_consistency",
-                reason="第三类边界条件的值点不同"
+                reason="Inconsistent boundary evaluation points for third-type conditions"
             )
         
         ctx.third_conds.append(standard_expr)
@@ -208,7 +208,7 @@ class BVPConditionTransformer:
             raise ConditionValidationError(
                 condition=f"multiple function terms: {func_expr}",
                 validation_type="condition_completeness", 
-                reason="一个解条件包含过多函数项"
+                reason="Too many function terms found in a single boundary/initial condition"
             )
         
         separate_func = func_expr[0]
@@ -231,7 +231,7 @@ class BVPConditionTransformer:
             raise ConditionValidationError(
                 condition=f"multiple derivative terms: {subs_expr}",
                 validation_type="condition_completeness",
-                reason="一个解条件包含过多导数项"
+                reason="Too many derivative terms found in a single boundary/initial condition"
             )
         
         separate_der = subs_expr[0]
@@ -277,22 +277,22 @@ class BVPConditionTransformer:
 
 
 class BoundaryConditionHandler(ABC):
-    """边界条件处理器基类"""
+    """Base class for boundary condition handlers"""
     
     @abstractmethod
     def process(self, bc_expr, boundary_values, subs_order_list, ctx):
-        """处理边界条件"""
+        """Process a boundary condition and return residual expression"""
         pass
 
 
 class NonDerivativeConditionHandler(BoundaryConditionHandler):
-    """非导数型边界条件处理器"""
+    """Handler for non-derivative boundary conditions"""
     
     def __init__(self, non_derivative_conds: Dict):
         self.conditions = non_derivative_conds
     
     def process(self, bc_expr, boundary_values, subs_order_list, ctx):
-        """处理非导数边界条件"""
+        """Process non-derivative boundary condition"""
         if type(bc_expr) in subs_order_list:
             sub_num = subs_order_list.index(type(bc_expr))
             return boundary_values[sub_num] - self.conditions[bc_expr]
@@ -301,14 +301,14 @@ class NonDerivativeConditionHandler(BoundaryConditionHandler):
 
 
 class DerivativeConditionHandler(BoundaryConditionHandler):
-    """导数型边界条件处理器"""
+    """Handler for derivative boundary conditions"""
     
     def __init__(self, derivative_conds: Dict, org_derivative_conds: Dict):
         self.derivative_conds = derivative_conds
         self.org_derivative_conds = org_derivative_conds
         
     def process(self, bc_expr, boundary_values, subs_order_list, ctx):
-        """处理导数型边界条件"""
+        """Process derivative boundary condition"""
         der_func_expr = bc_expr.expr
         
         # 如果有转换字典，应用转换
@@ -323,7 +323,7 @@ class DerivativeConditionHandler(BoundaryConditionHandler):
 
 
 class ThirdTypeConditionHandler(BoundaryConditionHandler):
-    """第三类边界条件处理器"""
+    """Handler for third-type boundary conditions"""
     
     def __init__(self, third_conds: List, third_func_list: List, third_subs_list: List):
         self.conditions = third_conds
@@ -331,7 +331,7 @@ class ThirdTypeConditionHandler(BoundaryConditionHandler):
         self.subs_list = third_subs_list
         
     def process(self, bc_expr, boundary_values, subs_order_list, ctx):
-        """处理第三类边界条件"""
+        """Process third-type boundary condition"""
         idx_expr = self.conditions.index(bc_expr)
         func_expr = self.func_list[idx_expr]
         subs_expr = self.subs_list[idx_expr]
@@ -366,12 +366,12 @@ class ThirdTypeConditionHandler(BoundaryConditionHandler):
 
 
 class BoundaryConditionProcessor:
-    """边界条件处理器，统一处理流程"""
+    """Unified boundary condition processor"""
     
     def __init__(self, non_derivative_conds: Dict, derivative_conds: Dict, 
                  org_derivative_conds: Dict, third_conds: List, 
                  third_func_list: List, third_subs_list: List):
-        """初始化边界条件处理器"""
+        """Initialize boundary condition processor"""
         # 创建各种类型的处理器
         self.handlers = {
             'non_derivative': NonDerivativeConditionHandler(non_derivative_conds),
@@ -379,23 +379,23 @@ class BoundaryConditionProcessor:
             'third_type': ThirdTypeConditionHandler(third_conds, third_func_list, third_subs_list)
         }
         
-        # 建立条件到处理器类型的映射，用于快速查找
+        # Map boundary condition expression to handler type for quick lookup
         self.condition_map = {}
         
-        # 映射非导数条件
+        # Map non-derivative conditions
         for bc_expr in non_derivative_conds.keys():
             self.condition_map[bc_expr] = 'non_derivative'
         
-        # 映射导数条件
+        # Map derivative conditions
         for bc_expr in org_derivative_conds.keys():
             self.condition_map[bc_expr] = 'derivative'
         
-        # 映射第三类条件
+        # Map third-type conditions
         for bc_expr in third_conds:
             self.condition_map[bc_expr] = 'third_type'
     
     def process_conditions(self, bc_expr_list: List, boundary_values, subs_order_list, ctx) -> List:
-        """处理条件列表"""
+        """Process a list of boundary conditions into residuals"""
         residuals = []
         
         for bc_expr in bc_expr_list:
@@ -406,7 +406,7 @@ class BoundaryConditionProcessor:
         return residuals
     
     def _get_handler(self, bc_expr) -> BoundaryConditionHandler:
-        """获取对应的条件处理器"""
+        """Get handler for the given boundary condition expression"""
         if bc_expr not in self.condition_map:
             raise ValueError(f"Unknown boundary condition: {bc_expr}")
         
@@ -415,7 +415,7 @@ class BoundaryConditionProcessor:
 
 
 class BVPAdapter:
-    """BVP适配器，专门处理边值问题的适配"""
+    """BVP adapter that prepares solver/boundary-callable for SciPy"""
     
     def __init__(self):
         """初始化BVP适配器"""

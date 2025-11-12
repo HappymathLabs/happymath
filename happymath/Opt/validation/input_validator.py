@@ -1,7 +1,7 @@
 """
-输入验证模块
+Input validation module.
 
-提供全面的输入验证和清晰的错误处理机制。
+Provides comprehensive validation and clear error messages.
 """
 
 import functools
@@ -11,26 +11,26 @@ from sympy import Symbol, Basic
 
 def validate_obj_func(obj_func: Any) -> Dict:
     """
-    验证目标函数格式
+    Validate objective function format.
 
     Args:
-        obj_func: 目标函数
+        obj_func: Objective function mapping.
 
     Returns:
-        验证后的目标函数字典
+        Validated objective mapping.
 
     Raises:
-        TypeError: 如果obj_func类型不正确
-        ValueError: 如果obj_func格式不正确
+        TypeError: Wrong type for obj_func
+        ValueError: Malformed mapping
     """
     if not isinstance(obj_func, dict):
         raise TypeError(
-            f"目标函数必须是字典类型，当前类型: {type(obj_func).__name__}\n"
-            f"正确格式: {{'min'/'max': expr}}"
+            f"obj_func must be a dict, got {type(obj_func).__name__}\n"
+            f"Expected format: {{'min'/'max': expr}}"
         )
 
     if len(obj_func) == 0:
-        raise ValueError("目标函数字典不能为空")
+        raise ValueError("obj_func mapping cannot be empty")
 
     # 验证字典的键必须是 'min' 或 'max'
     valid_directions = {'min', 'max'}
@@ -38,20 +38,20 @@ def validate_obj_func(obj_func: Any) -> Dict:
     for key, value in obj_func.items():
         # 检查键是否为优化方向
         if isinstance(key, str) and key in valid_directions:
-            # 检查值是否为有效的sympy表达式
+            # Check that value is a valid sympy expression
             if not isinstance(value, (Basic, Symbol)):
                 try:
                     from sympy import sympify
                     sympify(str(value))
                 except:
                     raise ValueError(
-                        f"目标函数的值必须是有效的数学表达式，当前值: {value}"
+                        f"Objective value must be a valid mathematical expression, got: {value}"
                     )
         else:
             raise ValueError(
-                f"目标函数格式不正确。\n"
-                f"正确格式: {{'min'/'max': expr}}\n"
-                f"当前项: {{{key}: {value}}}"
+                f"Invalid objective mapping.\n"
+                f"Expected: {{'min'/'max': expr}}\n"
+                f"Got: {{{key}: {value}}}"
             )
 
     return obj_func
@@ -59,31 +59,31 @@ def validate_obj_func(obj_func: Any) -> Dict:
 
 def validate_constraints(constraints: Any) -> Optional[List]:
     """
-    验证约束条件格式
+    Validate constraints format.
 
     Args:
-        constraints: 约束条件
+        constraints: Constraints
 
     Returns:
-        验证后的约束条件列表
+        Validated constraint list.
 
     Raises:
-        TypeError: 如果constraints类型不正确
-        ValueError: 如果constraints格式不正确
+        TypeError: Wrong type
+        ValueError: Malformed constraints
     """
     if constraints is None:
         return None
 
     if not isinstance(constraints, (list, tuple)):
         raise TypeError(
-            f"约束条件必须是列表或元组类型，当前类型: {type(constraints).__name__}\n"
-            f"如果只有一个约束，请使用列表: [constraint]"
+            f"constraints must be a list or tuple, got {type(constraints).__name__}\n"
+            f"If a single constraint, pass [constraint]"
         )
 
     if len(constraints) == 0:
         return []
 
-    # 验证每个约束条件
+    # Validate each constraint
     for i, constraint in enumerate(constraints):
         if not isinstance(constraint, Basic):
             try:
@@ -91,7 +91,7 @@ def validate_constraints(constraints: Any) -> Optional[List]:
                 sympify(str(constraint))
             except:
                 raise ValueError(
-                    f"约束条件[{i}]必须是有效的数学表达式，当前值: {constraint}"
+                    f"constraint[{i}] must be a valid mathematical expression, got: {constraint}"
                 )
 
     return list(constraints)
@@ -99,27 +99,27 @@ def validate_constraints(constraints: Any) -> Optional[List]:
 
 def validate_mode(mode: Any) -> str:
     """
-    验证求解模式
+    Validate solve mode.
 
     Args:
-        mode: 求解模式
+        mode: Mode string
 
     Returns:
-        验证后的模式字符串
+        Validated mode string
 
     Raises:
-        TypeError: 如果mode类型不正确
-        ValueError: 如果mode值不正确
+        TypeError: Wrong type
+        ValueError: Invalid value
     """
     if not isinstance(mode, str):
         raise TypeError(
-            f"求解模式必须是字符串类型，当前类型: {type(mode).__name__}"
+            f"mode must be a string, got {type(mode).__name__}"
         )
 
     valid_modes = {'auto', 'pyomo', 'pymoo'}
     if mode not in valid_modes:
         raise ValueError(
-            f"求解模式必须是 {valid_modes} 中的一个，当前值: '{mode}'"
+            f"mode must be one of {valid_modes}, got '{mode}'"
         )
 
     return mode
@@ -127,35 +127,33 @@ def validate_mode(mode: Any) -> str:
 
 def validate_search_range(default_search_range: Any) -> Union[int, float]:
     """
-    验证搜索范围
+    Validate search range.
 
     Args:
-        default_search_range: 默认搜索范围
+        default_search_range: Default search range
 
     Returns:
-        验证后的搜索范围
+        Validated range value
 
     Raises:
-        TypeError: 如果类型不正确
-        ValueError: 如果值不正确
+        TypeError: Wrong type
+        ValueError: Invalid value
     """
     if not isinstance(default_search_range, (int, float)):
         raise TypeError(
-            f"默认搜索范围必须是数值类型，当前类型: {type(default_search_range).__name__}"
+            f"default_search_range must be numeric, got {type(default_search_range).__name__}"
         )
 
     if default_search_range <= 0:
         raise ValueError(
-            f"默认搜索范围必须是正数，当前值: {default_search_range}"
+            f"default_search_range must be positive, got: {default_search_range}"
         )
 
     return default_search_range
 
 
 def validate_tighten_bounds(tighten_bounds: Any) -> Dict[str, Any]:
-    """
-    验证边界紧化配置
-    """
+    """Validate bound tightening configuration."""
     default_config = {'mode': 'auto', 'options': {}}
     allowed_modes = {'none', 'auto', 'rbc', 'lp'}
 
@@ -169,7 +167,7 @@ def validate_tighten_bounds(tighten_bounds: Any) -> Dict[str, Any]:
         mode = tighten_bounds.strip().lower()
         if mode not in allowed_modes:
             raise ValueError(
-                f"tighten_bounds必须是{sorted(allowed_modes)}之一，当前值: {tighten_bounds}"
+                f"tighten_bounds must be one of {sorted(allowed_modes)}, got: {tighten_bounds}"
             )
         return {'mode': mode, 'options': {}}
 
@@ -182,11 +180,11 @@ def validate_tighten_bounds(tighten_bounds: Any) -> Dict[str, Any]:
         nested_options = options.pop('options', None)
 
         if not isinstance(mode_value, str):
-            raise TypeError("tighten_bounds['mode']必须是字符串")
+            raise TypeError("tighten_bounds['mode'] must be a string")
         mode = mode_value.strip().lower()
         if mode not in allowed_modes:
             raise ValueError(
-                f"tighten_bounds['mode']必须是{sorted(allowed_modes)}之一，当前值: {mode_value}"
+                f"tighten_bounds['mode'] must be one of {sorted(allowed_modes)}, got: {mode_value}"
             )
 
         merged_options = {}
@@ -196,8 +194,8 @@ def validate_tighten_bounds(tighten_bounds: Any) -> Dict[str, Any]:
         return {'mode': mode, 'options': merged_options}
 
     raise TypeError(
-        "tighten_bounds必须是字符串、布尔值或字典，"
-        f"当前类型: {type(tighten_bounds).__name__}"
+        "tighten_bounds must be a string, bool or dict, "
+        f"got: {type(tighten_bounds).__name__}"
     )
 
 
@@ -207,52 +205,52 @@ def validate_solver_params(
     max_solvers: Any
 ) -> tuple:
     """
-    验证求解器参数
+    Validate solver parameters.
 
     Args:
-        solver: 求解器设置
-        use_auto_solvers: 是否使用多个求解器
-        max_solvers: 最大求解器数量
+        solver: Solver selection
+        use_auto_solvers: Try multiple solvers
+        max_solvers: Max number of solvers
 
     Returns:
-        验证后的参数元组
+        Validated parameter tuple
 
     Raises:
-        TypeError: 如果参数类型不正确
-        ValueError: 如果参数值不正确
+        TypeError: Wrong types
+        ValueError: Invalid values
     """
-    # 验证use_auto_solvers
+    # Validate use_auto_solvers
     if not isinstance(use_auto_solvers, bool):
         raise TypeError(
-            f"use_auto_solvers必须是布尔类型，当前类型: {type(use_auto_solvers).__name__}"
+            f"use_auto_solvers must be bool, got {type(use_auto_solvers).__name__}"
         )
 
-    # 验证max_solvers
+    # Validate max_solvers
     if max_solvers != "all":
         if not isinstance(max_solvers, int):
             raise TypeError(
-                f"max_solvers必须是整数或'all'，当前类型: {type(max_solvers).__name__}"
+                f"max_solvers must be an int or 'all', got {type(max_solvers).__name__}"
             )
         if max_solvers < 1:
             raise ValueError(
-                f"max_solvers必须大于等于1，当前值: {max_solvers}"
+                f"max_solvers must be >= 1, got: {max_solvers}"
             )
 
-    # 验证solver
+    # Validate solver
     if solver is not None:
         if not isinstance(solver, (str, list)):
             raise TypeError(
-                f"solver必须是None、字符串或字符串列表，当前类型: {type(solver).__name__}"
+                f"solver must be None, str, or list[str], got {type(solver).__name__}"
             )
 
         if isinstance(solver, list):
             if len(solver) == 0:
-                raise ValueError("求解器列表不能为空")
+                raise ValueError("solver list cannot be empty")
 
             for i, s in enumerate(solver):
                 if not isinstance(s, str):
                     raise TypeError(
-                        f"求解器列表[{i}]必须是字符串，当前类型: {type(s).__name__}"
+                        f"solver[{i}] must be a string, got {type(s).__name__}"
                     )
 
     return solver, use_auto_solvers, max_solvers

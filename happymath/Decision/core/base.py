@@ -1,8 +1,10 @@
 """
-所有决策方法的抽象基类。
+Abstract base class for all decision methods.
 
-本模块为所有决策分析类提供了基础，
-包括通用功能和接口。
+This module provides the common foundation for decision analysis classes:
+- Unified interfaces and lifecycle for running methods
+- Parameter validation and auto-selection based on available inputs
+- Result storage and retrieval utilities
 """
 
 from abc import ABC, abstractmethod
@@ -13,13 +15,13 @@ import warnings
 
 class DecisionBase(ABC):
     """
-    所有决策方法类的抽象基类。
-    
-    该类提供：
-    - 所有决策方法的通用接口
-    - 基于可用参数的智能方法选择
-    - 结果存储和管理
-    - 参数验证框架
+    Base class for all decision methods.
+
+    Provides:
+    - Unified interface for running methods
+    - Smart method selection based on available inputs
+    - Result storage and management
+    - Parameter validation framework
     """
     
     # 方法注册表：将方法名称映射到其所需参数
@@ -28,11 +30,11 @@ class DecisionBase(ABC):
     
     def __init__(self, methods: Optional[Union[str, List[str]]] = None):
         """
-        初始化决策基类。
-        
-        参数:
-            methods: 要使用的特定方法。如果为 None，将根据参数自动选择。
-                     可以是单个方法名（str）或方法名列表。
+        Initialize the base class.
+
+        Args:
+            methods: Optional method name or list of names to run. When None, methods
+                will be auto-selected based on provided inputs.
         """
         if methods is None:
             self._user_methods = None
@@ -51,14 +53,13 @@ class DecisionBase(ABC):
         self._last_params: Dict[str, Any] = {}
     
     def _get_applicable_methods(self, **kwargs) -> List[str]:
-        """
-        根据提供的参数确定可以执行哪些方法。
-        
-        参数:
-            **kwargs: 用户提供的参数
-            
-        返回:
-            可以执行的方法名称列表
+        """Determine applicable methods from provided parameters.
+
+        Args:
+            **kwargs: User-provided parameters.
+
+        Returns:
+            List of method names that can be executed.
         """
         # 如果用户指定了方法，则验证并返回这些方法
         if self._user_methods:
@@ -95,18 +96,17 @@ class DecisionBase(ABC):
         return applicable_methods
     
     def _validate_user_methods(self, methods: List[str], **kwargs) -> List[str]:
-        """
-        根据可用参数验证用户指定的方法。
-        
-        参数:
-            methods: 用户指定的方法名称列表
-            **kwargs: 可用的参数
-            
-        返回:
-            有效的方法名称列表
-            
-        引发:
-            ValueError: 如果方法不受支持或参数不足
+        """Validate user-specified methods against available parameters.
+
+        Args:
+            methods: Method names requested by the user.
+            **kwargs: Available parameters.
+
+        Returns:
+            Valid method names.
+
+        Raises:
+            ValueError: When methods are unsupported or parameters are insufficient.
         """
         valid_methods = []
         provided_params = set(k for k, v in kwargs.items() if v is not None)
@@ -148,17 +148,16 @@ class DecisionBase(ABC):
         return valid_methods
     
     def decide(self, **kwargs) -> 'DecisionBase':
-        """
-        执行决策方法。
-        
-        这是所有决策分析的主要入口点。
-        通用的决策执行流程，子类通过提供配置和特定逻辑来定制行为。
-        
-        参数:
-            **kwargs: 决策方法的参数
-            
-        返回:
-            返回自身以支持方法链式调用
+        """Run the decision methods.
+
+        Common entrypoint; subclasses customize behavior via configuration and
+        specialized logic.
+
+        Args:
+            **kwargs: Parameters for decision methods.
+
+        Returns:
+            Self, to allow chaining.
         """
         # 校验通用参数
         self._validate_common_parameters(**kwargs)
@@ -200,29 +199,26 @@ class DecisionBase(ABC):
     
     @abstractmethod
     def _execute_method(self, method_name: str, **kwargs) -> Any:
-        """
-        使用给定参数执行特定方法。
-        
-        子类必须实现此方法以处理其特定方法。
-        
-        参数:
-            method_name: 要执行的方法名称
-            **kwargs: 方法的参数
-            
-        返回:
-            方法执行的结果
+        """Execute a specific method with given parameters.
+
+        Subclasses must implement this method.
+
+        Args:
+            method_name: Name of the method to execute.
+            **kwargs: Parameters for the method.
+
+        Returns:
+            Method result.
         """
         pass
     
     def _store_results_to_manager(self, results: Dict[str, Any]) -> None:
-        """
-        将结果存储到ResultManager中。
-        
-        子类可以重写此方法来定制存储行为。
-        默认实现会根据子类类型自动选择合适的存储方法。
-        
-        参数:
-            results: 要存储的结果字典 {method_name: result}
+        """Store results into a ResultManager, if present.
+
+        Subclasses may override to customize persistence behavior.
+
+        Args:
+            results: Dict mapping method names to their results.
         """
         if not hasattr(self, 'result_manager'):
             return
@@ -244,69 +240,36 @@ class DecisionBase(ABC):
                 self.result_manager.add_result(method_name, result)
     
     def get_results(self) -> Dict[str, Any]:
-        """
-        获取所有已执行方法的结果。
-        
-        返回:
-            一个将方法名称映射到其结果的字典
-        """
+        """Return all executed method results as a dictionary."""
         return self.results.copy()
     
     def get_result(self, method_name: str) -> Optional[Any]:
-        """
-        获取特定方法的结果。
-        
-        参数:
-            method_name: 方法的名称
-            
-        返回:
-            方法的结果，如果尚未执行则返回 None
-        """
+        """Return the result for a particular method, or None if not executed."""
         return self.results.get(method_name)
     
     def get_executed_methods(self) -> List[str]:
-        """
-        获取已执行的方法列表。
-        
-        返回:
-            已执行的方法名称列表
-        """
+        """Return a list of executed method names."""
         return self._executed_methods.copy()
     
     def clear_results(self) -> 'DecisionBase':
-        """
-        清除所有存储的结果。
-        
-        返回:
-            返回自身以支持方法链式调用
-        """
+        """Clear stored results and state; returns self for chaining."""
         self.results.clear()
         self._executed_methods.clear()
         self._last_params.clear()
         return self
     
     def _store_result(self, method_name: str, result: Any) -> None:
-        """
-        存储方法执行的结果。
-        
-        参数:
-            method_name: 方法的名称
-            result: 要存储的结果
-        """
+        """Store a result for a given method name."""
         self.results[method_name] = result
         if method_name not in self._executed_methods:
             self._executed_methods.append(method_name)
     
     def _validate_common_parameters(self, **kwargs) -> None:
-        """
-        验证许多方法通用的参数。
-        
-        参数:
-            **kwargs: 要验证的参数
-            
-        引发:
-            ValueError: 如果参数无效
-            TypeError: 如果参数类型错误
+        """Validate common parameters.
+
+        Raises:
+            ValueError: Invalid values.
+            TypeError: Wrong types.
         """
         # 如果提供了决策矩阵/数据集，则进行验证
         for dataset_key in ['decision_matrix', 'dataset']:
@@ -358,14 +321,14 @@ class DecisionBase(ABC):
                 )
     
     def __repr__(self) -> str:
-        """对象的字符串表示形式。"""
+        """Debug-friendly string representation."""
         class_name = self.__class__.__name__
         n_executed = len(self._executed_methods)
         n_results = len(self.results)
         return f"{class_name}(executed_methods={n_executed}, results={n_results})"
     
     def __str__(self) -> str:
-        """人类可读的字符串表示形式。"""
+        """Human-readable string representation."""
         if not self._executed_methods:
             return f"{self.__class__.__name__}: No methods executed yet"
         

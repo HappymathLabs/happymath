@@ -1,7 +1,7 @@
 """
-决策方法的参数验证器。
+Parameter validators for decision methods.
 
-本模块为决策分析方法中使用的各种类型的输入参数提供全面的验证。
+Provide comprehensive validation for common input types used in decision analysis.
 """
 
 import numpy as np
@@ -10,24 +10,20 @@ import warnings
 
 
 class ParameterValidator:
-    """
-    为决策分析中的通用参数提供验证方法。
-    """
+    """Validation helpers for common parameters in decision analysis."""
     
     @staticmethod
     def validate_decision_matrix(matrix: Any, min_alternatives: int = 2, 
                                 min_criteria: int = 2) -> Dict[str, Any]:
-        """
-        验证决策矩阵。
-        
-        参数:
-            matrix: 要验证的决策矩阵
-            min_alternatives: 所需的最小方案数
-            min_criteria: 所需的最小准则数
-            
-        返回:
-            包含验证结果的字典，其中包含 'is_valid'、'processed_data'、'error_message'
-            
+        """Validate decision matrix.
+
+        Args:
+            matrix: Matrix to validate.
+            min_alternatives: Minimum number of alternatives required.
+            min_criteria: Minimum number of criteria required.
+
+        Returns:
+            Dict with 'is_valid', 'processed_data', 'error_message'.
         """
         if matrix is None:
             return {
@@ -47,12 +43,12 @@ class ParameterValidator:
                     'error_message': f'Cannot convert decision matrix to numpy array: {e}'
                 }
         
-        # 检查维度
+        # Check dimensionality
         if matrix.ndim != 2:
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': f'决策矩阵必须是二维数组，当前维度为{matrix.ndim}'
+                'error_message': f'Decision matrix must be 2-D array, got ndim={matrix.ndim}'
             }
         
         n_alternatives, n_criteria = matrix.shape
@@ -61,29 +57,29 @@ class ParameterValidator:
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': f'决策矩阵至少需要{min_alternatives}个方案，当前只有{n_alternatives}个'
+                'error_message': f'Decision matrix needs at least {min_alternatives} alternatives, got {n_alternatives}'
             }
         
         if n_criteria < min_criteria:
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': f'决策矩阵至少需要{min_criteria}个准则，当前只有{n_criteria}个'
+                'error_message': f'Decision matrix needs at least {min_criteria} criteria, got {n_criteria}'
             }
         
-        # 检查无效值
+        # Check invalid values
         if np.any(np.isnan(matrix)):
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': '决策矩阵包含缺失值（NaN）'
+                'error_message': 'Decision matrix contains NaN values'
             }
         
         if np.any(np.isinf(matrix)):
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': '决策矩阵包含无穷值'
+                'error_message': 'Decision matrix contains infinite values'
             }
         
         return {
@@ -95,16 +91,15 @@ class ParameterValidator:
     @staticmethod
     def validate_weights(weights: Any, n_criteria: Optional[int] = None,
                         normalize: bool = True) -> Dict[str, Any]:
-        """
-        验证权重向量。
-        
-        参数:
-            weights: 要验证的权重向量
-            n_criteria: 预期的准则数（可选）
-            normalize: 是否将权重归一化以使总和为 1
-            
-        返回:
-            包含验证结果的字典，其中包含 'is_valid'、'processed_data'、'error_message'
+        """Validate weight vector.
+
+        Args:
+            weights: Weight vector.
+            n_criteria: Expected number of criteria.
+            normalize: Whether to normalize weights to sum to 1.
+
+        Returns:
+            Dict with 'is_valid', 'processed_data', 'error_message'.
         """
         if weights is None:
             return {
@@ -124,7 +119,7 @@ class ParameterValidator:
                     'error_message': f'Cannot convert weights to numpy array: {e}'
                 }
         
-        # 检查维度
+        # Check dimensionality
         if weights.ndim != 1:
             return {
                 'is_valid': False,
@@ -132,41 +127,41 @@ class ParameterValidator:
                 'error_message': f'权重必须是一维数组，当前维度为{weights.ndim}'
             }
         
-        # 如果指定，检查长度
+        # Length check
         if n_criteria is not None and len(weights) != n_criteria:
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': f'权重向量长度（{len(weights)}）与准则数量（{n_criteria}）不匹配'
+                'error_message': f'Weight length ({len(weights)}) mismatches criteria count ({n_criteria})'
             }
         
-        # 检查无效值
+        # Invalid values
         if np.any(np.isnan(weights)):
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': '权重包含NaN值'
+                'error_message': 'Weights contain NaN values'
             }
         
         if np.any(np.isinf(weights)):
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': '权重包含无穷值'
+                'error_message': 'Weights contain infinite values'
             }
         
         if np.any(weights < 0):
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': '权重必须是非负值'
+                'error_message': 'Weights must be non-negative'
             }
         
         if np.all(weights == 0):
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': '至少一个权重必须非零'
+                'error_message': 'At least one weight must be non-zero'
             }
         
         # 如果请求，进行归一化
@@ -186,15 +181,14 @@ class ParameterValidator:
     
     @staticmethod
     def validate_criterion_type(criterion_type: Any, n_criteria: Optional[int] = None) -> Dict[str, Any]:
-        """
-        验证准则类型列表。
-        
-        参数:
-            criterion_type: 准则类型列表（'max' 或 'min'）
-            n_criteria: 预期的准则数（可选）
-            
-        返回:
-            包含验证结果的字典，其中包含 'is_valid'、'processed_data'、'error_message'
+        """Validate criterion type list ('max' or 'min').
+
+        Args:
+            criterion_type: List of types ('max' or 'min').
+            n_criteria: Expected number of criteria.
+
+        Returns:
+            Dict with 'is_valid', 'processed_data', 'error_message'.
         """
         if criterion_type is None:
             return {
@@ -207,7 +201,7 @@ class ParameterValidator:
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': f'准则类型必须是列表，当前类型为{type(criterion_type)}'
+                'error_message': f'criterion_type must be a list, got {type(criterion_type)}'
             }
         
         # 检查空列表
@@ -215,7 +209,7 @@ class ParameterValidator:
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': '准则类型列表不能为空'
+                'error_message': 'criterion_type list cannot be empty'
             }
         
         # 如果指定，检查长度
@@ -223,7 +217,7 @@ class ParameterValidator:
             return {
                 'is_valid': False,
                 'processed_data': None,
-                'error_message': f'准则类型列表长度（{len(criterion_type)}）与准则数量（{n_criteria}）不匹配'
+                'error_message': f'criterion_type length ({len(criterion_type)}) mismatches criteria count ({n_criteria})'
             }
         
         # 验证每个类型
@@ -233,7 +227,7 @@ class ParameterValidator:
                 return {
                     'is_valid': False,
                     'processed_data': None,
-                    'error_message': f'索引{i}处的准则类型"{ctype}"无效，必须是max或min'
+                    'error_message': f'Invalid criterion type "{ctype}" at index {i}; must be max or min'
                 }
         
         return {
@@ -245,16 +239,15 @@ class ParameterValidator:
     @staticmethod
     def validate_dimensions_consistency(decision_matrix: np.ndarray, weights: Optional[np.ndarray] = None, 
                                       criterion_type: Optional[List[str]] = None) -> Dict[str, Any]:
-        """
-        验证矩阵维度与相关参数之间的一致性。
-        
-        参数:
-            decision_matrix: 决策矩阵
-            weights: 权重向量（可选）
-            criterion_type: 准则类型列表（可选）
-            
-        返回:
-            包含验证结果的字典，其中包含 'is_valid'、'processed_data'、'error_message'
+        """Validate dimensional consistency among matrix, weights and types.
+
+        Args:
+            decision_matrix: Decision matrix.
+            weights: Optional weight vector.
+            criterion_type: Optional list of criterion types.
+
+        Returns:
+            Dict with 'is_valid', 'processed_data', 'error_message'.
         """
         if decision_matrix is None:
             return {

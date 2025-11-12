@@ -1,8 +1,8 @@
 """
-OptModule - 重构版本
+OptModule - Refactored version.
 
-使用清理后的OptBase和新的求解器接口，删除了所有向后兼容依赖。
-添加了全面的输入验证和错误处理。
+Uses a cleaned OptBase and new solver interfaces; removes legacy compatibility layers.
+Includes comprehensive input validation and error handling.
 """
 
 import time
@@ -32,7 +32,7 @@ class OptModule(OptBase):
         # 使用新的接口获取目标函数数量
         self.is_single_obj = len(self.parse_result.objective_funcs) <= 1
 
-        # 严格边界策略：Pymoo 仅在所有变量有上下界时允许
+        # Strict bound policy: Pymoo only allowed when all variables are bounded
         import warnings
         all_bounded = self._check_all_variables_bounded()
 
@@ -42,22 +42,22 @@ class OptModule(OptBase):
                     self.libraries = ["pyomo", "pymoo"]
                 else:
                     warnings.warn(
-                        "检测到存在无上下界的变量：已禁用 Pymoo，自动切换到 Pyomo 后端。"
+                        "Detected variables without bounds: disabling Pymoo and falling back to Pyomo backend."
                     )
                     self.libraries = ["pyomo"]
             elif mode == "pyomo":
                 self.libraries = ["pyomo"]
             elif mode == "pymoo":
                 if not all_bounded:
-                    # 收集无界变量名
+                    # Collect names of unbounded variables
                     try:
                         ub_vars = self._collect_unbounded_variables()
-                        details = ", ".join(ub_vars) if ub_vars else "(未知变量)"
+                        details = ", ".join(ub_vars) if ub_vars else "(unknown variable)"
                     except Exception:
-                        details = "(变量列表收集失败)"
+                        details = "(failed to collect variable list)"
                     raise ValueError(
-                        "Pymoo 严格模式：检测到无上下界的变量，无法使用启发式后端。"
-                        f" 请为变量显式提供上下界或改用 Pyomo。未界定变量：{details}"
+                        "Pymoo strict mode: variables without bounds detected; heuristic backend cannot be used."
+                        f" Please provide explicit lower/upper bounds for variables or switch to Pyomo. Unbounded: {details}"
                     )
                 self.libraries = ["pymoo"]
             else:
@@ -65,16 +65,16 @@ class OptModule(OptBase):
         else:  # Multi-objective
             if mode == "pyomo":
                 raise ValueError("Pyomo does not support multi-objective optimization.")
-            # 多目标目前仅支持 Pymoo；严格策略下，若变量无界则直接报错
+            # Multi-objective currently supports only Pymoo; under strict policy, error if any variable is unbounded
             if not all_bounded:
                 try:
                     ub_vars = self._collect_unbounded_variables()
-                    details = ", ".join(ub_vars) if ub_vars else "(未知变量)"
+                    details = ", ".join(ub_vars) if ub_vars else "(unknown variable)"
                 except Exception:
-                    details = "(变量列表收集失败)"
+                    details = "(failed to collect variable list)"
                 raise ValueError(
-                    "多目标优化需要 Pymoo，但检测到存在无上下界的变量。"
-                    f" 请为变量显式提供上下界后再求解。未界定变量：{details}"
+                    "Multi-objective optimization requires Pymoo, but unbounded variables were detected."
+                    f" Please provide explicit bounds before solving. Unbounded: {details}"
                 )
             self.libraries = ["pymoo"]
 
@@ -83,15 +83,15 @@ class OptModule(OptBase):
         self.pymoo_solver = PymooSolver(self.parse_result, epsilon=self.epsilon)
 
     def _check_all_variables_bounded(self):
-        """检查是否所有变量都有边界"""
+        """Return True if all variables have both lower and upper bounds."""
         return self.parse_result.bound_manager.check_all_variables_bounded()
 
     def _prepare_opt_module_info(self):
         """
-        准备传递给OptResult的OptModule信息
+        Prepare OptModule metadata for OptResult.
 
         Returns:
-            dict: OptModule的基本信息字典
+            dict: Basic information about the problem and solvers.
         """
         problem_type = "Unknown"
         if "pyomo" in self.libraries:
@@ -106,12 +106,12 @@ class OptModule(OptBase):
             'senses': self.parse_result.senses,
             'problem_type': problem_type,
             'ir_problem': self.parse_result.ir_problem,
-            # 保持符号对象形式，便于后续变量解码与映射
+            # Keep symbol objects to facilitate decoding/mapping later
             'sorted_symbols': self.parse_result.sorted_symbols,
         }
 
     def _collect_unbounded_variables(self):
-        """返回未设置上下界的变量名列表。"""
+        """Return a list of variable names without proper bounds."""
         bm = self.parse_result.bound_manager
         xl = bm.lower_bounds
         xu = bm.upper_bounds
@@ -124,20 +124,20 @@ class OptModule(OptBase):
 
     def solve(self, solver: str = None, use_auto_solvers: bool = True, max_solvers: int = 3, ref: dict | None = None):
         """
-        求解优化问题
+        Solve the optimization problem.
 
         Args:
-            solver: 指定求解器/算法名称，如果为None则根据问题类型自动选择
-            use_auto_solvers: 是否使用多个求解器/算法求解，True时使用多个求解器，False时只使用单个求解器
-            max_solvers: 最大使用的求解器/算法数量，默认3个
-            ref: Pymoo结果后处理使用的参考点字典；None表示采用无先验理想点ASF
+            solver: Name of solver/algorithm. None to auto-select by problem type.
+            use_auto_solvers: If True, try multiple solvers/algorithms; otherwise use a single solver.
+            max_solvers: Maximum number of solvers/algorithms to try.
+            ref: Reference-point dict for Pymoo post-processing; None to use ASF without prior ideal point.
 
         Returns:
-            OptResult: 封装求解结果的OptResult对象
+            OptResult with solver outputs.
 
         Raises:
-            TypeError: 如果参数类型不正确
-            ValueError: 如果参数值不正确
+            TypeError: Invalid parameter types.
+            ValueError: Invalid parameter values.
         """
         # 验证求解器参数
         try:
@@ -146,11 +146,11 @@ class OptModule(OptBase):
             )
         except (TypeError, ValueError) as e:
             raise type(e)(
-                f"求解参数验证失败: {str(e)}\n\n"
-                f"使用示例:\n"
-                f"  result = opt.solve()  # 自动选择\n"
-                f"  result = opt.solve('cbc')  # 指定求解器\n"
-                f"  result = opt.solve(['cbc', 'glpk'])  # 指定多个求解器"
+                f"Solver parameter validation failed: {str(e)}\n\n"
+                f"Examples:\n"
+                f"  result = opt.solve()  # auto select\n"
+                f"  result = opt.solve('cbc')  # choose a solver\n"
+                f"  result = opt.solve(['cbc', 'glpk'])  # choose multiple solvers"
             ) from e
 
         # 记录开始时间
@@ -234,7 +234,7 @@ class OptModule(OptBase):
                 'algorithm': solver if solver else "auto",
                 'result': None,
                 'success': False,
-                'message': f"求解失败: {str(e)}",
+                'message': f"Solve failed: {str(e)}",
                 'exec_time': solve_time,
                 'solver_type': self.libraries,
             }

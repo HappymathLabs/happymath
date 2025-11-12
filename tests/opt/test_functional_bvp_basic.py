@@ -8,7 +8,7 @@ from happymath.Opt.functional.evaluator import TrajectoryEvaluatorBVP
 
 
 def test_bvp_evaluator_runs_simple():
-    # x''(t) = 0, x(0)=0, x(1)=0 => 解为 0；J = 末端 x(1) 与 路径 L2 均为 0
+    # x''(t) = 0, x(0)=0, x(1)=0 => solution is 0; J = terminal x(1) and path L2 are both 0
     t = sp.symbols('t', real=True)
     x = sp.Function('x')
     ode = [sp.Eq(sp.diff(x(t), t, 2), 0)]

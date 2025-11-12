@@ -1,7 +1,7 @@
 """
-解析器抽象基类
+Abstract parser base class.
 
-定义将SymPy表达式转换为可执行形式的标准接口。
+Defines a standard interface to convert SymPy expressions into executable forms.
 """
 
 from abc import ABC, abstractmethod
@@ -9,24 +9,24 @@ from typing import Any, List
 
 
 class ParserBase(ABC):
-    """解析器抽象基类"""
+    """Abstract parser base class."""
 
     @abstractmethod
     def parse(self) -> Any:
         """
-        将SymPy表达式解析为可执行形式
+        Parse a SymPy expression into an executable object.
 
         Returns:
-            Any: 解析后的可执行对象(如lambda函数)
+            Any: Executable object (e.g., a lambda function).
         """
         pass
 
     @abstractmethod
     def validate(self) -> bool:
         """
-        验证表达式是否有效
+        Validate expression correctness.
 
         Returns:
-            bool: 表达式是否有效
+            bool: Whether the expression is valid.
         """
         pass

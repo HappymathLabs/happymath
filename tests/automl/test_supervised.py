@@ -5,7 +5,7 @@ from happymath.AutoML import ClassificationML, RegressionML
 
 
 def _prepare_classification_data():
-    """构造用于分类测试的 Iris 数据集。"""
+    """Construct Iris dataset for classification testing."""
     iris = load_iris(as_frame=True)
     data = iris.data.copy()
     data["target"] = iris.target
@@ -13,7 +13,7 @@ def _prepare_classification_data():
 
 
 def _prepare_regression_data():
-    """构造用于回归测试的 Diabetes 数据集。"""
+    """Construct Diabetes dataset for regression testing."""
     diabetes = load_diabetes(as_frame=True)
     data = diabetes.data.copy()
     data["target"] = diabetes.target

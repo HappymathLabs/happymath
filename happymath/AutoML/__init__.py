@@ -1,4 +1,4 @@
-"""HappyMath AutoML 对外接口。"""
+"""Public interface for HappyMath AutoML."""
 
 from .base import AutoMLBase
 from .supervised import ClassificationML, RegressionML

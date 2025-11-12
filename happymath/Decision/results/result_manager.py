@@ -1,8 +1,8 @@
 """
-决策分析方法的结果管理模块。
+Result management for decision analysis methods.
 
-本模块为所有决策方法提供统一的结果存储、处理与访问功能，
-支持权重、评分、排名、矩阵等多类型输出的统一管理与导出。
+Provides unified storage, processing and access for outputs such as weights,
+scores, rankings and matrices, with basic export utilities.
 """
 
 import numpy as np
@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 
 
 class ResultType(Enum):
-    """决策方法可能产生的结果类型枚举。"""
+    """Enumeration of possible result types from decision methods."""
     WEIGHTS = "weights"
     SCORES = "scores"
     RANKINGS = "rankings"
@@ -30,13 +30,13 @@ class ResultType(Enum):
 @dataclass
 class MethodResult:
     """
-    单个方法结果的容器。
-    
-    属性说明：
-        - method_name: 方法名称
-        - raw_output: 方法的原始输出
-        - processed_data: 结构化后的数据表示（如向量、矩阵、元组等）
-        - metadata: 关于结果的附加信息（如时间戳、参数设置等）
+    Container for a single method result.
+
+    Attributes:
+        - method_name: Name of the method.
+        - raw_output: Raw output from the method.
+        - processed_data: Structured representation (vector/matrix/tuple, etc.).
+        - metadata: Additional information (timestamp, parameters, etc.).
     """
     method_name: str
     raw_output: Any
@@ -44,11 +44,11 @@ class MethodResult:
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
-        """在初始化后将原始输出转换为结构化格式。"""
+        """Post-init: convert raw output into structured form."""
         self._process_output()
     
     def _process_output(self):
-        """根据方法名称和输出格式规范对原始输出进行处理。"""
+        """Process raw output based on method name and expected formats."""
         method_name = self.method_name.lower()
         
         # 权重类方法处理
@@ -74,19 +74,19 @@ class MethodResult:
             self._process_default_output()
     
     def get_weights(self) -> Optional[np.ndarray]:
-        """提取权重（如可用）。"""
+        """Return weights if available."""
         if 'weights' in self.processed_data:
             return self.processed_data['weights']
         return None
     
     def get_scores(self) -> Optional[np.ndarray]:
-        """提取评分（如可用）。"""
+        """Return scores if available."""
         if 'scores' in self.processed_data:
             return self.processed_data['scores']
         return None
     
     def get_ranking(self) -> Optional[np.ndarray]:
-        """提取或计算排名。"""
+        """Return or compute ranking if available."""
         if 'ranking' in self.processed_data:
             return self.processed_data['ranking']
         

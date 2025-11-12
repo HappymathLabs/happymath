@@ -1,5 +1,5 @@
 """
-时间序列任务封装。
+Time series task wrapper.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from .base import AutoMLBase
 
 
 class TimeSeriesML(AutoMLBase):
-    """时间序列预测任务封装。"""
+    """AutoML wrapper for time series forecasting tasks."""
 
     def __init__(
         self,
@@ -73,11 +73,11 @@ class TimeSeriesML(AutoMLBase):
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ):
-        """时间序列预测支持传入预测视野等参数。"""
+        """Forecast with optional horizon and parameters."""
         self._ensure_setup()
         predictor = estimator or self.current_model
         if predictor is None:
-            raise ValueError("没有可用于预测的时间序列模型")
+            raise ValueError("No time-series model available for prediction")
 
         verbose_flag = self.verbose if verbose is None else verbose
         predict_fn = self.experiment.predict_model

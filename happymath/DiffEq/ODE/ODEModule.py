@@ -1,6 +1,6 @@
 """
-重构后的ODEModule - 使用组件化架构
-将复杂逻辑分离到专门的处理器中，消除全局变量，改善代码结构
+Refactored ODEModule using a componentized architecture.
+Complex logic is separated into dedicated processors; no global state; improved structure.
 """
 
 import inspect
@@ -44,17 +44,24 @@ MAX_SYMBOL_GENERATION_ATTEMPTS = 1000
 
 class ODEModule(DEBase):
     """
-    重构后的ODE模块主类
-    使用组件化架构，职责分离，线程安全
+    Main ODE module class (refactored).
+    Componentized design with clear responsibilities; thread-safe.
     """
     
     def __init__(self, sympy_obj: Union[sympy.Expr, list], value_range: str = "real"):
         """
-        初始化ODE模块
-        
+        Initialize the ODE module.
+
         Args:
-            sympy_obj: ODE表达式或表达式列表
-            value_range: 变量取值范围
+            sympy_obj: A SymPy ODE expression or list of expressions.
+            value_range: Symbol assumptions for variables (e.g., "real").
+
+        Example:
+            >>> from sympy import Eq, Function, symbols, Derivative
+            >>> t = symbols("t")
+            >>> y = Function("y")
+            >>> ode = Eq(Derivative(y(t), t), -y(t))
+            >>> mod = ODEModule(ode)
         """
         super(ODEModule, self).__init__(sympy_obj, value_range)
         # expr属性现在是通过property从基类继承的，无需重新设置
@@ -72,9 +79,7 @@ class ODEModule(DEBase):
             raise InvalidExpressionError(sympy_obj, "Not a valid ordinary differential equation expression.")
     
     def _compute_standard_ode(self):
-        """
-        使用 ExprParser 直接计算标准化结果并返回结果对象
-        """
+        """Compute and cache standardized ODE expressions using the expression parser."""
         try:
             result = process_expression(self.expr)
             self.undeter_terms = result.undetermined_terms
@@ -83,21 +88,19 @@ class ODEModule(DEBase):
                 raise InvalidExpressionError(self.expr, "Not a valid ordinary differential equation expression.")
             return result
         except Exception as e:
-            self.logger.error(f"ODE标准化失败: {e}")
-            raise ExpressionStandardizationError(self.expr, "ODE标准化", str(e))
+            self.logger.error(f"Failed to standardize ODE: {e}")
+            raise ExpressionStandardizationError(self.expr, "ODE standardization", str(e))
     
     @property
     def stand_ode(self):
-        """
-        返回标准化后的 ODE 方程列表（使用缓存机制）
-        """
+        """Return standardized ODE expressions (with caching)."""
         if self._cache_invalid or self._cached_standard_result is None:
             self._cached_standard_result = self._compute_standard_ode()
             self._cache_invalid = False
         return self._cached_standard_result.standardized_expressions
     
     def _invalidate_cache(self) -> None:
-        """使缓存失效"""
+        """Invalidate cached standardized result."""
         self._cache_invalid = True
     
     # 提供必要的属性以供适配器使用（从 ExprParser 结果读取）
@@ -113,90 +116,89 @@ class ODEModule(DEBase):
     @property
     def expr(self) -> Union[sympy.Expr, list]:
         """
-        返回表达式对象
-        重写基类属性以支持缓存管理
-        
+        Return the current expression object.
+        Override to integrate cache invalidation.
+
         Returns:
-            表达式对象
+            The SymPy expression or list of expressions.
         """
         return self._sympy_obj
     
     @expr.setter
     def expr(self, new_expr: Union[sympy.Expr, list]):
         """
-        设置新表达式并自动失效缓存
-        修复报告中提到的缓存失效机制不完整问题
-        
+        Set a new expression and invalidate internal caches.
+
         Args:
-            new_expr: 新的表达式对象
+            new_expr: New SymPy expression or list of expressions.
         """
         self._sympy_obj = new_expr
         self._invalidate_cache()
-        self.logger.debug("表达式已更新，缓存已失效")
+        self.logger.debug("Expression updated; cache invalidated")
     
     @property
     def show_stand_ode(self) -> None:
         """
-        展示标准化后的ODE方程
-        优化了异常处理和显示逻辑
+        Display standardized ODE expressions.
+        Includes better error handling and formatting.
         """
         try:
             stand_ode_list = self.stand_ode
             if not stand_ode_list:
-                raise ExpressionStandardizationError(self.expr, "系统标准化", "无法转换为标准形式")
+                raise ExpressionStandardizationError(self.expr, "system standardization", "cannot convert to standard form")
             
-            print("标准ODE (stand_ode):")
+            print("Standard ODE (stand_ode):")
             for stand in stand_ode_list:
                 display(stand)
-            print("\n")
+            print("\\n")
             
             if hasattr(self, 'subs_vars_dict') and self.subs_vars_dict:
-                print("替代变量 (subs_vars_dict):")
+                print("Substitution variables (subs_vars_dict):")
                 for key, value in self.subs_vars_dict.items():
                     display(sympy.Eq(value, key))
-                print("\n")
+                print("\\n")
             
             if hasattr(self, 'undeter_terms') and self.undeter_terms:
-                print("待定求解项 (undeter_terms):")
+                print("Undetermined terms (undeter_terms):")
                 for und_terms in self.undeter_terms:
                     display(und_terms)
                     
         except Exception as e:
-            self.logger.error(f"显示标准ODE失败: {e}")
+            self.logger.error(f"Failed to display standardized ODE: {e}")
             raise
     
     def ode2scipy(self, mode: str, cond: Dict, const_cond: Optional[Dict] = None):
         """
-        将sympy格式的ODE转换为scipy标准格式
-        
+        Convert a SymPy ODE into SciPy-compatible callable(s).
+
         Args:
-            mode: 求解模式 ('IVP' 或 'BVP')
-            cond: 条件字典
-            const_cond: 常数条件字典
-            
+            mode: Solve mode ('IVP' or 'BVP').
+            cond: Conditions dictionary (initial or boundary conditions).
+            const_cond: Optional constants dictionary.
+
         Returns:
-            scipy格式的函数和参数
+            Tuple of SciPy-compatible functions and parameters.
         """
         try:
             # 使用包内绝对导入，避免不同导入路径导致的相对导入越界问题
             from happymath.DiffEq.ODE.adapters.ode_scipy_adapter import ode2scipy as _ode2scipy_adapter
             return _ode2scipy_adapter(self, mode, cond, const_cond)
         except Exception as e:
-            self.logger.error(f"转换为scipy格式失败: {e}")
-            raise SolverExecutionError("ode2scipy", "格式转换", e)
+            self.logger.error(f"Failed to convert to SciPy format: {e}")
+            raise SolverExecutionError("ode2scipy", "format conversion", e)
     
     def ana_solve(self, eq: Optional[Union[sympy.Expr, list]] = None, 
                   ics: Optional[Dict] = None, **kwargs) -> Union[sympy.Eq, List[sympy.Eq]]:
         """
-        求解析解
-        
+        Compute the analytic solution using SymPy dsolve.
+
         Args:
-            eq: 方程表达式，默认使用当前表达式
-            ics: 初始条件
-            **kwargs: 其他dsolve参数
-            
+            eq: Optional equation/expression; default to current expression.
+            ics: Initial conditions for dsolve.
+            **kwargs: Extra keyword arguments forwarded to dsolve.
+
         Returns:
-            解析解
+            SymPy Eq or list of Eq representing the solution.
         """
         if eq is None:
             eq = self.expr
@@ -205,8 +207,8 @@ class ODEModule(DEBase):
             ana_solution = dsolve(eq, ics=ics, **kwargs)
             return ana_solution
         except Exception as e:
-            self.logger.error(f"解析求解失败: {e}")
-            raise SolverExecutionError("dsolve", "解析求解", e)
+            self.logger.error(f"Analytic solve failed: {e}")
+            raise SolverExecutionError("dsolve", "analytic solve", e)
     
     def num_solve(self, mode: str, cond: Dict, domain: np.ndarray, 
                   const_cond: Optional[Dict] = None, bc: Optional[Callable] = None,
@@ -214,21 +216,21 @@ class ODEModule(DEBase):
                   solve_method: str = "RK45",
                   tol: float = 0.001, bc_tol: Optional[float] = None) -> np.ndarray:
         """
-        数值求解方法（已合并详细求解逻辑，保持向后兼容：返回解数组）
-        
+        Numerical solver entry point (returns solution array for backward compatibility).
+
         Args:
-            mode: 求解模式
-            cond: 条件字典
-            domain: 定义域
-            const_cond: 常数条件
-            bc: 边界条件函数（BVP需要）
-            init_guess: 初始猜测
-            solve_method: 求解方法
-            tol: 容差
-            bc_tol: 边界条件容差
-            
+            mode: Solve mode ('IVP' or 'BVP').
+            cond: Conditions dictionary.
+            domain: Independent variable sample points (numpy array).
+            const_cond: Optional constants dictionary.
+            bc: Boundary condition function (required for BVP).
+            init_guess: Initial guess strategy or array for BVP.
+            solve_method: Underlying SciPy method name.
+            tol: Relative tolerance.
+            bc_tol: Boundary condition tolerance (optional).
+
         Returns:
-            解数组（np.ndarray）
+            Solution array as numpy.ndarray.
         """
         try:
             # 参数校验
@@ -244,40 +246,40 @@ class ODEModule(DEBase):
 
             return result.solution
         except Exception as e:
-            self.logger.error(f"数值求解失败: {e}")
+            self.logger.error(f"Numeric solve failed: {e}")
             if isinstance(e, DEException):
                 raise
             else:
-                raise SolverExecutionError(solve_method, "数值求解", e)
+                raise SolverExecutionError(solve_method, "numeric solve", e)
     
     def _validate_solver_parameters(self, mode: str, domain: np.ndarray, 
                                   init_guess: Union[str, np.ndarray], 
                                   bc: Optional[Callable]) -> None:
         """
-        验证求解器参数
-        
+        Validate common solver parameters.
+
         Args:
-            mode: 求解模式
-            domain: 定义域
-            init_guess: 初始猜测
-            bc: 边界条件函数
+            mode: Solve mode.
+            domain: Domain array.
+            init_guess: Initial guess setting.
+            bc: Boundary condition function.
         """
         ParameterValidator.validate_solver_parameters(mode, domain, init_guess, bc)
     
     def _solve_ivp(self, cond: Dict, domain: np.ndarray, solve_method: str,
                    tol: float, const_cond: Optional[Dict] = None) -> ODESolutionResult:
         """
-        求解初值问题
-        
+        Solve an initial value problem (IVP).
+
         Args:
-            cond: 条件字典
-            domain: 定义域
-            solve_method: 求解方法
-            tol: 容差
-            const_cond: 常数条件
-            
+            cond: Initial conditions mapping.
+            domain: 1D domain array (time grid).
+            solve_method: SciPy method name.
+            tol: Relative tolerance.
+            const_cond: Optional constants mapping.
+
         Returns:
-            求解结果对象
+            ODESolutionResult
         """
         try:
             # 转换为scipy格式
@@ -297,7 +299,7 @@ class ODEModule(DEBase):
             )
             
             if not sol_ivp.success:
-                raise SolverExecutionError(solve_method, "IVP求解", sol_ivp.message)
+                raise SolverExecutionError(solve_method, "IVP solve", sol_ivp.message)
             
             # 误差估计：简化为容差占位，后续如需可在适配层恢复
             local_errors = [tol] * len(domain)
@@ -309,38 +311,38 @@ class ODEModule(DEBase):
                 solution_func=lambda t: sol_ivp.sol(t) if hasattr(sol_ivp, 'sol') else None,
                 substitution_dict={"initial_conditions": cond, "constants": const_cond or {}},
                 success=True,
-                message="IVP求解成功"
+                message="IVP solve succeeded"
             )
             
         except Exception as e:
             if isinstance(e, DEException):
                 raise
             else:
-                raise SolverExecutionError(solve_method, "IVP求解", e)
+                raise SolverExecutionError(solve_method, "IVP solve", e)
     
     def _solve_bvp(self, cond: Dict, domain: np.ndarray, bc: Callable,
                    init_guess: Union[str, np.ndarray], solve_method: str,
                    tol: float, bc_tol: Optional[float] = None,
                    const_cond: Optional[Dict] = None) -> ODESolutionResult:
         """
-        求解边值问题
-        
+        Solve a boundary value problem (BVP).
+
         Args:
-            cond: 条件字典
-            domain: 定义域
-            bc: 边界条件函数
-            init_guess: 初始猜测
-            solve_method: 求解方法
-            tol: 容差
-            bc_tol: 边界条件容差
-            const_cond: 常数条件
-            
+            cond: Boundary conditions mapping.
+            domain: 1D domain array (grid).
+            bc: Boundary condition function.
+            init_guess: Initial guess setting or array.
+            solve_method: Underlying method name.
+            tol: Relative tolerance.
+            bc_tol: Boundary condition tolerance.
+            const_cond: Optional constants mapping.
+
         Returns:
-            求解结果对象
+            ODESolutionResult
         """
         try:
             if bc is None:
-                raise MissingParameterError("bc", "BVP求解")
+                raise MissingParameterError("bc", "BVP solve")
             
             # 转换为scipy格式
             scipy_ode_func, bc_func, subs_dict_bvp, const_values = self.ode2scipy(
@@ -368,7 +370,7 @@ class ODEModule(DEBase):
             )
             
             if not sol_bvp.success:
-                raise SolverExecutionError(solve_method, "BVP求解", sol_bvp.message)
+                raise SolverExecutionError(solve_method, "BVP solve", sol_bvp.message)
             
             # 评估解在域点上的值
             solution_values = sol_bvp.sol(domain).T
@@ -380,27 +382,29 @@ class ODEModule(DEBase):
                 solution_func=lambda t: sol_bvp.sol(t),
                 substitution_dict={"boundary_conditions": cond, "constants": const_cond or {}},
                 success=True,
-                message="BVP求解成功"
+                message="BVP solve succeeded"
             )
             
         except Exception as e:
             if isinstance(e, DEException):
                 raise
             else:
-                raise SolverExecutionError(solve_method, "BVP求解", e)
+                raise SolverExecutionError(solve_method, "BVP solve", e)
                 
-    # 为了与ode_scipy_adapter.py保持兼容性，添加以下方法
+    # Compatibility helpers for ode_scipy_adapter.py
     def _stand_ode_der_subs(self, stand_ode_list, Y_symbols):
         """
-        根据标准ODE得到导数项的替代项字典
-        stand_ode的等号左侧是导数表达式，右侧是替代变量，该函数仅返回所有替代导数项的替代变量
-        
+        Build a mapping for derivative substitutions from standardized ODEs.
+
+        The left-hand side of each standardized equation is the derivative; the right-hand side
+        is the substituted symbol. This function returns a dict for all substituted derivative terms.
+
         Args:
-            stand_ode_list: 标准ODE方程列表
-            Y_symbols: Y符号列表
-            
+            stand_ode_list: List of standardized SymPy equations.
+            Y_symbols: Symbols used for substitutions.
+
         Returns:
-            dict: 导数项替代字典
+            dict: Derivative substitution mapping.
         """
         try:
             Y = Y_symbols
@@ -418,20 +422,20 @@ class ODEModule(DEBase):
 
             return Y_subs_dict
         except Exception as e:
-            self.logger.warning(f"_stand_ode_der_subs失败: {e}")
+            self.logger.warning(f"_stand_ode_der_subs failed: {e}")
             return {}
     
     def _select_conds(self, non_derivative_conds, derivative_conds, third_conds):
         """
-        将BVP的定解条件按照边界值进行区分
-        
+        Group BVP conditions by boundary value.
+
         Args:
-            non_derivative_conds: 非导数条件
-            derivative_conds: 导数条件 
-            third_conds: 第三类条件
-            
+            non_derivative_conds: Non-derivative conditions.
+            derivative_conds: Derivative conditions.
+            third_conds: Third-type (expression) conditions.
+
         Returns:
-            dict: {ya_value:[non_der_expr1,der_expr1,third_conds_1,...], yb_value:[non_der_expr1,der_expr1,third_conds_1,...]}
+            dict: {ya_value: [...], yb_value: [...]} mapping.
         """
         if isinstance(non_derivative_conds, dict):
             non_der_list = [*non_derivative_conds.keys()]  # 函数项定解条件
@@ -456,7 +460,7 @@ class ODEModule(DEBase):
             if bc_value and self._is_number(bc_value[0]):
                 selected_conds_dict[bc_value[0]].append(non_der_key)
             else:
-                raise BoundaryConditionError("非导数条件", non_der_key, "边界值条件定义错误")
+                raise BoundaryConditionError("non-derivative-condition", non_der_key, "invalid boundary value condition")
 
         for der_key in der_list:
             bc_meta_list = self._split_expr_meta(der_key, mode_list=[sympy.Mul, sympy.Add, sympy.Pow, sympy.Subs])
@@ -464,7 +468,7 @@ class ODEModule(DEBase):
             if bc_value:
                 selected_conds_dict[bc_value[0]].append(der_key)
             else:
-                raise BoundaryConditionError("非导数条件", non_der_key, "边界值条件定义错误")
+                raise BoundaryConditionError("non-derivative-condition", non_der_key, "invalid boundary value condition")
 
         for third_key in third_list:
             bc_meta_list = self._split_expr_meta(third_key, mode_list=[sympy.Mul, sympy.Add, sympy.Pow, sympy.Subs])
@@ -472,7 +476,7 @@ class ODEModule(DEBase):
             if bc_value:
                 selected_conds_dict[bc_value[0]].append(third_key)
             else:
-                raise BoundaryConditionError("非导数条件", non_der_key, "边界值条件定义错误")
+                raise BoundaryConditionError("non-derivative-condition", non_der_key, "invalid boundary value condition")
 
         return dict(selected_conds_dict)
 
@@ -529,7 +533,7 @@ class ODEModule(DEBase):
     
     @property
     def _is_ivp_bvp(self):
-        """为ode_scipy_adapter.py兼容性保留的属性"""
+        """Compatibility attribute kept for ode_scipy_adapter.py."""
         # 这里是一个简化的实现，原来的逻辑更复杂
         if not hasattr(self, '__is_ivp_bvp'):
             self.__is_ivp_bvp = "BVP"  # 默认返回BVP

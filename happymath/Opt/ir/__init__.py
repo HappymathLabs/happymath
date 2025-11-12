@@ -1,7 +1,7 @@
 """
-Opt IR 模块
+Opt IR module.
 
-提供优化问题的统一中间表示定义，供解析器与求解器共同使用。
+Provide unified intermediate representations consumed by parsers and solvers.
 """
 
 from .definitions import (

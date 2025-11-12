@@ -1,12 +1,12 @@
 """
-IVP（初值问题）测试代码
-基于ODEModule和scipy的对比测试
+IVP (Initial Value Problem) Test Code
+Comparative tests based on ODEModule and scipy
 
-测试包括：
-1. 一阶ODE的IVP问题
-2. 一阶ODE组的IVP问题  
-3. 二阶ODE的IVP问题
-4. 复杂ODE组的IVP问题
+Tests include:
+1. First-order ODE IVP problems
+2. First-order ODE system IVP problems
+3. Second-order ODE IVP problems
+4. Complex ODE system IVP problems
 """
 
 import numpy as np
@@ -14,53 +14,53 @@ import pytest
 import sympy
 from scipy.integrate import solve_ivp
 
-# 导入本地模块
+# Import local modules
 from happymath.DiffEq.ODE.ODEModule import ODEModule
 
 
 class TestFirstOrderODEIVP:
-    """一阶ODE的IVP问题测试类"""
+    """First-order ODE IVP problem test class"""
     
     def test_first_order_ode_ivp_case1(self):
         """
-        测试案例1: dy/dt = -y + sin(t) - exp(-t) + k + m, y(0) = 0
-        包含常数项k=1, m=2的一阶线性ODE
+        Test case 1: dy/dt = -y + sin(t) - exp(-t) + k + m, y(0) = 0
+        First-order linear ODE with constant terms k=1, m=2
         """
-        # 定义sympy符号与函数
+        # Define sympy symbols and functions
         y = sympy.Function("y")
         t = sympy.symbols("t")
         k, m = sympy.symbols("k m", constant=True)
 
-        # 定义ode表达式与初值条件
+        # Define ODE expression and initial conditions
         ode_expr = -y(t).diff(t, 1) - y(t) - sympy.exp(-t) + sympy.sin(t) + k + m
         ics = {y(0): 0}
         const_cond = {k: 1, m: 2}
         
-        # 创建ODEModule对象
+        # Create ODEModule object
         ode_obj = ODEModule(ode_expr)
         
-        # 时间范围和初值条件
+        # Time range and initial conditions
         t_span = np.linspace(0, 15, 100)
         t_range = (0, 15)
         y0 = [0]
 
-        # scipy求解方式
+        # scipy solving method
         def scipy_ode(t, y, k, m):
             return -y - np.exp(-t) + np.sin(t) + k + m
 
         sol_scipy = solve_ivp(scipy_ode, t_range, y0, t_eval=t_span, args=[1, 2])
         
-        # happymath求解方式
+        # happymath solving method
         happymath_func, S, const = ode_obj.ode2scipy("IVP", ics, const_cond)
         sol_happymath = solve_ivp(happymath_func, t_range, S, t_eval=t_span, args=const)
 
-        # 比较结果
+        # Compare results
         assert np.allclose(sol_scipy.y[0], sol_happymath.y[0], rtol=1e-10)
 
     def test_first_order_ode_ivp_case2(self):
         """
-        测试案例2: dy/dt = 2y + t, y(0) = 1
-        简单的一阶线性ODE
+        Test case 2: dy/dt = 2y + t, y(0) = 1
+        Simple first-order linear ODE
         """
         y = sympy.Function("y")
         t = sympy.symbols("t")
@@ -86,8 +86,8 @@ class TestFirstOrderODEIVP:
 
     def test_first_order_ode_ivp_case3(self):
         """
-        测试案例3: dy/dt = -3y + cos(t), y(0) = 2
-        包含三角函数的一阶ODE
+        Test case 3: dy/dt = -3y + cos(t), y(0) = 2
+        First-order ODE with trigonometric functions
         """
         y = sympy.Function("y")
         t = sympy.symbols("t")
@@ -113,8 +113,8 @@ class TestFirstOrderODEIVP:
 
     def test_first_order_ode_ivp_case4(self):
         """
-        测试案例4: dy/dt = y^2 - t, y(0) = 0.5
-        非线性一阶ODE
+        Test case 4: dy/dt = y^2 - t, y(0) = 0.5
+        Nonlinear first-order ODE
         """
         y = sympy.Function("y")
         t = sympy.symbols("t")
@@ -140,11 +140,11 @@ class TestFirstOrderODEIVP:
 
 
 class TestFirstOrderODESystemIVP:
-    """一阶ODE组的IVP问题测试类"""
+    """First-order ODE system IVP problem test class"""
     
     def test_first_order_system_ivp_case1(self):
         """
-        测试案例1: dy1/dx = 2*y1 + y2, dy2/dx = y1 + 3*y2
+        Test case 1: dy1/dx = 2*y1 + y2, dy2/dx = y1 + 3*y2
         y1(0) = 1, y2(0) = 0
         """
         y1 = sympy.Function('y1')
@@ -175,7 +175,7 @@ class TestFirstOrderODESystemIVP:
 
     def test_first_order_system_ivp_case2(self):
         """
-        测试案例2: dy1/dt = -y1 + 2*y2, dy2/dt = 3*y1 - y2
+        Test case 2: dy1/dt = -y1 + 2*y2, dy2/dt = 3*y1 - y2
         y1(0) = 2, y2(0) = 1
         """
         y1 = sympy.Function('y1')
@@ -206,8 +206,8 @@ class TestFirstOrderODESystemIVP:
 
     def test_first_order_system_ivp_case3(self):
         """
-        测试案例3: dy1/dt = y2, dy2/dt = -y1 + sin(t)
-        简谐振动系统，y1(0) = 0, y2(0) = 1
+        Test case 3: dy1/dt = y2, dy2/dt = -y1 + sin(t)
+        Simple harmonic motion system, y1(0) = 0, y2(0) = 1
         """
         y1 = sympy.Function('y1')
         y2 = sympy.Function('y2')
@@ -237,11 +237,11 @@ class TestFirstOrderODESystemIVP:
 
 
 class TestSecondOrderODEIVP:
-    """二阶ODE的IVP问题测试类"""
+    """Second-order ODE IVP problem test class"""
     
     def test_second_order_ode_ivp_case1(self):
         """
-        测试案例1: d²y/dt² + y + exp(-t) - sin(t) = 0
+        Test case 1: d²y/dt² + y + exp(-t) - sin(t) = 0
         y(0) = 0, y'(0) = 1
         """
         y = sympy.Function("y")
@@ -269,7 +269,7 @@ class TestSecondOrderODEIVP:
 
     def test_second_order_ode_ivp_case2(self):
         """
-        测试案例2: d²y/dt² - 4*dy/dt + 3*y = 0
+        Test case 2: d²y/dt² - 4*dy/dt + 3*y = 0
         y(0) = 1, y'(0) = 0
         """
         y = sympy.Function("y")
@@ -297,8 +297,8 @@ class TestSecondOrderODEIVP:
 
     def test_second_order_ode_ivp_case3(self):
         """
-        测试案例3: d²y/dt² + 2*dy/dt + 2*y = cos(t)
-        带阻尼的受迫振动，y(0) = 0, y'(0) = 1
+        Test case 3: d²y/dt² + 2*dy/dt + 2*y = cos(t)
+        Damped forced vibration, y(0) = 0, y'(0) = 1
         """
         y = sympy.Function("y")
         t = sympy.symbols("t")
@@ -325,11 +325,11 @@ class TestSecondOrderODEIVP:
 
 
 class TestComplexODESystemIVP:
-    """复杂ODE组的IVP问题测试类"""
+    """Complex ODE system IVP problem test class"""
     
     def test_complex_system_ivp_case1(self):
         """
-        测试案例1: 混合阶数的复杂ODE组
+        Test case 1: Complex ODE system with mixed orders
         d²x1/dt² = 2*x1 + x2, dx2/dt = x1 + 3*x2
         x1(0) = 0, x1'(0) = 1, x2(0) = 0
         """
@@ -360,7 +360,7 @@ class TestComplexODESystemIVP:
 
     def test_complex_system_ivp_case2(self):
         """
-        测试案例2: 简化的线性系统
+        Test case 2: Simplified linear system
         dx1/dt = x1 + x2, dx2/dt = x2 - x1
         x1(0) = 1, x2(0) = 0
         """
@@ -368,7 +368,7 @@ class TestComplexODESystemIVP:
         x2 = sympy.Function("x2")
         t = sympy.Symbol("t")
 
-        # 简化的线性系统
+        # Simplified linear system
         ode_1 = -x1(t).diff(t,1) + x1(t) + x2(t)
         ode_2 = -x2(t).diff(t,1) + x2(t) - x1(t)
         ode = [ode_1, ode_2]
@@ -396,7 +396,7 @@ class TestComplexODESystemIVP:
 
     def test_complex_system_ivp_case3(self):
         """
-        测试案例3: 三维ODE系统
+        Test case 3: Three-dimensional ODE system
         dx/dt = -x + y, dy/dt = x - y + z, dz/dt = y - 2*z
         """
         x = sympy.Function('x')
@@ -431,7 +431,7 @@ class TestComplexODESystemIVP:
 
 @pytest.fixture
 def common_test_parameters():
-    """通用测试参数的fixture"""
+    """Fixture for common test parameters"""
     return {
         'rtol': 1e-10,
         'default_t_span': np.linspace(0, 2, 30),

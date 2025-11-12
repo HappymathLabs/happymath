@@ -1,10 +1,10 @@
 """
-变量管理器
+Variable manager.
 
-负责管理优化问题中的所有变量符号，包括：
-- 收集所有变量符号
-- 管理变量排序（确保一致性）
-- 提供符号到索引的映射
+Manages all decision variable symbols:
+- Collect symbols
+- Provide stable ordering
+- Build symbol-to-index mapping
 """
 
 from typing import Set, List, Dict
@@ -12,15 +12,15 @@ from sympy import Symbol
 
 
 class VariableManager:
-    """变量管理器"""
+    """Manager for decision variable symbols."""
 
     def __init__(self, obj_analyzer, con_analyzer=None, extra_symbols=None, exclude_symbols=None):
         """
-        初始化变量管理器
+        Initialize variable manager.
 
         Args:
-            obj_analyzer: ObjectiveAnalyzer实例
-            con_analyzer: ConstraintAnalyzer实例（可选）
+            obj_analyzer: ObjectiveAnalyzer instance.
+            con_analyzer: Optional ConstraintAnalyzer instance.
         """
         self.obj_analyzer = obj_analyzer
         self.con_analyzer = con_analyzer
@@ -33,22 +33,22 @@ class VariableManager:
 
     def collect_all_symbols(self) -> Set[Symbol]:
         """
-        收集所有变量符号
+        Collect all decision variable symbols.
 
         Returns:
-            Set[Symbol]: 所有符号变量的集合
+            Set[Symbol]: Set of all symbols.
         """
         if self._all_symbols is not None:
             return self._all_symbols
 
-        # 从目标函数收集符号
+        # From objectives
         all_symbols = self.obj_analyzer.get_symbols().copy()
 
-        # 从约束条件收集符号
+        # From constraints
         if self.con_analyzer:
             all_symbols.update(self.con_analyzer.get_symbols())
 
-        # 合入外部提供的额外决策变量符号（如控制系数、初值符号等）
+        # Merge external symbols (e.g., control coefficients, initial symbols)
         for s in self._extra_symbols:
             try:
                 if s is not None:
@@ -56,7 +56,7 @@ class VariableManager:
             except Exception:
                 continue
 
-        # 排除连续域自变量（如 t）等
+        # Exclude independent domain variables (e.g., t)
         if self._exclude_symbols:
             all_symbols = {s for s in all_symbols if s not in self._exclude_symbols}
 
@@ -65,10 +65,10 @@ class VariableManager:
 
     def get_sorted_symbols(self) -> List[Symbol]:
         """
-        获取排序后的符号列表（按字符串表示排序）
+        Return symbols sorted by string representation.
 
         Returns:
-            List[Symbol]: 排序后的符号列表
+            List[Symbol]
         """
         if self._sorted_symbols is not None:
             return self._sorted_symbols
@@ -79,10 +79,10 @@ class VariableManager:
 
     def get_symbol_to_index_mapping(self) -> Dict[Symbol, int]:
         """
-        获取符号到索引的映射
+        Return mapping from symbol to index.
 
         Returns:
-            Dict[Symbol, int]: 符号到索引的映射字典
+            Dict[Symbol, int]
         """
         if self._symbol_to_index is not None:
             return self._symbol_to_index
@@ -93,20 +93,20 @@ class VariableManager:
 
     @property
     def all_symbols(self) -> Set[Symbol]:
-        """获取所有符号"""
+        """Return all symbols."""
         return self.collect_all_symbols()
 
     @property
     def sorted_symbols(self) -> List[Symbol]:
-        """获取排序后的符号列表"""
+        """Return sorted symbols."""
         return self.get_sorted_symbols()
 
     @property
     def symbol_to_index(self) -> Dict[Symbol, int]:
-        """获取符号到索引的映射"""
+        """Return symbol-to-index mapping."""
         return self.get_symbol_to_index_mapping()
 
     @property
     def n_variables(self) -> int:
-        """获取变量数量"""
+        """Return number of variables."""
         return len(self.sorted_symbols)

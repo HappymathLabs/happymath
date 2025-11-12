@@ -57,7 +57,6 @@ def rov(dataset, weights, criterion_type, graph = True, verbose = True):
         flow = flow[np.argsort(flow[:, 1])]
         flow = flow[::-1]
         ranking(flow)
-    # 将1D评分数组转换为2D格式（方案编号 + 评分）
     num_alternatives = u.shape[0]
     indices = np.arange(1, num_alternatives + 1).reshape(-1, 1)
     scores_reshaped = u.reshape(-1, 1)

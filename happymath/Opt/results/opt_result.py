@@ -1,4 +1,4 @@
-"""优化结果类"""
+"""Optimization result container"""
 
 from datetime import datetime
 from typing import Any, Dict, List, Union, Optional
@@ -6,7 +6,7 @@ import numpy as np
 
 
 class OptResult:
-    """统一封装PyomoSolver和PymooSolver的求解结果"""
+    """Unified wrapper for results from PyomoSolver and PymooSolver"""
 
     def __init__(self, results: Union[Dict, List[Dict]], opt_module_info: Dict):
         """

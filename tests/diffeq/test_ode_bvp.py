@@ -1,13 +1,12 @@
 """
-BVP (边值问题) 测试模块
+BVP (Boundary Value Problem) Test Module
 
-本模块包含基于pytest框架的边值问题测试用例，用于验证ODEModule求解BVP问题的正确性。
-所有测试都将比较ODEModule求解结果和scipy原生求解结果的一致性。
+This module contains boundary value problem test cases based on pytest framework, used to verify the correctness of ODEModule for solving BVP problems. All tests will compare the consistency between ODEModule solutions and scipy native solutions.
 
-测试类型包括：
-1. 二阶ODE组的BVP问题
-2. 带常数的BVP问题  
-3. 带第三类边界条件的BVP问题
+Test types include:
+1. Second-order ODE system BVP problems
+2. BVP problems with constants
+3. BVP problems with third-type boundary conditions
 """
 
 import numpy as np
@@ -19,39 +18,39 @@ from happymath.DiffEq.ODE.ODEModule import ODEModule
 
 
 class TestSecondOrderODESystemBVP:
-    """二阶ODE组的BVP问题测试类"""
+    """Second-order ODE system BVP problem test class"""
 
     def test_second_order_ode_bvp_case1(self):
         """
-        测试标准二阶ODE组BVP问题求解
+        Test standard second-order ODE system BVP problem solving
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + 2*y1(x) + y2(x) = 0
         -y2'(x) + y1(x) + 3*y2(x) = 0
         
-        边界条件:
+        Boundary conditions:
         y1'(0) = 1, y1(1) = 1, y2(0) = 1
         """
-        # 定义函数和变量
+        # Define functions and variables
         y1 = sympy.Function('y1')
         y2 = sympy.Function('y2')
         x = sympy.Symbol('x')
 
-        # 定义微分方程组
+        # Define differential equation system
         deqn1 = -y1(x).diff(x, 2) + 2 * y1(x) + y2(x)
         deqn2 = -y2(x).diff(x, 1) + y1(x) + 3 * y2(x)
         deqn = [deqn1, deqn2]
         
-        # 创建ODEModule对象
+        # Create ODEModule object
         deqn_obj = ODEModule(deqn)
 
-        # 定义边界条件
+        # Define boundary conditions
         bcs = {y1(x).diff(x).subs(x, 0): 1, y1(1): 1, y2(0): 1}
         
-        # 获取happymath求解函数
+        # Get happymath solving function
         happymath_func, bc_func, guess_shape, const_list = deqn_obj.ode2scipy("BVP", bcs)
 
-        # 定义对应的scipy求解函数
+        # Define corresponding scipy solving function
         def scipy_ode_second(t, S):
             y1, v, y2 = S
             return [v, 2 * y1 + y2, y1 + 3 * y2]
@@ -59,43 +58,43 @@ class TestSecondOrderODESystemBVP:
         def bc(ya, yb):
             return np.array([yb[0] - 1, ya[1] - 1, ya[2] - 1])
 
-        # 设置初值条件
+        # Set initial conditions
         t_guess = np.linspace(0, 1, 100)
         y_guess = np.zeros((len(guess_shape), t_guess.size))
 
-        # 求解
+        # Solve
         sol_scipy_bvp = solve_bvp(scipy_ode_second, bc, t_guess, y_guess)
         sol_happymath_bvp = solve_bvp(happymath_func, bc_func, t_guess, y_guess)
 
-        # 验证结果一致性
+        # Verify result consistency
         assert np.allclose(sol_scipy_bvp.y[0], sol_happymath_bvp.y[0], rtol=1e-10)
         assert np.allclose(sol_scipy_bvp.y[1], sol_happymath_bvp.y[1], rtol=1e-10)
         assert np.allclose(sol_scipy_bvp.y[2], sol_happymath_bvp.y[2], rtol=1e-10)
 
     def test_second_order_ode_bvp_case2(self):
         """
-        测试不同系数的二阶ODE组BVP问题
+        Test second-order ODE system BVP problem with different coefficients
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + 3*y1(x) + 2*y2(x) = 0
         -y2'(x) + 2*y1(x) + y2(x) = 0
         
-        边界条件:
+        Boundary conditions:
         y1'(0) = 2, y1(1) = 0, y2(0) = -1
         """
-        # 定义函数和变量
+        # Define functions and variables
         y1 = sympy.Function('y1')
         y2 = sympy.Function('y2')
         x = sympy.Symbol('x')
 
-        # 定义微分方程组
+        # Define differential equation system
         deqn1 = -y1(x).diff(x, 2) + 3 * y1(x) + 2 * y2(x)
         deqn2 = -y2(x).diff(x, 1) + 2 * y1(x) + y2(x)
         deqn = [deqn1, deqn2]
         
         deqn_obj = ODEModule(deqn)
 
-        # 定义边界条件
+        # Define boundary conditions
         bcs = {y1(x).diff(x).subs(x, 0): 2, y1(1): 0, y2(0): -1}
         
         happymath_func, bc_func, guess_shape, const_list = deqn_obj.ode2scipy("BVP", bcs)
@@ -119,13 +118,13 @@ class TestSecondOrderODESystemBVP:
 
     def test_second_order_ode_bvp_case3(self):
         """
-        测试负系数的二阶ODE组BVP问题
+        Test second-order ODE system BVP problem with negative coefficients
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) - y1(x) + y2(x) = 0
         -y2'(x) + y1(x) - 2*y2(x) = 0
         
-        边界条件:
+        Boundary conditions:
         y1'(0) = 0, y1(1) = 1, y2(0) = 2
         """
         y1 = sympy.Function('y1')
@@ -161,13 +160,13 @@ class TestSecondOrderODESystemBVP:
 
     def test_second_order_ode_bvp_case4(self):
         """
-        测试更复杂系数的二阶ODE组BVP问题
+        Test second-order ODE system BVP problem with more complex coefficients
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + 4*y1(x) - 3*y2(x) = 0
         -y2'(x) - 2*y1(x) + 5*y2(x) = 0
         
-        边界条件:
+        Boundary conditions:
         y1'(0) = -1, y1(1) = 2, y2(0) = 0
         """
         y1 = sympy.Function('y1')
@@ -203,13 +202,13 @@ class TestSecondOrderODESystemBVP:
 
     def test_second_order_ode_bvp_case5(self):
         """
-        测试分数系数的二阶ODE组BVP问题
+        Test second-order ODE system BVP problem with fractional coefficients
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + 0.5*y1(x) + 1.5*y2(x) = 0
         -y2'(x) + 2.5*y1(x) + 0.8*y2(x) = 0
         
-        边界条件:
+        Boundary conditions:
         y1'(0) = 1.5, y1(1) = -0.5, y2(0) = 2.2
         """
         y1 = sympy.Function('y1')
@@ -245,19 +244,19 @@ class TestSecondOrderODESystemBVP:
 
 
 class TestConstantBVP:
-    """带常数的BVP问题测试类"""
+    """BVP problem test class with constants"""
 
     def test_constant_bvp_case1(self):
         """
-        测试标准带常数的BVP问题求解
+        Test standard BVP problem with constants solving
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + 2*y1(x) + y2(x) + k = 0
         -y2'(x) + y1(x) + 3*y2(x) = 0
         
-        边界条件:
+        Boundary conditions:
         y1'(0) = 1, y1(1) = 1, y2(0) = 1
-        常数条件: k = 0
+        Constant condition: k = 0
         """
         y1 = sympy.Function('y1')
         y2 = sympy.Function('y2')
@@ -292,13 +291,13 @@ class TestConstantBVP:
 
     def test_constant_bvp_case2(self):
         """
-        测试非零常数的BVP问题
+        Test BVP problem with non-zero constants
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + 2*y1(x) + y2(x) + k = 0
         -y2'(x) + y1(x) + 3*y2(x) = 0
         
-        常数条件: k = 2.5
+        Constant condition: k = 2.5
         """
         y1 = sympy.Function('y1')
         y2 = sympy.Function('y2')
@@ -333,13 +332,13 @@ class TestConstantBVP:
 
     def test_constant_bvp_case3(self):
         """
-        测试多常数的BVP问题
+        Test BVP problem with multiple constants
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + a*y1(x) + y2(x) + b = 0
         -y2'(x) + y1(x) + c*y2(x) = 0
         
-        常数条件: a = 1.5, b = -1, c = 2.8
+        Constant conditions: a = 1.5, b = -1, c = 2.8
         """
         y1 = sympy.Function('y1')
         y2 = sympy.Function('y2')
@@ -376,13 +375,13 @@ class TestConstantBVP:
 
     def test_constant_bvp_case4(self):
         """
-        测试负常数的BVP问题
+        Test BVP problem with negative constants
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + y1(x) + y2(x) + k = 0
         -y2'(x) + y1(x) + 2*y2(x) = 0
         
-        常数条件: k = -3.2
+        Constant condition: k = -3.2
         """
         y1 = sympy.Function('y1')
         y2 = sympy.Function('y2')
@@ -417,17 +416,17 @@ class TestConstantBVP:
 
 
 class TestThirdTypeBoundaryConditionBVP:
-    """带第三类边界条件的BVP问题测试类"""
+    """BVP problem test class with third-type boundary conditions"""
 
     def test_third_type_bvp_case1(self):
         """
-        测试标准第三类边界条件BVP问题
+        Test standard third-type boundary condition BVP problem
         
-        微分方程组:
+        Differential equation system:
         -y1''(x) + 2*y1(x) + y2(x) = 0
         -y2'(x) + y1(x) + 3*y2(x) = 0
         
-        边界条件:
+        Boundary conditions:
         y1'(0) + y2(0) = 1, y1(1) = 1, y2(1) = 1
         """
         y1 = sympy.Function('y1')
@@ -461,9 +460,9 @@ class TestThirdTypeBoundaryConditionBVP:
 
     def test_third_type_bvp_case2(self):
         """
-        测试系数不为1的第三类边界条件
+        Test third-type boundary condition with coefficients not equal to 1
         
-        边界条件:
+        Boundary conditions:
         2*y1'(0) + 3*y2(0) = 5, y1(1) = 0, y2(1) = 2
         """
         y1 = sympy.Function('y1')
@@ -497,9 +496,9 @@ class TestThirdTypeBoundaryConditionBVP:
 
     def test_third_type_bvp_case3(self):
         """
-        测试负系数的第三类边界条件
+        Test third-type boundary condition with negative coefficients
         
-        边界条件:
+        Boundary conditions:
         y1'(0) - 2*y2(0) = -1, y1(1) = 1.5, y2(1) = -0.5
         """
         y1 = sympy.Function('y1')
@@ -533,9 +532,9 @@ class TestThirdTypeBoundaryConditionBVP:
 
     def test_third_type_bvp_case4(self):
         """
-        测试分数系数的第三类边界条件
+        Test third-type boundary condition with fractional coefficients
         
-        边界条件:
+        Boundary conditions:
         0.5*y1'(0) + 1.2*y2(0) = 2.3, y1(1) = 0.8, y2(1) = 1.1
         """
         y1 = sympy.Function('y1')
@@ -569,9 +568,9 @@ class TestThirdTypeBoundaryConditionBVP:
 
     def test_third_type_bvp_case5(self):
         """
-        测试简化的第三类边界条件
+        Test simplified third-type boundary condition
         
-        边界条件:
+        Boundary conditions:
         y1'(0) + y2(0) = 2, y1(1) = 0, y2(1) = 1
         """
         y1 = sympy.Function('y1')
@@ -607,24 +606,24 @@ class TestThirdTypeBoundaryConditionBVP:
 # pytest fixtures for common setup
 @pytest.fixture
 def standard_domain():
-    """标准求解域fixture"""
+    """Standard solution domain fixture"""
     return np.linspace(0, 1, 100)
 
 
 @pytest.fixture
 def extended_domain():
-    """扩展求解域fixture"""
+    """Extended solution domain fixture"""
     return np.linspace(0, 2, 150)
 
 
-# 实用工具函数
+# Utility functions
 def create_zero_guess(shape_length, domain_size):
-    """创建零初始猜测值"""
+    """Create zero initial guess values"""
     return np.zeros((shape_length, domain_size))
 
 
 def validate_bvp_solution(scipy_sol, happymath_sol, rtol=1e-10):
-    """验证BVP求解结果的一致性"""
+    """Validate consistency of BVP solution results"""
     for i in range(len(scipy_sol.y)):
         assert np.allclose(scipy_sol.y[i], happymath_sol.y[i], rtol=rtol)
 

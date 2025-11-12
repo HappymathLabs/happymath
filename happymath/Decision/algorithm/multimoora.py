@@ -43,46 +43,33 @@ def ranking_m(flow_1, flow_2, flow_3):
 def majority_rule(flow_1, flow_2, flow_3):
     n_alternatives = flow_1.shape[0]
     
-    # 获取各方法的排名（1为最优，n为最差）
-    # flow_1: 值越大越好，降序排列
-    rank_1 = np.argsort(-flow_1[:, 1]) + 1  # 负号实现降序
-    # flow_2: 值越小越好，升序排列  
+    rank_1 = np.argsort(-flow_1[:, 1]) + 1
     rank_2 = np.argsort(flow_2[:, 1]) + 1
-    # flow_3: 值越大越好，降序排列
-    rank_3 = np.argsort(-flow_3[:, 1]) + 1  # 负号实现降序
+    rank_3 = np.argsort(-flow_3[:, 1]) + 1
     
-    # 创建排名矩阵，每行代表一个方案在三个方法中的排名
     rankings = np.column_stack([rank_1, rank_2, rank_3])
     
-    # 两两比较矩阵：preference[i][j] = 1 表示方案i优于方案j
     preference_matrix = np.zeros((n_alternatives, n_alternatives))
     
     for i in range(n_alternatives):
         for j in range(n_alternatives):
             if i != j:
-                # 比较方案i和j在三个方法中的排名
-                wins = 0  # 方案i优于方案j的方法数
+                wins = 0
                 for k in range(3):
-                    if rankings[i, k] < rankings[j, k]:  # 排名越小越好
+                    if rankings[i, k] < rankings[j, k]:
                         wins += 1
                 
-                # 如果方案i在至少2个方法中优于方案j，则i整体优于j
                 if wins >= 2:
                     preference_matrix[i, j] = 1
     
-    # 计算每个方案的优势次数（胜过多少其他方案）
     dominance_count = np.sum(preference_matrix, axis=1)
     
-    # 检测异常情况
     warning_message = None
     
-    # 检测完全平局：所有方案优势次数相同
     if len(np.unique(dominance_count)) == 1:
         warning_message = "警告：三个方法的排名结果完全冲突，无法通过多数决规则确定明确的最优排序。所有方案的综合优势相同。"
         return None, warning_message
     
-    # 检测循环偏好
-    # 简单检测：如果优势矩阵不是传递的
     for i in range(n_alternatives):
         for j in range(n_alternatives):
             if preference_matrix[i, j] == 1:
@@ -95,15 +82,12 @@ def majority_rule(flow_1, flow_2, flow_3):
         if warning_message:
             break
     
-    # 基于优势次数生成最终排序
-    final_ranking_indices = np.argsort(-dominance_count)  # 降序排列
+    final_ranking_indices = np.argsort(-dominance_count)
     
-    # 生成标准化得分（与其他flow格式一致）
     final_scores = np.zeros(n_alternatives)
     for i, idx in enumerate(final_ranking_indices):
-        final_scores[idx] = (n_alternatives - i) / n_alternatives  # 标准化到[1/n, 1]区间
+        final_scores[idx] = (n_alternatives - i) / n_alternatives
     
-    # 构建flow_final数组，格式与flow_1, flow_2, flow_3一致
     flow_final = np.copy(final_scores)
     flow_final = np.reshape(flow_final, (n_alternatives, 1))
     flow_final = np.insert(flow_final, 0, list(range(1, n_alternatives + 1)), axis=1)
@@ -159,10 +143,8 @@ def multimoora(dataset, criterion_type, graph = True):
     if (graph == True):
         ranking_m(flow_1[np.argsort(flow_1[:, 1])[::-1]], flow_2[np.argsort(flow_2[:, 1])], flow_3[np.argsort(flow_3[:, 1])[::-1]])
     
-    # 应用多数决规则生成最终排序
     flow_final, warning_message = majority_rule(flow_1, flow_2, flow_3)
     
-    # 如果有警告信息，打印出来
     if warning_message:
         print(warning_message)
         if flow_final is None:

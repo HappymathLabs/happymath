@@ -1,8 +1,7 @@
 """
-Pymoo求解器 - 重构版本
+Pymoo solver - refactored version.
 
-继承BaseSolver基类，使用拆分出来的专门模块，大幅简化代码结构。
-从原来的1088行减少到约200行。
+Inherits BaseSolver and uses dedicated modules to simplify structure.
 """
 
 import time
@@ -20,44 +19,41 @@ from .pymoo.algorithm_factory import PymooAlgorithmFactory
 
 class PymooSolver(BaseSolver):
     """
-    Pymoo求解器类 - 重构版本
+    Pymoo solver class (refactored).
 
-    继承BaseSolver，使用专门的功能模块处理：
-    - 算法选择和创建 (PymooAlgorithmFactory)
-
-    代码行数从1088行减少到约200行。
+    Uses separate modules to handle responsibilities, e.g. algorithm selection/creation.
     """
 
     def __init__(self, problem: IProblemDefinition, epsilon: float = 1e-6):
         """
-        初始化PymooSolver
+        Initialize the PymooSolver.
 
         Args:
-            problem: 问题定义接口
-            epsilon: epsilon值，用于约束处理
+            problem: Problem definition instance.
+            epsilon: Epsilon for constraint handling.
         """
         super().__init__(problem)
         self.epsilon = epsilon
 
-        # 初始化专门的功能模块
+        # Initialize specialized modules
         self.algorithm_factory = PymooAlgorithmFactory()
         # 不再从 IR context 读取 Pymoo 配置；使用内置默认
         self._verbosity = True
         self._budget_override: Optional[int] = None
 
     def get_solver_type(self) -> str:
-        """获取求解器类型"""
+        """Return solver type."""
         return 'pymoo'
 
     def _get_default_solvers(self, max_solvers: Union[int, str]) -> List[str]:
         """
-        根据问题类型获取默认算法列表
+        Get default algorithm names based on problem type.
 
         Args:
-            max_solvers: 最大算法数量
+            max_solvers: Maximum number of algorithms.
 
         Returns:
-            算法名称列表
+            List of algorithm names.
         """
         problem_type_dict = self.problem.get_pymoo_problem_type()
         return self.algorithm_factory.get_recommended_algorithms(
@@ -66,15 +62,15 @@ class PymooSolver(BaseSolver):
 
     def _get_or_create_model(self) -> Any:
         """
-        获取或创建Pymoo问题实例
+        Get or create the Pymoo problem instance.
 
         Returns:
-            Pymoo问题实例
+            Pymoo problem instance.
         """
         if self._model_cache is None:
             adapter = PymooAdapter(self.problem, self.epsilon)
             self._model_cache = adapter.convert()
-            # 若有预算覆盖，则设置到问题实例
+            # Set evaluation budget hint if provided
             try:
                 if self._budget_override is not None:
                     setattr(self._model_cache, '_budget_hint', int(self._budget_override))
@@ -85,14 +81,14 @@ class PymooSolver(BaseSolver):
 
     def _solve_single(self, problem: Any, algorithm_name: str) -> Dict[str, Any]:
         """
-        使用单个算法求解
+        Solve with a single algorithm.
 
         Args:
-            problem: Pymoo问题实例
-            algorithm_name: 算法名称
+            problem: Pymoo problem instance.
+            algorithm_name: Algorithm name.
 
         Returns:
-            求解结果字典
+            Result dictionary.
         """
         start_time = time.time()
 
@@ -101,13 +97,13 @@ class PymooSolver(BaseSolver):
             problem_type_dict = self.problem.get_pymoo_problem_type()
             ok, reason = self.algorithm_factory.is_algorithm_compatible(algorithm_name, problem_type_dict)
             if not ok:
-                raise ValueError(f"算法 {algorithm_name} 与问题设置不兼容: {reason}")
+                raise ValueError(f"Algorithm {algorithm_name} is incompatible with problem settings: {reason}")
 
             algorithm = self.algorithm_factory.create_algorithm(algorithm_name, problem)
             if algorithm is None:
-                raise ValueError(f"无法创建算法: {algorithm_name}")
+                raise ValueError(f"Unable to create algorithm: {algorithm_name}")
 
-            # 直接使用算法进行求解（移除自动调参机制）
+            # Use the algorithm directly for solving (no auto-tuning)
             n_evals = self._calculate_evaluation_budget(problem)
             final_result = minimize(
                 problem,
@@ -117,12 +113,12 @@ class PymooSolver(BaseSolver):
                 verbose=False
             )
 
-            # 构造与原有路径一致的结果字典，便于后续提取
+            # Result dict consistent with previous path, for extraction
             result_info = {
                 'algorithm': algorithm_name,
                 'result': final_result,
                 'success': True,
-                'message': f"算法 {algorithm_name} 求解成功",
+                'message': f"Algorithm {algorithm_name} solved successfully",
                 'exec_time': time.time() - start_time,
                 'solver_type': 'pymoo',
                 'X': getattr(final_result, 'X', None),
@@ -132,7 +128,7 @@ class PymooSolver(BaseSolver):
                 'n_evals': getattr(final_result, 'evaluator', {}).get('n_eval', n_evals)
             }
 
-            # 提取解信息
+            # Extract solution info
             return self._extract_solution_info(result_info, algorithm_name)
 
         except Exception as e:
@@ -140,8 +136,8 @@ class PymooSolver(BaseSolver):
             return self._create_failed_result(algorithm_name, str(e), exec_time)
 
     def _calculate_evaluation_budget(self, problem: Any) -> int:
-        """计算评估预算（移除自动调参后，直接用于最终求解）。"""
-        # 优先使用问题对象提供的预算提示
+        """Compute evaluation budget used directly for solving (no auto-tuning)."""
+        # Prefer budget hint on the problem object
         try:
             hint = getattr(problem, '_budget_hint', None)
             if hint is not None:
@@ -149,7 +145,7 @@ class PymooSolver(BaseSolver):
         except Exception:
             pass
 
-        # 否则根据规模自适应计算（与适配器中的逻辑保持一致的量级）
+        # Else compute based on problem size similar to adapter logic
         n_constr = 0
         try:
             n_constr = int(getattr(problem, 'n_ieq_constr', 0) + getattr(problem, 'n_eq_constr', 0))
@@ -167,14 +163,14 @@ class PymooSolver(BaseSolver):
         algorithm_name: str
     ) -> Dict[str, Any]:
         """
-        从求解结果中提取解信息
+        Extract solution information from the solver result.
 
         Args:
-            result_info: 求解结果信息字典
-            algorithm_name: 算法名称
+            result_info: Result dictionary.
+            algorithm_name: Algorithm name.
 
         Returns:
-            标准化的解信息字典
+            Standardized result dictionary.
         """
         # 如果直接提供了 X/F 字段（不含 result 对象），仍需执行最小成功性校验
         if 'X' in result_info and 'F' in result_info and 'result' not in result_info:
@@ -182,7 +178,7 @@ class PymooSolver(BaseSolver):
             success_flag = result_info.get('success', True)
             if x_val is None or (hasattr(x_val, 'size') and x_val.size == 0):
                 success_flag = False
-                result_info['message'] = result_info.get('message') or f"算法 {algorithm_name} 未找到可行解"
+                result_info['message'] = result_info.get('message') or f"Algorithm {algorithm_name} did not find a feasible solution"
             result_info['success'] = success_flag
             return result_info
 

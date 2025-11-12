@@ -1,7 +1,7 @@
 """
-PDE validators 模块
+PDE validators module.
 
-提供基础的条件与参数校验工具，保持与 ODE 目录对齐的结构。
+Basic validators for parameters and conditions; aligned with ODE structure.
 """
 
 from collections.abc import Iterable
@@ -22,5 +22,4 @@ class PDEParameterValidator:
             raise TypeError("'dt' must be a number.")
         if dt_val <= 0:
             raise ValueError("'dt' must be positive.")
-
 

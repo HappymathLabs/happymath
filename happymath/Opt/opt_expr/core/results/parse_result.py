@@ -1,8 +1,8 @@
 """
-解析结果封装
+Wrapper for parse results.
 
-统一封装所有解析和分析结果，提供标准的访问接口。
-实现IProblemDefinition接口，支持面向接口的编程。
+Encapsulates all parsing and analysis results with standard accessors.
+Implements IProblemDefinition to support interface-oriented programming.
 """
 
 import math
@@ -31,19 +31,18 @@ from ....adapters.constraint_handlers.epsilon_estimator import EpsilonEstimator
 
 
 class ParseResult(IProblemDefinition):
-    """解析结果封装类"""
+    """Container for parsed expression results implementing IProblemDefinition."""
 
     def __init__(self, obj_analyzer, con_analyzer, var_manager, bound_manager, type_analyzer, functional_config=None):
         """
-        初始化解析结果
+        Initialize parse result container.
 
         Args:
-            obj_analyzer: ObjectiveAnalyzer实例
-            con_analyzer: ConstraintAnalyzer实例
-            var_manager: VariableManager实例
-            bound_manager: BoundManager实例
-            type_analyzer: ProblemTypeAnalyzer实例
-            
+            obj_analyzer: ObjectiveAnalyzer instance.
+            con_analyzer: ConstraintAnalyzer instance.
+            var_manager: VariableManager instance.
+            bound_manager: BoundManager instance.
+            type_analyzer: ProblemTypeAnalyzer instance.
         """
         self.obj_analyzer = obj_analyzer
         self.con_analyzer = con_analyzer
@@ -52,19 +51,19 @@ class ParseResult(IProblemDefinition):
         self.type_analyzer = type_analyzer
         self._functional_config = functional_config
 
-        # 确保所有分析器都已执行分析（仅代数路径）
+        # Ensure analyzers ran (algebraic path)
         self.obj_analyzer.analyze()
         if self.con_analyzer:
             self.con_analyzer.analyze()
 
-        # 构建统一IR
+        # Build unified IR
         self._ir_problem = self._build_ir_problem()
         self._inject_epsilon_hints()
 
-    # === 内部构建方法 ===
+    # === Internal builders ===
 
     def _to_float(self, value: Any) -> Optional[float]:
-        """将值安全转换为浮点数"""
+        """Safely convert a value to float."""
         if value is None:
             return None
         try:
@@ -73,7 +72,7 @@ class ParseResult(IProblemDefinition):
             return None
 
     def _build_ir_variables(self) -> List[IROptVariable]:
-        """构建IR变量列表"""
+        """Build IR variable list."""
         variables: List[IROptVariable] = []
         sorted_symbols = list(self.var_manager.sorted_symbols)
         xl, xu = self.variable_bounds
@@ -104,7 +103,7 @@ class ParseResult(IProblemDefinition):
 
             if discrete_map and idx in discrete_map:
                 values = tuple(discrete_map[idx])
-                unique_values = tuple(dict.fromkeys(values))  # 保持原顺序去重
+                unique_values = tuple(dict.fromkeys(values))  # de-dup preserving order
                 discrete_domain = IRDiscreteDomain(values=unique_values)
                 if set(unique_values).issubset({0, 1}) and len(set(unique_values)) <= 2:
                     var_type = IROptVarType.BINARY
@@ -286,7 +285,7 @@ class ParseResult(IProblemDefinition):
         obj_exprs = self.objective_exprs
 
         for idx, expr in enumerate(obj_exprs):
-            # 基准设定：按原表达式生成 free_symbols 与 lambda
+            # Baseline: derive free_symbols and lambda from original expression
             current_expr = expr
             free_symbols = tuple(sorted(list(current_expr.free_symbols), key=lambda s: str(s)))
             lambda_func = parsed_funcs[idx] if idx < len(parsed_funcs) else None
@@ -301,7 +300,7 @@ class ParseResult(IProblemDefinition):
             except Exception:
                 pass
 
-            # 若提供了功能型配置且声明了该目标的聚合信息，则构建 FUNCTIONAL spec
+            # If functional config provided, build FUNCTIONAL spec for the objective
             if self._functional_config is not None:
                 try:
                     cfg = self._functional_config
@@ -310,11 +309,11 @@ class ParseResult(IProblemDefinition):
                         functional_spec = build_pde_evaluator(cfg, objective_key=idx)
                         is_functional = True
                     else:
-                        # 默认 ODE/IVP（兼容）：BVP 的 evaluator 由上层直接构造或未来扩展
+                        # Default ODE/IVP (compat). BVP evaluator is built by upper layer or future extension.
                         functional_spec = build_ode_ivp_evaluator(cfg, objective_key=idx)
                         is_functional = True
                 except Exception:
-                    # 若构建失败，回退为代数目标（以便报错更可读）
+                    # On failure, fall back to algebraic objective for clearer errors
                     functional_spec = None
                     is_functional = is_functional
 
@@ -332,12 +331,12 @@ class ParseResult(IProblemDefinition):
         return objectives
 
     def _build_ir_problem(self) -> IROptProblem:
-        """构建整体IR问题表示"""
+        """Build the overall IR problem object."""
         variables = self._build_ir_variables()
         objectives = self._build_ir_objectives()
         constraints = list(self.parsed_constraints) if self.parsed_constraints else []
 
-        # 注入来自功能型配置的“虚拟 FUNCTIONAL 约束”（如终端/路径约束）
+        # Inject virtual FUNCTIONAL constraints from functional config (terminal/path constraints)
         if self._functional_config is not None:
             try:
                 meta = getattr(self._functional_config, 'constraint_meta', {}) if not isinstance(self._functional_config, dict) else (self._functional_config.get('constraint_meta') or {})
@@ -416,128 +415,128 @@ class ParseResult(IProblemDefinition):
             except Exception:
                 ir_con.epsilon_hint = None
 
-    # === 目标函数相关 ===
+    # === Objectives ===
 
     @property
     def objective_funcs(self) -> List:
-        """获取解析后的目标函数lambda列表"""
+        """Return parsed objective lambda list."""
         return self.obj_analyzer.parsed_funcs
 
     @property
     def objective_exprs(self) -> List:
-        """获取原始目标函数表达式列表"""
+        """Return raw objective expressions list."""
         return self.obj_analyzer.obj_func_list
 
     @property
     def objective_symbols(self) -> List[Set]:
-        """获取每个目标函数的符号列表"""
+        """Return symbol list per objective."""
         return self.obj_analyzer.symbols_list
 
     @property
     def senses(self) -> List[str]:
-        """获取优化方向列表 ('min'/'max')"""
+        """Return optimization senses list ('min'/'max')."""
         return self.obj_analyzer.senses
 
-    # === 约束相关 ===
+    # === Constraints ===
 
-    # 移除原始约束的直接暴露（避免旧接口继续被使用）
+    # Avoid exposing raw constraints directly (prevent legacy usage)
 
     @property
     def parsed_constraints(self) -> List:
-        """获取解析后的约束列表"""
+        """Return parsed constraints list."""
         if self.con_analyzer:
             return self.con_analyzer.parsed_con_list
         return []
 
     @property
     def discrete_constraints(self) -> List:
-        """获取离散变量约束"""
+        """Return discrete variable constraints."""
         if self.con_analyzer:
             return self.con_analyzer.discrete_constraints
         return []
 
     @property
     def inequality_constraints(self) -> List:
-        """获取不等式约束"""
+        """Return inequality constraints."""
         if self.con_analyzer:
             return self.con_analyzer.inequality_constraints
         return []
 
     @property
     def equality_constraints(self) -> List:
-        """获取等式约束"""
+        """Return equality constraints."""
         if self.con_analyzer:
             return self.con_analyzer.equality_constraints
         return []
 
-    # === 变量相关 ===
+    # === Variables ===
 
     @property
     def all_symbols(self) -> Set[Symbol]:
-        """获取所有符号变量"""
+        """Return all symbol variables."""
         return self.var_manager.all_symbols
 
     @property
     def sorted_symbols(self) -> List[Symbol]:
-        """获取排序后的符号列表"""
+        """Return sorted symbol list."""
         return self.var_manager.sorted_symbols
 
     @property
     def symbol_to_index(self) -> Dict[Symbol, int]:
-        """获取符号到索引的映射"""
+        """Return symbol-to-index mapping."""
         return self.var_manager.symbol_to_index
 
     @property
     def n_variables(self) -> int:
-        """获取变量数量"""
+        """Return number of variables."""
         return self.var_manager.n_variables
 
     @property
     def variable_bounds(self) -> tuple:
-        """获取变量边界 (lower_bounds, upper_bounds)"""
+        """Return variable bounds (lower_bounds, upper_bounds)."""
         return self.bound_manager.lower_bounds, self.bound_manager.upper_bounds
 
     @property
     def discrete_variables(self) -> Dict:
-        """获取离散变量字典"""
+        """Return discrete variable dictionary."""
         return self.bound_manager.discrete_variables
 
-    # === 问题类型 ===
+    # === Problem types ===
 
     @property
     def pyomo_problem_type(self) -> str:
-        """获取Pyomo问题类型"""
+        """Return Pyomo problem type."""
         return self.type_analyzer.pyomo_problem_type
 
     @property
     def is_convex_qp(self) -> bool:
-        """指示是否检测为凸二次规划"""
+        """Whether detected as a convex QP."""
         return bool(getattr(self.type_analyzer, 'is_convex_qp', False))
 
     @property
     def pymoo_problem_type(self) -> Dict[str, Any]:
-        """获取Pymoo问题类型"""
+        """Return Pymoo problem type mapping."""
         return self.type_analyzer.pymoo_problem_type
 
     def has_integer_variables(self) -> bool:
-        """检查是否有整数/离散变量"""
+        """Check if integer/discrete variables exist."""
         if self.con_analyzer:
             return self.con_analyzer.has_integer_variables()
         return False
 
-    # === IProblemDefinition接口实现 ===
+    # === IProblemDefinition implementation ===
 
     def get_pyomo_problem_type(self) -> str:
-        """获取Pyomo问题类型"""
+        """Return Pyomo problem type string."""
         return self.pyomo_problem_type
 
     def get_pymoo_problem_type(self) -> Dict[str, Any]:
-        """获取Pymoo问题类型字典"""
+        """Return Pymoo problem type dictionary."""
         return self.pymoo_problem_type
 
-    # === IR 接口 ===
+    # === IR accessors ===
 
     @property
     def ir_problem(self) -> IROptProblem:
-        """获取统一IR问题表示"""
+        """Return the unified IR problem."""
         return self._ir_problem

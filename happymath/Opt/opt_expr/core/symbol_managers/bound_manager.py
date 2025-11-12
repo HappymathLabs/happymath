@@ -1,10 +1,10 @@
 """
-边界管理器
+Bound manager.
 
-负责管理变量边界，包括：
-- 提取简单边界约束
-- 处理默认搜索范围
-- 管理离散变量的值域
+Manages variable bounds:
+- Extract simple bound constraints
+- Apply default search ranges
+- Handle discrete variable domains
 """
 
 import numpy as np
@@ -16,17 +16,17 @@ from ....ir import IRConstraintSense
 
 
 class BoundManager:
-    """边界管理器"""
+    """Manager for variable bounds and discrete domains."""
 
     def __init__(self, var_manager, con_analyzer=None, default_search_range=100, show_bound_warnings=True, tighten_config=None, external_bounds: Dict[Symbol, tuple] | None = None):
         """
-        初始化边界管理器
+        Initialize the bound manager.
 
         Args:
-            var_manager: VariableManager实例
-            con_analyzer: ConstraintAnalyzer实例（可选）
-            default_search_range: 默认搜索范围
-            show_bound_warnings: 是否显示变量边界警告（默认True）
+            var_manager: VariableManager instance.
+            con_analyzer: Optional ConstraintAnalyzer instance.
+            default_search_range: Default search range.
+            show_bound_warnings: Whether to warn for variable bounds.
         """
         self.var_manager = var_manager
         self.con_analyzer = con_analyzer
@@ -53,16 +53,16 @@ class BoundManager:
 
     def extract_bounds(self) -> tuple:
         """
-        提取变量边界
+        Extract variable bounds.
 
         Returns:
-            tuple: (lower_bounds, upper_bounds) 两个numpy数组
+            tuple of two numpy arrays: (lower_bounds, upper_bounds)
         """
         self._ensure_true_bounds()
         return self._true_lower_bounds, self._true_upper_bounds
 
     def _ensure_true_bounds(self) -> None:
-        """确保真实边界（允许±inf）已计算并执行配置的紧化策略"""
+        """Ensure true bounds (allowing ±inf) are computed and tightened per strategy."""
         if self._true_lower_bounds is not None and self._true_upper_bounds is not None:
             if not self._auto_tightening_done:
                 self._maybe_auto_tighten()
@@ -72,11 +72,11 @@ class BoundManager:
         sorted_symbols = self.var_manager.sorted_symbols
         symbol_to_index = self.var_manager.symbol_to_index
 
-        # 初始化边界为无穷
+        # Initialize bounds with infinities
         xl = np.full(n_var, -np.inf)
         xu = np.full(n_var, np.inf)
 
-        # 处理离散变量约束（FiniteSet）
+        # Handle discrete variable constraints (FiniteSet)
         discrete_vars = {}
         if self.con_analyzer:
             for con_item in self.con_analyzer.discrete_constraints:
@@ -101,7 +101,7 @@ class BoundManager:
                         else:
                             numeric_values.append(float(v))
                     except Exception:
-                        # 若无法转换，保持原值但跳过边界更新
+                        # If cannot convert, keep original but skip bound update
                         continue
 
                 if not numeric_values:
@@ -111,7 +111,7 @@ class BoundManager:
                 xl[var_idx] = min(numeric_values)
                 xu[var_idx] = max(numeric_values)
 
-        # 从原始约束中提取简单边界（如 x >= a, x <= b, Contains(x, Interval(a,b))）
+        # Extract simple bounds from constraints (e.g., x >= a, x <= b, Contains(x, Interval(a,b)))
         try:
             if self.con_analyzer:
                 from sympy import Eq
@@ -134,7 +134,7 @@ class BoundManager:
                             xu[i] = min(xu[i], b) if np.isfinite(xu[i]) else b
                         continue
 
-                    # 关系运算：尝试提取形如 Symbol 与 数值 的简单边界
+                    # Relational ops: try extracting simple bounds of Symbol vs numeric
                     if isinstance(con, ge_types + le_types + (Eq,)):
                         lhs, rhs = con.lhs, con.rhs
 

@@ -1,5 +1,5 @@
 """
-Pyomo求解器 - 重构版本
+PyomoSolver - 重构版本
 
 继承BaseSolver基类，消除代码重复，专注于Pyomo特定的求解逻辑。
 """
@@ -62,7 +62,7 @@ class PyomoSolver(BaseSolver):
         }
 
         if problem_type not in solver_mapping:
-            raise ValueError(f"不支持的问题类型: {problem_type}")
+            raise ValueError(f"Unsupported problem type: {problem_type}")
 
         # 基础候选
         solvers = list(solver_mapping[problem_type])
@@ -78,7 +78,7 @@ class PyomoSolver(BaseSolver):
                 except Exception:
                     pass
             else:
-                warnings.warn("检测到非凸或退化QP，默认跳过 OSQP，改用通用求解器。")
+                warnings.warn("Detected non-convex or degenerate QP: skipping OSQP and using generic solvers.")
 
         # 过滤不可用求解器，提升成功率与日志整洁
         available = []
@@ -152,7 +152,7 @@ class PyomoSolver(BaseSolver):
                 except Exception:
                     var_exp = False
                 if var_exp:
-                    raise ValueError("检测到变量指数形式（如 x**alpha）。Pyomo.DAE 不支持该类非线性，请使用 Pymoo 模式。")
+                    raise ValueError("Detected variable-in-exponent form (e.g., x**alpha). Pyomo.DAE does not support this nonlinearity; please use Pymoo mode.")
                 # 走 DAE 适配器（仅 ODE/IVP）
                 dae = PyomoDAEAdapter(pr, functional_cfg, epsilon=self.epsilon)
                 self._model_cache = dae.convert()
@@ -209,7 +209,7 @@ class PyomoSolver(BaseSolver):
         if model is None:
             raise ValueError(
                 "Pyomo模型为None，无法求解。\n"
-                "可能原因：表达式解析失败或模型转换失败"
+                "Possible reasons: expression parsing failed or model conversion failed"
             )
 
         # 验证变量数量
@@ -217,7 +217,7 @@ class PyomoSolver(BaseSolver):
         if n_vars == 0:
             raise ValueError(
                 "Pyomo模型中没有变量，无法求解。\n"
-                "请检查目标函数和约束条件是否包含变量"
+                "Please ensure the objective and constraints involve variables"
             )
 
     def _create_solver(self, solver_name: str) -> pyo.SolverFactory:
@@ -237,14 +237,14 @@ class PyomoSolver(BaseSolver):
             solver_pyomo = pyo.SolverFactory(solver_name)
         except Exception as e:
             raise RuntimeError(
-                f"无法创建求解器 '{solver_name}'。\n"
-                f"错误详情: {str(e)}\n"
-                f"请确保已安装该求解器"
+                f"Unable to create solver '{solver_name}'。\n"
+                f"Error details: {str(e)}\n"
+                f"Please ensure the solver is installed"
             ) from e
 
         if not solver_pyomo.available():
             raise RuntimeError(
-                f"求解器 '{solver_name}' 不可用。\n"
+                f"Solver '{solver_name}' 不可用。\n"
                 f"可能原因：\n"
                 f"1. 求解器未安装\n"
                 f"2. 求解器可执行文件不在PATH中\n"
@@ -303,7 +303,7 @@ class PyomoSolver(BaseSolver):
             'algorithm': solver_name,
             'result': results,
             'success': success,
-            'message': f"求解器 {solver_name} 完成" if success else f"求解器 {solver_name} 失败",
+            'message': f"Solver {solver_name} finished" if success else f"Solver {solver_name} failed",
             'exec_time': exec_time,
             'solver_type': 'pyomo',
             'variables': variables,
@@ -321,7 +321,7 @@ class PyomoSolver(BaseSolver):
         exec_time: float
     ) -> Dict[str, Any]:
         """
-        创建失败的结果字典
+        创建failed result dict
 
         Args:
             solver_name: 求解器名称
@@ -329,13 +329,13 @@ class PyomoSolver(BaseSolver):
             exec_time: 执行时间
 
         Returns:
-            失败结果字典
+            failed结果字典
         """
         return {
             'algorithm': solver_name,
             'result': None,
             'success': False,
-            'message': f"求解器 {solver_name} 失败: {error_message}",
+            'message': f"Solver {solver_name} failed: {error_message}",
             'exec_time': exec_time,
             'solver_type': 'pyomo',
             'variables': {},

@@ -1,12 +1,12 @@
 """
-目标函数分析器
+Objective function analyzer.
 
-负责解析和分析优化问题的目标函数，包括：
-- 解析目标函数字典 {"min"/"max": expr}
-- 提取目标函数列表和优化方向
-- 分析表达式类型（线性/二次/非线性）
-- 提取符号变量
-- 转换为lambda函数
+Parses and analyzes optimization objectives:
+- Parse objective dict {"min"/"max": expr}
+- Extract objective list and senses
+- Analyze expression types (linear/quadratic/nonlinear)
+- Extract symbols
+- Convert to lambda functions
 """
 
 from typing import Dict, List, Set, Any
@@ -20,24 +20,24 @@ from ....opt_core.opt_exceptions import InvalidExpressionError
 
 
 class ObjectiveAnalyzer(AnalyzerBase):
-    """目标函数分析器"""
+    """Objective analyzer"""
 
     def __init__(self, obj_func: Dict):
         """
-        初始化目标函数分析器
+        Initialize objective analyzer
 
         Args:
-            obj_func: 目标函数字典，格式为 {"min"/"max": expr}
-                     expr可以是单个表达式或表达式列表
+            obj_func: Objective dict in the form {"min"/"max": expr}.
+                     expr can be a single expression or a list of expressions
             
         """
         super().__init__(obj_func)
 
-        # 验证输入格式
+        # Validate input format
         if not isinstance(obj_func, dict):
             raise InvalidExpressionError(
                 expression=obj_func,
-                message="obj_func必须为字典，key为'min'或'max'，value为sympy表达式或表达式列表"
+                message="obj_func must be a dict with keys 'min' or 'max' and values as SymPy expression(s)"
             )
 
         self.obj_func_dict = obj_func
@@ -46,7 +46,7 @@ class ObjectiveAnalyzer(AnalyzerBase):
         self._symbols_list = []  # 每个目标函数对应的符号变量列表
         self._parsed_funcs = []  # lambda函数列表
 
-        # 解析字典
+        # Parse dict
         self._parse_dict()
 
         # 验证
@@ -55,16 +55,16 @@ class ObjectiveAnalyzer(AnalyzerBase):
     def _parse_dict(self):
         """解析目标函数字典，只接受 {"min"/"max": expr} 格式"""
         for key, value in self.obj_func_dict.items():
-            # 验证key必须是'min'或'max'
+            # key must be 'min' or 'max'
             if not isinstance(key, str) or key not in ("min", "max"):
                 raise InvalidExpressionError(
-                    message=f"目标函数的key必须为'min'或'max'，当前为{key}"
+                    message=f"Objective dict key must be 'min' or 'max', got {key}"
                 )
             
             sense = key
             expr = value
 
-            # 支持单个表达式或表达式列表
+            # Support single expression or list
             if isinstance(expr, list):
                 for single_expr in expr:
                     self._senses.append(sense)
@@ -74,13 +74,13 @@ class ObjectiveAnalyzer(AnalyzerBase):
                 self._obj_func_list.append(expr)
 
     def _validate_expressions(self):
-        """验证表达式是否有效"""
+        """Validate expressions"""
         for i, func in enumerate(self._obj_func_list):
-            # 检查是否为sympy表达式
+            # Must be a SymPy expression
             if not isinstance(func, Expr):
                 raise InvalidExpressionError(
                     expression=func,
-                    message=f"目标函数必须为sympy表达式，当前类型为{type(func)}"
+                    message=f"Objective must be a SymPy expression, got type {type(func)}"
                 )
 
             # 允许包含积分/微分的功能型目标（FUNCTIONAL），不再抛错
@@ -88,28 +88,28 @@ class ObjectiveAnalyzer(AnalyzerBase):
 
     def analyze(self) -> Dict[str, Any]:
         """
-        执行分析
+        Run analysis and return a result dictionary.
 
         Returns:
-            Dict: 包含分析结果的字典
+            Dict: Analysis results.
         """
         if self._analyzed:
             return self._analysis_cache
 
-        # 提取符号变量
+        # Extract symbols
         all_symbols = set()
         for expr in self._obj_func_list:
             expr_symbols = expr.free_symbols
             self._symbols_list.append(expr_symbols)
             all_symbols.update(expr_symbols)
 
-        # 转换为lambda函数
+        # Convert to lambda functions
         self._parsed_funcs = self._parse_to_lambdas()
 
-        # 分析表达式类型
+        # Analyze expression types
         expr_types = [self._analyze_single_expression_type(expr) for expr in self._obj_func_list]
 
-        # 缓存结果
+        # Cache results
         self._analysis_cache = {
             'obj_func_list': self._obj_func_list,
             'senses': self._senses,
@@ -123,29 +123,29 @@ class ObjectiveAnalyzer(AnalyzerBase):
         return self._analysis_cache
 
     def get_symbols(self) -> Set[Symbol]:
-        """获取所有符号变量"""
+        """Get all symbols"""
         if not self._analyzed:
             self.analyze()
         return self._analysis_cache['symbols']
 
     def _parse_to_lambdas(self) -> List:
-        """将sympy表达式转换为lambda函数列表"""
+        """Convert sympy expressions to a list of lambda functions"""
         parsed_funcs_list = []
         for i, func in enumerate(self._obj_func_list):
-            # 确保展开所有的Sum和Product表达式
+            # Expand Sum/Product expressions
             func = func.doit()
 
-            # 使用符号的完整字符串表示进行排序，确保排序稳定性
+            # Sort symbols by full string for stability
             symbols = sorted(list(self._symbols_list[i]), key=lambda s: str(s))
 
-            # 检查是否包含微分表达式
+            # Check if contains derivative expression
             if func.has(Derivative):
-                # 对于微分表达式，我们不能直接转换为lambda函数
-                # 暂时返回一个占位符函数，标记需要特殊处理
+                # Cannot directly convert derivative expressions to lambda;
+                # return a placeholder marking special handling
                 def differential_placeholder(*args):
                     raise NotImplementedError(
-                        f"微分表达式 {func} 需要特殊处理，不能直接作为目标函数优化。"
-                        "请考虑将微分方程作为约束条件，或者先求解微分方程。"
+                        f"Differential expression {func} requires special handling and cannot be directly optimized as objective. "
+                        f"Consider moving it to constraints or solving the differential equation first."
                     )
                 parsed_funcs_list.append(differential_placeholder)
             else:
@@ -154,22 +154,22 @@ class ObjectiveAnalyzer(AnalyzerBase):
                     parsed_funcs_list.append(parsed_func)
                 except Exception as e:
                     def conversion_error(*args):
-                        raise RuntimeError(f"无法将表达式 {func} 转换为可计算的函数: {e}")
+                        raise RuntimeError(f"Failed to convert expression {func} to an executable function: {e}")
                     parsed_funcs_list.append(conversion_error)
 
         return parsed_funcs_list
 
-    # === 表达式类型分析方法 ===
+    # === Expression type analysis ===
 
     def analyze_expressions_type(self, expressions: List) -> str:
         """
-        分析表达式列表的类型（线性、二次、非线性）
+        Analyze the type of a list of expressions (linear/quadratic/nonlinear).
 
         Args:
-            expressions: sympy表达式列表
+            expressions: list of SymPy expressions
 
         Returns:
-            str: 'linear', 'quadratic', 或 'nonlinear'
+            str: "linear", "quadratic", or "nonlinear"
         """
         if not expressions:
             return 'linear'
@@ -180,7 +180,7 @@ class ObjectiveAnalyzer(AnalyzerBase):
             expr_type = self._analyze_single_expression_type(expr)
             max_complexity = self._get_higher_complexity_type(max_complexity, expr_type)
 
-            # 如果已经是非线性，无需继续检查
+            # Early-exit if already nonlinear
             if max_complexity == 'nonlinear':
                 break
 
@@ -188,30 +188,30 @@ class ObjectiveAnalyzer(AnalyzerBase):
 
     def _analyze_single_expression_type(self, expr: Expr) -> str:
         """
-        分析单个表达式的类型
+        Analyze the type of a single expression.
 
         Args:
-            expr: sympy表达式
+            expr: SymPy expression
 
         Returns:
-            str: 'linear', 'quadratic', 或 'nonlinear'
+            str: "linear", "quadratic", or "nonlinear"
         """
         try:
-            # 展开表达式
+            # Expand expression
             expr = expr.expand()
 
-            # 1. 检查是否包含非线性函数
+            # 1. Nonlinear functions
             if self._has_nonlinear_functions(expr):
                 return 'nonlinear'
 
-            # 2. 获取所有自由符号
+            # 2. Free symbols
             symbols = list(expr.free_symbols)
 
             if not symbols:
-                # 常数表达式
+                # Constant expression
                 return 'linear'
 
-            # 3. 尝试构造多项式并分析次数
+            # 3. Try to form polynomial and analyze degree
             try:
                 # 将表达式视为多项式
                 poly = Poly(expr, symbols)

@@ -3,17 +3,17 @@ import sys
 import numpy as np
 import sympy as sp
 
-# 将项目根目录加入 sys.path，便于测试直接导入包
+# Add project root to sys.path for direct package import in tests
 from happymath.Opt.OptModule import OptModule
 from happymath.Opt.functional.config import ODEIVPConfig, DomainConfig, ControlParamConfig
 
 
 def build_simple_ocp():
     """
-    一阶 ODE：x'(t) = -x(t) + u(t)
-    目标：min ∫_0^1 u(t)^2 dt
-    约束：x(1) = 0（作为功能型等式约束）
-    控制：分段常数 5 段，系数边界 [-2, 2]
+    First-order ODE: x'(t) = -x(t) + u(t)
+    Objective: min ∫_0^1 u(t)^2 dt
+    Constraint: x(1) = 0 (as functional equality constraint)
+    Control: piecewise constant with 5 segments, coefficient bounds [-2, 2]
     """
     t = sp.symbols('t', real=True)
     x = sp.Function('x')
@@ -21,12 +21,12 @@ def build_simple_ocp():
 
     ode = [sp.Eq(sp.diff(x(t), t, 1), -x(t) + u(t))]
 
-    # 功能型配置
+    # Functional configuration
     coeffs = sp.symbols('c0:5', real=True)
     func_cfg = ODEIVPConfig(
         ode=ode,
         domain=DomainConfig(var=t, t0=0.0, t1=1.0, grid_n=101),
-        ivp_conds={x(0): 1.0},  # 初值固定 1.0
+        ivp_conds={x(0): 1.0},  # Initial value fixed at 1.0
         constants={},
         control=ControlParamConfig(
             kind='piecewise_constant',
@@ -45,10 +45,10 @@ def build_simple_ocp():
         bounds={}
     )
 
-    # 目标表达式（占位：Integral 保持语义），评估走 evaluator
+    # Objective expression (placeholder: Integral maintains semantics), evaluation goes through evaluator
     obj = {"min": sp.integrate(u(t) ** 2, (t, 0, 1))}
 
-    # 决策变量边界（通过代数约束提供，确保 Pymoo 严格边界通过）
+    # Decision variable bounds (provided through algebraic constraints to ensure Pymoo strict bounds pass)
     constraints = []
     for c in coeffs:
         constraints.append(c <= 2.0)
@@ -60,7 +60,7 @@ def build_simple_ocp():
 def test_pymoo_functional_ocp_runs():
     obj, constraints, func_cfg = build_simple_ocp()
 
-    # 构建并求解
+    # Build and solve
     opt = OptModule(
         obj_func=obj,
         constraints=constraints,
@@ -69,23 +69,23 @@ def test_pymoo_functional_ocp_runs():
         functional_config=func_cfg,
     )
 
-    # 缩短单测时间：降低评估预算
+    # Reduce unit test time: lower evaluation budget
     try:
-        # 适当提高评估预算以提升稳定性（避免随机解失败）
+        # Appropriately increase evaluation budget for improved stability (avoid random solution failures)
         opt.pymoo_solver._budget_override = 300
     except Exception:
         pass
     res = opt.solve(solver="GA", use_auto_solvers=False, max_solvers=1)
 
     assert res is not None
-    # 至少应有一个成功结果
+    # Should have at least one successful result
     succ = any(r.get('success') for r in res.raw_all_solutions)
-    assert succ, f"Pymoo 功能型求解失败: {res.raw_all_solutions}"
+    assert succ, f"Pymoo functional solving failed: {res.raw_all_solutions}"
 
-    # 读取最优 X，评估终端约束近似满足（<= 0.2）
+    # Read optimal X, evaluate terminal constraint approximately satisfied (<= 0.2)
     X = res.raw_all_solutions[0].get('X')
     assert X is not None
 
-    # 由于限制测试时间与随机性，仅检查结果对象结构
+    # Due to time and randomness constraints, only check result object structure
     best_vars = res.variables
     assert isinstance(best_vars, dict)

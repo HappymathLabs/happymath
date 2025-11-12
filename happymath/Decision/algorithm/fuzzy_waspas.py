@@ -77,17 +77,13 @@ def fuzzy_waspas(dataset, criterion_type, weights, graph = True):
     f_wsm        = [i[0] for i in rows_sums_p]
     lmbd         = sum(rows_sums_p)[0]/ (sum(rows_sums_q)[0] + sum(rows_sums_p)[0])
     f_waspas     = [lmbd*f_wsm[i] + (1 - lmbd)*f_wpm[i] for i in range(0, len(f_wsm))]
-    # 将三个得分都转换为标准格式（方案编号 + 得分）
     num_alternatives = len(f_wsm)
     indices = np.arange(1, num_alternatives + 1).reshape(-1, 1)
     
-    # WSM - 加权和得分
     wsm = np.hstack((indices, np.array(f_wsm).reshape(-1, 1)))
     
-    # WPM - 加权积得分  
     wpm = np.hstack((indices, np.array(f_wpm).reshape(-1, 1)))
     
-    # WASPAS - 最终得分
     waspas = np.hstack((indices, np.array(f_waspas).reshape(-1, 1)))
     
     if (graph == True):

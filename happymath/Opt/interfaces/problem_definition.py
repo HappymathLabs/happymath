@@ -1,8 +1,7 @@
 """
-问题定义接口
+Problem definition interfaces.
 
-定义了优化问题的标准接口，任何实现了这个接口的类都可以被
-适配器和求解器使用，从而实现松耦合的设计。
+Standard interface for optimization problems that adapters and solvers can consume.
 """
 
 from abc import ABC, abstractmethod
@@ -11,61 +10,61 @@ from sympy import Symbol
 
 
 class IProblemDefinition(ABC):
-    """优化问题定义接口"""
+    """Interface for optimization problem definitions."""
 
     @property
     @abstractmethod
     def objective_funcs(self) -> List[Any]:
-        """目标函数列表"""
+        """List of objective functions (callables)."""
         pass
 
     @property
     @abstractmethod
     def objective_exprs(self) -> List[Any]:
-        """目标表达式列表"""
+        """List of objective expressions (symbolic)."""
         pass
 
     @property
     @abstractmethod
     def senses(self) -> List[str]:
-        """优化方向列表 ('min' 或 'max')"""
+        """Optimization senses list ('min' or 'max')."""
         pass
 
     @property
     @abstractmethod
     def parsed_constraints(self) -> List[Any]:
-        """解析后的约束条件列表"""
+        """List of parsed constraints."""
         pass
 
     @property
     @abstractmethod
     def all_symbols(self) -> set:
-        """所有符号的集合"""
+        """Set of all symbols involved."""
         pass
 
     @property
     @abstractmethod
     def sorted_symbols(self) -> List[Symbol]:
-        """排序后的符号列表"""
+        """Sorted list of decision symbols."""
         pass
 
     @property
     @abstractmethod
     def variable_bounds(self) -> Tuple[List[float], List[float]]:
-        """变量边界 (下界列表, 上界列表)"""
+        """Variable bounds (lower_bounds, upper_bounds)."""
         pass
 
     @abstractmethod
     def has_integer_variables(self) -> bool:
-        """是否包含整数变量"""
+        """Whether integer variables exist."""
         pass
 
     @abstractmethod
     def get_pyomo_problem_type(self) -> str:
-        """获取Pyomo问题类型"""
+        """Return the Pyomo problem type string."""
         pass
 
     @abstractmethod
     def get_pymoo_problem_type(self) -> Dict[str, Any]:
-        """获取Pymoo问题类型字典"""
+        """Return a Pymoo problem-type dictionary."""
         pass

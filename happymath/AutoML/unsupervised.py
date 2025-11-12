@@ -1,7 +1,7 @@
 """
-无监督学习任务封装。
+Unsupervised learning task wrappers.
 
-提供聚类与异常检测的便捷接口。
+Convenience interfaces for clustering and anomaly detection.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from .base import AutoMLBase
 
 
 class ClusteringML(AutoMLBase):
-    """聚类任务封装。"""
+    """AutoML wrapper for clustering tasks."""
 
     def __init__(
         self,
@@ -63,7 +63,7 @@ class ClusteringML(AutoMLBase):
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
-        """创建聚类模型并记录其指标。"""
+        """Create a clustering model and record its metrics."""
         verbose_flag = self.verbose if verbose is None else verbose
         cluster_model = self.experiment.create_model(
             estimator=model,
@@ -86,15 +86,15 @@ class ClusteringML(AutoMLBase):
         return cluster_model
 
     def assign(self, model: Optional[Any] = None):
-        """为数据分配聚类标签。"""
+        """Assign cluster labels to the data."""
         target_model = model or self.current_model
         if target_model is None:
-            raise ValueError("没有可用的聚类模型")
+            raise ValueError("No clustering model available")
         return self.experiment.assign_model(target_model)
 
 
 class AnomalyML(AutoMLBase):
-    """异常检测任务封装。"""
+    """AutoML wrapper for anomaly detection tasks."""
 
     def __init__(
         self,
@@ -144,7 +144,7 @@ class AnomalyML(AutoMLBase):
         verbose: Optional[bool] = None,
         **kwargs: Any,
     ) -> Any:
-        """创建异常检测模型。"""
+        """Create an anomaly detection model."""
         verbose_flag = self.verbose if verbose is None else verbose
         frac = fraction if fraction is not None else self.fraction
 
@@ -169,8 +169,8 @@ class AnomalyML(AutoMLBase):
         return anomaly_model
 
     def assign(self, model: Optional[Any] = None):
-        """对数据打上异常标签。"""
+        """Label anomalies in the data."""
         target_model = model or self.current_model
         if target_model is None:
-            raise ValueError("没有可用的异常检测模型")
+            raise ValueError("No anomaly detection model available")
         return self.experiment.assign_model(target_model)
