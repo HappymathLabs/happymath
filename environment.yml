@@ -1,0 +1,47 @@
+# Conda 环境定义文件
+# Conda 只负责核心环境和非 Python 求解器，所有 Python 库由 Pip 管理
+# conda env create -f environment.yml
+
+name: happymath  # 新的环境名，以体现其特点
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - coincbc
+  - ipopt
+  - glpk
+  - lightgbm
+  - catboost
+  - xgboost
+  - scikit-learn
+  - pycaret=3.3.2
+  - scip  # 求解器，用于优化问题，不是scipy
+  - numpy
+  - sympy
+  - pyomo
+  - pymoo
+  - scipy=1.10.0
+  - py-pde
+  - ipython
+  - matplotlib<3.8.0
+  - pandas<2.2.0
+  - seaborn
+  - ipykernel
+  - dash
+  - timeout-decorator
+  - openfe
+  - pytest
+  - shap
+  - panel
+  - watchfiles
+  - jupyter_bokeh
+  - umap-learn
+  - statsmodels
+  - patsy
+  #- cuml # 仅在linux下可以安装
+
+  - pip:  # conda无法安装的库，都用pip安装
+    - pyDecision
+    - dash-bootstrap-components
