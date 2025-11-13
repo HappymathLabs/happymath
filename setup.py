@@ -13,7 +13,7 @@ else:
 
 # Package metadata
 NAME = "happymath"
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 DESCRIPTION = "Happymath is a high-level mathematical modeling Python library. Its core philosophy lies in reducing users' learning costs through high-level encapsulation, enabling efficient mathematical modeling. It is particularly suitable for mathematical modeling competitions and applied mathematics fields."
 AUTHOR = "HappyMathLabs"
 AUTHOR_EMAIL = "tonghui_zou@happymath.com.cn"

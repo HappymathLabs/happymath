@@ -1,6 +1,6 @@
-"""Module exports."""
-微分方程处理器实现层
-包含ODE和PDE的具体实现
+"""
+模块导出
+微分方程处理器实现层，包含 ODE 和 PDE 的具体实现
 """
 
 from .analyzers import ODEAnalyzer, PDEAnalyzer
@@ -16,5 +16,5 @@ __all__ = [
     "ODEStandardizer",
     "PDEStandardizer",
     "ODEResult",
-    "PDEResult"
+    "PDEResult",
 ]

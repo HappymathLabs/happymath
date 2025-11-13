@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "happymath"
-version = "0.1.1"
+version = "0.1.2"
 description = "Happymath is a high-level mathematical modeling Python library. Its core philosophy lies in reducing users' learning costs through high-level encapsulation, enabling efficient mathematical modeling. It is particularly suitable for mathematical modeling competitions and applied mathematics fields."
 readme = "README.md"
 authors = [
@@ -46,8 +46,7 @@ dependencies = [
     # Optimization solvers (Python interfaces)
     "pyomo",
     "pymoo",
-    "cylp",           # COIN-OR CBC interface
-    "cyipopt",        # IPOPT interface  
+    "cylp",           # COIN-OR CBC interface  
     "swiglpk",        # GLPK interface
     "PySCIPOpt",      # SCIP interface
     

@@ -51,6 +51,8 @@ Comprehensive optimization framework supporting:
 pip install happymath
 ```
 
+**Note**: When installing with pip, the ipopt solver is not included by default, and LightGBM models cannot be properly installed, which may cause AutoML errors. If you install via pip, it is recommended to manually install these two packages through conda.
+
 ### Requirements
 
 - Python 3.11+
@@ -151,15 +153,6 @@ If you have any questions or need help, please:
 - Open an issue on GitHub
 - Contact us at: tonghui_zou@happymath.com.cn
 - Visit our homepage: https://github.com/HappyMathLabs/happymath
-
-## Changelog
-
-### Version 0.1.0 (Current)
-
-- Initial release with complete AutoML, Decision, DiffEq, and Opt modules
-- 80+ decision analysis algorithms
-- Comprehensive optimization solver integration
-- Unified API design across all modules
 
 ## Citation
 

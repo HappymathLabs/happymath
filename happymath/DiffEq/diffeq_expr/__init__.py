@@ -1,4 +1,4 @@
-"""Module exports."""
+"""Module exports.
 SymPy前端包 - 微分方程表达式处理器
 从ODEModule和PDEModule中抽离的符号处理前端包
 """
@@ -26,7 +26,8 @@ from .DE import (
     PDEResult
 )
 
-__version__ = "1.0.0"
+# Removed hardcoded version - use happymath.__version__ instead
+
 __all__ = [
     "ExpressionProcessor",
     "process_expression",

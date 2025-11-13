@@ -12,11 +12,8 @@ Email: tonghui_zou@happymath.com.cn
 Homepage: https://github.com/HappyMathLabs/happymath
 """
 
-__version__ = "0.1.1"
-__author__ = "HappyMathLabs"
-__email__ = "tonghui_zou@happymath.com.cn"
-__description__ = "A comprehensive mathematical computing and machine learning library"
-__homepage__ = "https://github.com/HappyMathLabs/happymath"
+# Import version from dedicated version module
+from ._version import __version__
 
 # Import main modules
 from . import AutoML
@@ -29,9 +26,5 @@ __all__ = [
     "Decision", 
     "DiffEq",
     "Opt",
-    "__version__",
-    "__author__",
-    "__email__",
-    "__description__",
-    "__homepage__"
+    "__version__",  # Only export version, no other metadata
 ]

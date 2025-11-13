@@ -54,8 +54,8 @@ class PyomoSolver(BaseSolver):
         # 根据问题类型选择求解器
         solver_mapping = {
             'LP': ['cbc', 'glpk'],       # Linear Programming
-            'QP': ['ipopt', 'scip'],     # Quadratic Programming
-            'NP': ['ipopt', 'scip'],     # Nonlinear Programming (NLP)
+            'QP': ['scip','ipopt'],     # Quadratic Programming
+            'NP': ['scip','ipopt'],     # Nonlinear Programming (NLP)
             'MILP': ['scip', 'cbc'],     # Mixed-Integer Linear Programming
             'MIQP': ['scip', 'mindtpy'], # Mixed-Integer Quadratic Programming
             'MINP': ['scip', 'mindtpy']  # Mixed-Integer Nonlinear Programming (MINLP)

@@ -43,9 +43,7 @@ from .results.result_manager import ResultManager, MethodResult
 from .core.method_registry import MethodRegistry, MethodCategory
 from .core.validators import ParameterValidator
 
-__version__ = "1.0.0"
-__author__ = "Decision Analysis Framework Team"
-__description__ = "Intelligent Multi-Criteria Decision Analysis Framework"
+# Removed hardcoded metadata - use happymath.__version__ instead
 
 __all__ = [
     # Main classes
