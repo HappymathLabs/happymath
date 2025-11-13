@@ -1,0 +1,114 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "happymath"
+version = "0.1.1"
+description = "Happymath is a high-level mathematical modeling Python library. Its core philosophy lies in reducing users' learning costs through high-level encapsulation, enabling efficient mathematical modeling. It is particularly suitable for mathematical modeling competitions and applied mathematics fields."
+readme = "README.md"
+authors = [
+    {name = "HappyMathLabs", email = "tonghui_zou@happymath.com.cn"}
+]
+maintainers = [
+    {name = "HappyMathLabs", email = "tonghui_zou@happymath.com.cn"}
+]
+license = {text = "MIT"}
+
+keywords = ["mathematics", "machine-learning", "optimization", "differential-equations", "decision-analysis"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+requires-python = ">=3.11"
+
+dependencies = [
+    # Core scientific computing
+    "numpy",
+    "scipy==1.10.0",
+    "sympy",
+    "pandas<2.2.0",
+    
+    # Machine learning core
+    "scikit-learn",
+    "lightgbm",
+    "catboost", 
+    "xgboost",
+    "pycaret==3.3.2",
+    
+    # Optimization solvers (Python interfaces)
+    "pyomo",
+    "pymoo",
+    "cylp",           # COIN-OR CBC interface
+    "cyipopt",        # IPOPT interface  
+    "swiglpk",        # GLPK interface
+    "PySCIPOpt",      # SCIP interface
+    
+    # Visualization and UI
+    "matplotlib<3.8.0",
+    "seaborn",
+    "dash",
+    "dash-bootstrap-components",
+    "panel",
+    "jupyter_bokeh",
+    
+    # Statistics and analysis
+    "statsmodels",
+    "patsy",
+    "shap",
+    "umap-learn",
+    
+    # Additional tools
+    "timeout-decorator",
+    "openfe",
+    "pyDecision",
+    "py-pde",
+    "ipython",
+    "ipykernel",
+    "watchfiles"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy"
+]
+
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinx-autodoc-typehints"
+]
+
+[project.urls]
+Homepage = "https://github.com/HappyMathLabs/happymath"
+Repository = "https://github.com/HappyMathLabs/happymath"
+Documentation = "https://github.com/HappyMathLabs/happymath"
+"Bug Tracker" = "https://github.com/HappyMathLabs/happymath/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["happymath*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.rst", "*.md"]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short"
