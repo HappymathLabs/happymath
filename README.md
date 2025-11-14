@@ -4,7 +4,28 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+---
+
+🌐 **Language**: [English](README.md) | [中文](README_zh.md)
+
+---
+
 HappyMath is a comprehensive mathematical computing and machine learning library that provides unified interfaces for automated machine learning, multi-criteria decision making, differential equations, and mathematical optimization.
+
+> ⚠️ **WARNING: PREVIEW VERSION** ⚠️
+>
+> This is currently a **preview/development version** of HappyMath.
+>
+> **Please be advised that:**
+>
+> - This version contains numerous bugs and issues
+> - Performance and stability are not guaranteed
+> - API may change without notice
+> - Documentation may be incomplete or inaccurate
+>
+> **For production use, please wait for the stable 1.0.0 release.**
+>
+> We appreciate your interest in testing our library, but use at your own risk!
 
 ## Features
 
@@ -47,16 +68,40 @@ Comprehensive optimization framework supporting:
 
 ## Installation
 
+### ⭐️ **RECOMMENDED: Conda Installation**
+
+**This is the recommended installation method for optimal compatibility and performance.**
+
+```bash
+conda install -c conda-forge happymath
+```
+
+### Alternative: Pip Installation
+
 ```bash
 pip install happymath
 ```
 
-**Note**: When installing with pip, the ipopt solver is not included by default, and LightGBM models cannot be properly installed, which may cause AutoML errors. If you install via pip, it is recommended to manually install these two packages through conda.
+**⚠️ Important**: When installing with pip, the following issues may occur:
+
+- The ipopt solver is not included by default
+- LightGBM models cannot be properly installed
+- This may cause AutoML errors and reduced functionality
+
+If you used pip installation or want to ensure all optional dependencies are available, install these packages via conda:
+
+```bash
+# Install ipopt solver for optimization problems
+conda install -c conda-forge ipopt
+
+# Install LightGBM for enhanced AutoML performance
+conda install -c conda-forge lightgbm
+```
 
 ### Requirements
 
 - Python 3.11+
-- All dependencies are automatically installed
+- All core dependencies are automatically installed
 
 ## Quick Start
 
@@ -128,31 +173,9 @@ optimal_x = result.x
 optimal_value = result.fun
 ```
 
-## Documentation
-
-For detailed documentation, tutorials, and examples, please visit our [documentation page](https://github.com/HappyMathLabs/happymath).
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you have any questions or need help, please:
-
-- Open an issue on GitHub
-- Contact us at: tonghui_zou@happymath.com.cn
-- Visit our homepage: https://github.com/HappyMathLabs/happymath
 
 ## Citation
 
