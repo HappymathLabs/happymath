@@ -17,7 +17,7 @@ class TimeSeriesML(AutoMLBase):
     def __init__(
         self,
         data: Any,
-        target: Optional[str] = None,
+        target: Any = None,
         test_data: Optional[Any] = None,
         fh: int = 12,
         fold: int = 3,

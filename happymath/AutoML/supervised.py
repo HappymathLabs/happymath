@@ -21,7 +21,7 @@ class ClassificationML(AutoMLBase):
     def __init__(
         self,
         data: Any,
-        target: str,
+        target: Any = None,
         test_data: Optional[Any] = None,
         train_size: float = 0.7,
         fold: int = 5,
@@ -73,7 +73,7 @@ class RegressionML(AutoMLBase):
     def __init__(
         self,
         data: Any,
-        target: str,
+        target: Any = None,
         test_data: Optional[Any] = None,
         train_size: float = 0.7,
         fold: int = 5,

@@ -13,7 +13,7 @@ else:
 
 # Package metadata
 NAME = "happymath"
-VERSION = "0.1.3"
+VERSION = "0.1.4.dev1"
 DESCRIPTION = "Happymath is a high-level mathematical modeling Python library. Its core philosophy lies in reducing users' learning costs through high-level encapsulation, enabling efficient mathematical modeling. It is particularly suitable for mathematical modeling competitions and applied mathematics fields."
 AUTHOR = "HappymathLabs"
 AUTHOR_EMAIL = "tonghui_zou@happymath.com.cn"
@@ -29,7 +29,6 @@ INSTALL_REQUIRES = [
     
     # Machine learning core
     "scikit-learn",
-    "lightgbm",
     "catboost", 
     "xgboost",
     "pycaret==3.3.2",
@@ -37,10 +36,7 @@ INSTALL_REQUIRES = [
     # Optimization solvers (Python interfaces)
     "pyomo",
     "pymoo",
-    "cylp",           # COIN-OR CBC interface
     "cyipopt",        # IPOPT interface  
-    "swiglpk",        # GLPK interface
-    "PySCIPOpt",      # SCIP interface
     
     # Visualization and UI
     "matplotlib<3.8.0",
@@ -58,7 +54,6 @@ INSTALL_REQUIRES = [
     
     # Additional tools
     "timeout-decorator",
-    "openfe",
     "py-pde",
     "ipython",
     "ipykernel",
@@ -78,6 +73,15 @@ EXTRAS_REQUIRE = {
         "sphinx",
         "sphinx-rtd-theme",
         "sphinx-autodoc-typehints"
+    ],
+    "all": [
+        # Additional machine learning libraries
+        "lightgbm",
+        
+        # Additional optimization solvers
+        "cylp",           # COIN-OR CBC interface  
+        "swiglpk",        # GLPK interface
+        "PySCIPOpt",      # SCIP interface
     ]
 }
 

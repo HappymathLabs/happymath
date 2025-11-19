@@ -15,8 +15,13 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
+# Import the global Chinese font configuration
+try:
+    from .. import zh_font_available
+except ImportError:
+    zh_font_available = []
 
-DataLike = Union[str, pd.DataFrame, np.ndarray]
+DataLike = Union[str, pd.DataFrame, np.ndarray, Tuple[np.ndarray, np.ndarray]]
 TargetLike = Union[str, int, None]
 
 
@@ -75,6 +80,71 @@ class AutoMLBase:
     # ------------------------------------------------------------------
     # 数据相关工具
     # ------------------------------------------------------------------
+    def _is_sklearn_bunch(self, data: Any) -> bool:
+        """Check if data is a sklearn Bunch object (from load_*, fetch_* datasets)."""
+        return (
+            hasattr(data, 'data') and 
+            hasattr(data, 'target') and 
+            hasattr(data, 'feature_names')
+        )
+    
+    def _handle_sklearn_bunch(self, data: Any, target: TargetLike) -> Tuple[pd.DataFrame, Optional[str]]:
+        """
+        Handle sklearn Bunch objects (load_*, fetch_* datasets).
+        
+        Args:
+            data: sklearn Bunch object with .data, .target, .feature_names attributes
+            target: None, string column name, integer index, or tuple index
+            
+        Returns:
+            Tuple of (DataFrame, target_column_name)
+        """
+        # Extract features and target from Bunch object
+        features_data = data.data
+        target_data = data.target
+        
+        # Convert to arrays if needed
+        if hasattr(features_data, 'values'):
+            features_data = features_data.values
+        if hasattr(target_data, 'values'):
+            target_data = target_data.values
+            
+        # Create feature columns names
+        if hasattr(data, 'feature_names') and data.feature_names:
+            feature_columns = list(data.feature_names)
+        else:
+            feature_columns = [f"feature_{idx}" for idx in range(features_data.shape[1])]
+        
+        # Create DataFrame with features
+        df = pd.DataFrame(features_data, columns=feature_columns)
+        
+        # Add target column
+        if target is None:
+            # Default target column name
+            target_column_name = "target"
+            df[target_column_name] = target_data
+            return df, target_column_name
+        elif isinstance(target, str):
+            # Use provided column name
+            target_column_name = target
+            df[target_column_name] = target_data
+            return df, target_column_name
+        elif isinstance(target, int):
+            # Handle integer target (special case: -1 means use default target)
+            if target == -1:
+                target_column_name = "target"
+                df[target_column_name] = target_data
+                return df, target_column_name
+            elif 0 <= target < len(feature_columns):
+                # Use specified feature column as target
+                target_column_name = feature_columns[target]
+                df.rename(columns={target_column_name: "target"}, inplace=True)
+                return df, "target"
+            else:
+                raise ValueError(f"Target column index {target} out of range for {len(feature_columns)} features")
+        else:
+            raise TypeError("Target must be None, string column name, or integer index")
+    
     def _load_data(
         self,
         data: DataLike,
@@ -82,7 +152,13 @@ class AutoMLBase:
     ) -> Tuple[pd.DataFrame, Optional[str]]:
         """
         Normalize various input data formats into a DataFrame and handle target column.
+        Automatically handles sklearn datasets (Bunch objects, tuples, etc.).
         """
+        # Auto-detect sklearn Bunch objects (load_*, fetch_* datasets)
+        if self._is_sklearn_bunch(data):
+            return self._handle_sklearn_bunch(data, target)
+        
+        # Handle regular data types
         if isinstance(data, str):
             if data.lower().endswith(".csv"):
                 df = pd.read_csv(data)
@@ -94,12 +170,13 @@ class AutoMLBase:
             df = data.to_frame()
         elif isinstance(data, pd.DataFrame):
             df = data.copy()
-        elif isinstance(data, np.ndarray):
-            # 数组模式下目标列在转换函数中处理
+        elif isinstance(data, (np.ndarray, tuple)):
+            # 数组模式或tuple模式下目标列在转换函数中处理
             return self._convert_array_to_frame(data, target)
         else:
-            raise TypeError("data must be a file path, DataFrame, or NumPy array")
+            raise TypeError("data must be a file path, DataFrame, NumPy array, or tuple of (features, target)")
 
+        # Continue with target column handling...
         target_name: Optional[str]
         if target is None:
             target_name = None
@@ -119,29 +196,96 @@ class AutoMLBase:
 
     def _convert_array_to_frame(
         self,
-        array: np.ndarray,
+        data: Union[np.ndarray, Tuple[np.ndarray, np.ndarray]],
         target: TargetLike,
     ) -> Tuple[pd.DataFrame, Optional[str]]:
-        """Convert a NumPy array to a DataFrame and set the target column by index."""
-        if array.ndim != 2:
-            raise ValueError("Only 2-D arrays are supported as data input")
-
-        columns = [f"feature_{idx}" for idx in range(array.shape[1])]
-        df = pd.DataFrame(array, columns=columns)
-
-        if target is None:
-            return df, None
-
-        if not isinstance(target, int):
-            raise TypeError("In NumPy array mode, target must be an integer index")
-
-        try:
-            target_column = columns[target]
-        except IndexError as exc:
-            raise ValueError(f"target column index {target} out of range") from exc
-
-        df.rename(columns={target_column: "target"}, inplace=True)
-        return df, "target"
+        """Convert NumPy arrays to a DataFrame and handle target column.
+        
+        Supports multiple input modes:
+        1. Single array with target index (backward compatible)
+        2. Tuple of (features, target) arrays  
+        3. Single array with no target
+        
+        Args:
+            data: Either a single 2D array or tuple of (features, target) arrays
+            target: None, string column name, integer index, or tuple index
+        
+        Returns:
+            Tuple of (DataFrame, target_column_name)
+        """
+        # Handle tuple input: (features, target)
+        if isinstance(data, tuple):
+            if len(data) != 2:
+                raise ValueError("When data is a tuple, it must contain exactly 2 arrays: (features, target)")
+            
+            features_array, target_array = data
+            
+            # Validate arrays
+            if not isinstance(features_array, np.ndarray) or not isinstance(target_array, np.ndarray):
+                raise TypeError("Both elements of the tuple must be NumPy arrays")
+            
+            if features_array.ndim != 2:
+                raise ValueError("Features array must be 2-dimensional")
+            
+            if target_array.ndim != 1:
+                raise ValueError("Target array must be 1-dimensional")
+            
+            if len(features_array) != len(target_array):
+                raise ValueError("Features and target arrays must have the same length")
+            
+            # Create features DataFrame
+            feature_columns = [f"feature_{idx}" for idx in range(features_array.shape[1])]
+            features_df = pd.DataFrame(features_array, columns=feature_columns)
+            
+            # Handle target based on type
+            if target is None:
+                # Simply add target as a column
+                target_column_name = "target"
+                features_df[target_column_name] = target_array
+                return features_df, target_column_name
+            elif isinstance(target, str):
+                # Use provided column name
+                target_column_name = target
+                features_df[target_column_name] = target_array
+                return features_df, target_column_name
+            elif isinstance(target, int):
+                # Use integer index to determine target column name
+                if target == -1:
+                    target_column_name = "target"
+                else:
+                    try:
+                        target_column_name = feature_columns[target]
+                    except IndexError as exc:
+                        raise ValueError(f"Target index {target} out of range for {len(feature_columns)} features") from exc
+                features_df[target_column_name] = target_array
+                return features_df, target_column_name
+            else:
+                raise TypeError("Target must be None, string column name, or integer index")
+        
+        # Handle single array input (backward compatibility)
+        elif isinstance(data, np.ndarray):
+            if data.ndim != 2:
+                raise ValueError("Only 2-D arrays are supported as data input")
+            
+            columns = [f"feature_{idx}" for idx in range(data.shape[1])]
+            df = pd.DataFrame(data, columns=columns)
+            
+            if target is None:
+                return df, None
+            
+            if not isinstance(target, int):
+                raise TypeError("In NumPy array mode, target must be an integer index")
+            
+            try:
+                target_column = columns[target]
+            except IndexError as exc:
+                raise ValueError(f"target column index {target} out of range") from exc
+            
+            df.rename(columns={target_column: "target"}, inplace=True)
+            return df, "target"
+        
+        else:
+            raise TypeError("data must be a NumPy array or tuple of (features, target) arrays")
 
     def _validate_data(self, data: pd.DataFrame, target: Optional[str]) -> None:
         """Basic data validation to ensure target exists and no duplicate columns."""
@@ -289,7 +433,7 @@ class AutoMLBase:
         legend_labels: Optional[List[str]],
         font_sizes: Optional[Dict[str, Union[int, float]]],
     ):
-        """Temporarily override Matplotlib labels/titles/legend to apply custom text and fonts."""
+        """Override Matplotlib labels/titles/legend to apply custom text and fonts with global Chinese font setting."""
         import matplotlib.pyplot as plt
         from matplotlib.axes import Axes
         from matplotlib import rcParams
@@ -297,6 +441,16 @@ class AutoMLBase:
 
         patches: List[Tuple[Any, str, Any]] = []
         fonts = font_sizes or {}
+        
+        # 设置全局中文字体
+        if zh_font_available and isinstance(zh_font_available, list) and len(zh_font_available) > 0:
+            chinese_font = zh_font_available[0]
+        else:
+            chinese_font = "Arial"
+        
+        # 全局设置中文字体（永久生效）
+        rcParams['font.sans-serif'] = [chinese_font] + [f for f in rcParams.get('font.sans-serif', ['Arial']) if f != chinese_font]
+        rcParams['axes.unicode_minus'] = False
 
         title_size = fonts.get("title")
         xlabel_size = fonts.get("xlabel")
@@ -305,8 +459,6 @@ class AutoMLBase:
         legend_label_size = fonts.get("legend_label")
         xtick_size = fonts.get("xtick")
         ytick_size = fonts.get("ytick")
-
-        original_rc: Dict[str, Any] = {}
 
         def add_patch(target: Any, attr: str, new_func: Any) -> None:
             original = getattr(target, attr)
@@ -433,30 +585,22 @@ class AutoMLBase:
 
             add_patch(plt, "legend", plt_legend_override)
 
+        # 设置坐标轴标签大小（全局设置）
         if xtick_size is not None:
-            original_rc["xtick.labelsize"] = rcParams.get("xtick.labelsize")
             rcParams["xtick.labelsize"] = xtick_size
         if ytick_size is not None:
-            original_rc["ytick.labelsize"] = rcParams.get("ytick.labelsize")
             rcParams["ytick.labelsize"] = ytick_size
         if "tick" in fonts and fonts["tick"] is not None:
             value = fonts["tick"]
-            original_rc["xtick.labelsize"] = original_rc.get(
-                "xtick.labelsize", rcParams.get("xtick.labelsize")
-            )
-            original_rc["ytick.labelsize"] = original_rc.get(
-                "ytick.labelsize", rcParams.get("ytick.labelsize")
-            )
             rcParams["xtick.labelsize"] = value
             rcParams["ytick.labelsize"] = value
-
+        
         try:
             yield
         finally:
-            for target, attr, original in reversed(patches):
+            # 恢复所有补丁（只恢复被覆盖的函数，保留中文字体设置）
+            for target, attr, original in patches:
                 setattr(target, attr, original)
-            for key, value in original_rc.items():
-                rcParams[key] = value
 
     # ------------------------------------------------------------------
     # 模型存储与管理
@@ -543,6 +687,7 @@ class AutoMLBase:
             budget_time=budget_time,
             verbose=verbose_flag,
             n_select=1,
+            turbo=False,
             **kwargs,
         )
 
