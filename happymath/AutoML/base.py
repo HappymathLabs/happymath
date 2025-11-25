@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import KFold, LeaveOneOut, StratifiedKFold, train_test_split
 
 # Import the global Chinese font configuration
 try:
@@ -53,18 +54,18 @@ class AutoMLBase:
         primary_metric: Optional[str] = None,
         **setup_kwargs: Any,
     ) -> None:
-        # 数据加载与校验
+        # Data loading and validation
         self.data, normalized_target = self._load_data(data, target)
         self.target = normalized_target
         self._validate_data(self.data, self.target)
 
-        # 测试数据处理
+        # Test data processing
         if test_data is not None:
             self.test_data, _ = self._load_data(test_data, target=None)
         else:
             self.test_data = None
 
-        # 公共属性初始化
+        # Common attribute initialization
         self.primary_metric = primary_metric or self.primary_metric
         self.setup_kwargs = setup_kwargs
         self.experiment = None
@@ -74,11 +75,11 @@ class AutoMLBase:
         self.results = None
         self.verbose = getattr(self, "verbose", False)
 
-        # 自动执行实验初始化
+        # Auto-execute experiment initialization
         self._setup_experiment(**setup_kwargs)
 
     # ------------------------------------------------------------------
-    # 数据相关工具
+    # Data-related tools
     # ------------------------------------------------------------------
     def _is_sklearn_bunch(self, data: Any) -> bool:
         """Check if data is a sklearn Bunch object (from load_*, fetch_* datasets)."""
@@ -171,7 +172,7 @@ class AutoMLBase:
         elif isinstance(data, pd.DataFrame):
             df = data.copy()
         elif isinstance(data, (np.ndarray, tuple)):
-            # 数组模式或tuple模式下目标列在转换函数中处理
+            # Target column handling in array/tuple mode is processed in conversion function
             return self._convert_array_to_frame(data, target)
         else:
             raise TypeError("data must be a file path, DataFrame, NumPy array, or tuple of (features, target)")
@@ -299,7 +300,7 @@ class AutoMLBase:
             raise ValueError("specified target column not found in data")
 
     # ------------------------------------------------------------------
-    # 指标相关工具
+    # Metric-related tools
     # ------------------------------------------------------------------
     def _get_metric_direction(self, metric: str) -> str:
         """Determine metric optimization direction from common names."""
@@ -442,14 +443,14 @@ class AutoMLBase:
         patches: List[Tuple[Any, str, Any]] = []
         fonts = font_sizes or {}
         
-        # 设置全局中文字体
+        # Set global Chinese font
         if zh_font_available and isinstance(zh_font_available, list) and len(zh_font_available) > 0:
             chinese_font = zh_font_available[0]
         else:
             chinese_font = "Arial"
         
-        # 全局设置中文字体（永久生效）
-        rcParams['font.sans-serif'] = [chinese_font] + [f for f in rcParams.get('font.sans-serif', ['Arial']) if f != chinese_font]
+        # Global Chinese font setting (permanent effect)
+        rcParams['font.sans-serif'] = [chinese_font]
         rcParams['axes.unicode_minus'] = False
 
         title_size = fonts.get("title")
@@ -585,7 +586,7 @@ class AutoMLBase:
 
             add_patch(plt, "legend", plt_legend_override)
 
-        # 设置坐标轴标签大小（全局设置）
+        # Set axis label sizes (global setting)
         if xtick_size is not None:
             rcParams["xtick.labelsize"] = xtick_size
         if ytick_size is not None:
@@ -598,12 +599,12 @@ class AutoMLBase:
         try:
             yield
         finally:
-            # 恢复所有补丁（只恢复被覆盖的函数，保留中文字体设置）
+            # Restore all patches (only restore overridden functions, keep Chinese font settings)
             for target, attr, original in patches:
                 setattr(target, attr, original)
 
     # ------------------------------------------------------------------
-    # 模型存储与管理
+    # Model storage and management
     # ------------------------------------------------------------------
     def _store_model_with_metrics(
         self,
@@ -625,11 +626,24 @@ class AutoMLBase:
         if results_df is not None:
             metrics = self._extract_metrics_from_results(results_df, model_label)
 
+        # Assemble additional information and preserve complete cross-validation results for time series tasks
+        extra: Dict[str, Any] = dict(additional_info) if additional_info is not None else {}
+
+        usecase = getattr(self.experiment, "_ml_usecase", None)
+        usecase_str = str(usecase) if usecase is not None else ""
+        if "TIME_SERIES" in usecase_str and isinstance(results_df, pd.DataFrame):
+            # Time series create_model steps' pull usually returns cross-validation results with cutoff column and Mean/SD rows
+            has_cutoff_col = "cutoff" in results_df.columns
+            has_mean_row = any(str(idx).lower() == "mean" for idx in results_df.index)
+            if has_cutoff_col and has_mean_row:
+                # Save a complete copy for reuse in scores (kfold etc.)
+                extra.setdefault("ts_cv_results", results_df.copy())
+
         info = StoredModel(
             model=model,
             metrics=metrics,
             name=model_name,
-            extra=additional_info or {},
+            extra=extra,
             timestamp=pd.Timestamp.now(),
         )
         self.models[model_name] = info
@@ -664,7 +678,7 @@ class AutoMLBase:
         return best_info.model, best_info.metrics
 
     # ------------------------------------------------------------------
-    # 训练与评估核心接口
+    # Core training and evaluation interfaces
     # ------------------------------------------------------------------
     def compare(
         self,
@@ -1093,7 +1107,7 @@ class AutoMLBase:
         self.experiment.evaluate_model(target_model)
 
     # ------------------------------------------------------------------
-    # 对外辅助接口
+    # External helper interfaces
     # ------------------------------------------------------------------
     def get_models(self) -> Iterable[str]:
         """Return the list of stored model names."""
@@ -1133,7 +1147,7 @@ class AutoMLBase:
         pulled = self.experiment.pull()
         if pulled is not None and not pulled.empty:
             return pulled
-        raise ValueError("No leaderboard data available")
+            raise ValueError("No leaderboard data available")
 
     def save(self, model_name: str, model: Optional[Any] = None) -> None:
         """Save the model to disk."""
@@ -1154,12 +1168,1060 @@ class AutoMLBase:
         return self.experiment.get_config(key)
 
     # ------------------------------------------------------------------
-    # 辅助工具
+    # Unified evaluation interface
+    # ------------------------------------------------------------------
+    def scores(
+        self,
+        mode: str = "auto",
+        metrics: Union[str, List[str]] = "all",
+        test_data: Optional[DataLike] = None,
+        train_size: Optional[float] = None,
+        fold: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """
+        Evaluate model performance across different data split modes using the current model, returning a DataFrame.
+
+        Parameters
+        ----------
+        mode:
+            Evaluation mode, options:
+            - ``auto`` (default):
+              - If test set exists (``test_data`` in scores or ``self.test_data`` from initialization), equivalent to ``custom``;
+              - Otherwise automatically selected based on sample size:
+                * Supervised learning: n < 100 use ``leaveout``; 100 ≤ n ≤ 10000 use ``kfold``; n > 10000 use ``holdout``;
+                * Time series: n ≤ 10000 use ``kfold``; n > 10000 use ``holdout``;
+                * Clustering: forced to ``train-only``.
+            - ``holdout``: Split train/test sets according to ``train_size`` ratio, evaluate each once;
+            - ``kfold``: Cross-validation with ``fold`` folds:
+              * Classification/regression: one row per fold, last row shows average results;
+              * Time series: reuse PyCaret's time series backtesting results;
+            - ``leaveout``: Leave-one-out evaluation only supported for supervised learning (not supported for time series);
+            - ``custom``: Training set uses ``data`` from initialization, test set uses ``test_data`` parameter from scores,
+              if empty falls back to ``self.test_data``, error if both are empty;
+            - ``train-only``: No new splitting:
+              * Always evaluate training set;
+              * If test set exists (``test_data`` in scores or ``self.test_data``), also evaluate test set.
+              * For clustering tasks, only supports ``auto`` and ``train-only``, where ``auto`` is equivalent to ``train-only``.
+        metrics:
+            Metric selection:
+            - ``"all"``: Return all computable metrics for current task;
+            - Single string: Keep only this metric (case-insensitive, e.g. ``"accuracy"`` is equivalent to ``"Accuracy"``);
+            - String list: Keep only metrics appearing in the list.
+        test_data:
+            Custom test set, only used in ``custom`` or ``train-only`` modes.
+            - For classification/regression tasks, test set must contain target column (consistent with ``target`` from initialization), otherwise metrics cannot be calculated;
+            - For time series/clustering tasks, target column is optional.
+        train_size:
+            Training set proportion in holdout mode, range (0, 1). Resolution priority:
+            1. If explicitly passed as non-None in ``scores``, use directly;
+            2. Otherwise use ``train_size`` in ``self.setup_kwargs`` from initialization (if exists and non-None);
+            3. Otherwise use internal default value 0.7.
+        fold:
+            Number of folds in kfold mode. Resolution priority:
+            1. If explicitly passed as non-None in ``scores``, use directly;
+            2. Otherwise use ``fold`` in ``self.setup_kwargs`` from initialization (if exists and non-None);
+            3. Otherwise use internal default value 5.
+
+        Returns
+        ----------
+        df : pandas.DataFrame
+            - ``holdout``: Two rows, index is ``["train", "test"]``;
+            - ``custom``: Two rows, index is ``["train", "test"]``;
+            - ``train-only``: At least contains ``"train"`` row, if test set exists then also contains ``"test"`` row;
+            - ``kfold``:
+              * Supervised learning: ``fold`` rows show results per fold, last row ``"mean"`` shows average results;
+              * Time series: Each ``cutoff`` corresponds to one row, last row shows average results;
+            - ``leaveout`` (supervised learning only): Two rows, index is ``["train_mean", "test_mean"]``.
+        """
+        self._ensure_setup()
+        if self.current_model is None:
+            raise ValueError(
+                "No evaluable model currently available, please create a model first using compare/create/tune/ensemble/blend/stack/finalize methods."
+            )
+
+        # Parse task type as internal unified label to avoid direct dependency on external enums
+        usecase = getattr(self.experiment, "_ml_usecase", None)
+        usecase_str = str(usecase) if usecase is not None else ""
+        if "TIME_SERIES" in usecase_str:
+            task_type = "time_series"
+        elif "CLUSTERING" in usecase_str:
+            task_type = "clustering"
+        elif "CLASSIFICATION" in usecase_str or "REGRESSION" in usecase_str:
+            task_type = "supervised"
+        else:
+            raise NotImplementedError("Current AutoML task type does not support scores() interface")
+
+        # Parse external test set (if any), maintain consistency with initialization data specifications
+        external_test_df: Optional[pd.DataFrame] = None
+        if test_data is not None:
+            # For supervised tasks, require custom test set to explicitly contain target column
+            target_for_loading: Optional[TargetLike] = self.target if task_type != "clustering" else None
+            external_test_df, _ = self._load_data(test_data, target=target_for_loading)
+
+        # Parse train_size / fold with clear priority and internal default values
+        effective_train_size = self._get_effective_train_size(train_size)
+        effective_fold = self._get_effective_fold(fold)
+
+        mode_normalized = (mode or "auto").lower()
+
+        if task_type == "clustering":
+            # Clustering tasks: only allow auto and train-only, where auto is equivalent to train-only
+            if mode_normalized not in {"auto", "train-only"}:
+                raise ValueError("Current task is clustering, scores only supports 'auto' and 'train-only' modes")
+            resolved_mode = "train-only"
+            return self._scores_clustering(
+                mode=resolved_mode,
+                metrics=metrics,
+                external_test_data=external_test_df,
+            )
+
+        if task_type == "time_series":
+            return self._scores_time_series(
+                mode=mode_normalized,
+                metrics=metrics,
+                external_test_data=external_test_df,
+                train_size=effective_train_size,
+                fold=effective_fold,
+            )
+
+        # Supervised learning (classification / regression)
+        return self._scores_supervised(
+            mode=mode_normalized,
+            metrics=metrics,
+            external_test_data=external_test_df,
+            train_size=effective_train_size,
+            fold=effective_fold,
+        )
+
+    # ------------------------------------------------------------------
+    # Helper tools
     # ------------------------------------------------------------------
     def _ensure_setup(self) -> None:
         """Ensure the experiment has been set up."""
         if not self.is_setup:
             raise RuntimeError("Please complete experiment setup first")
+
+    def _get_effective_train_size(self, train_size: Optional[float]) -> float:
+        """
+        Parse train_size used in scores.
+
+        Priority:
+        1. train_size explicitly passed during scores call (non-None);
+        2. train_size in self.setup_kwargs from initialization (non-None);
+        3. Internal default value 0.7.
+        """
+        if train_size is not None:
+            return float(train_size)
+
+        from_kwargs = self.setup_kwargs.get("train_size", None)
+        if from_kwargs is not None:
+            try:
+                return float(from_kwargs)
+            except (TypeError, ValueError):
+                pass
+
+        return 0.7
+
+    def _get_effective_fold(self, fold: Optional[int]) -> int:
+        """
+        Parse fold (cross-validation folds) used in scores.
+
+        Priority:
+        1. fold explicitly passed during scores call (non-None);
+        2. fold in self.setup_kwargs from initialization (non-None);
+        3. Internal default value 5.
+        """
+        if fold is not None:
+            try:
+                fold_int = int(fold)
+            except (TypeError, ValueError):
+                fold_int = 5
+        else:
+            from_kwargs = self.setup_kwargs.get("fold", None)
+            if from_kwargs is not None:
+                try:
+                    fold_int = int(from_kwargs)
+                except (TypeError, ValueError):
+                    fold_int = 5
+            else:
+                fold_int = 5
+
+        # At least 2 folds to avoid invalid configuration
+        if fold_int < 2:
+            fold_int = 2
+        return fold_int
+
+    def _get_random_state(self) -> Optional[int]:
+        """
+        Try to infer random seed used for data splitting.
+
+        Priority:
+        1. session_id in self.setup_kwargs from initialization;
+        2. Common seed attribute on subclasses;
+        3. Default None (handled by downstream functions).
+        """
+        from_kwargs = self.setup_kwargs.get("session_id", None)
+        if from_kwargs is not None:
+            return from_kwargs
+        return getattr(self, "seed", None)
+
+    def _filter_metrics_columns(self, df: pd.DataFrame, metrics: Union[str, List[str]]) -> pd.DataFrame:
+        """
+        Filter DataFrame columns based on user-specified metrics parameter.
+
+        For columns containing suffixes (e.g. ``Accuracy_train`` / ``Accuracy_test`` in kfold),
+        matches with metrics case-insensitively using the base name without suffix.
+        """
+        if metrics is None or metrics == "all":
+            return df
+
+        if isinstance(metrics, str):
+            requested = {metrics.lower()}
+        else:
+            requested = {str(m).lower() for m in metrics}
+
+        def base_name(col: str) -> str:
+            for suffix in ("_train", "_test", "_train_mean", "_test_mean"):
+                if col.endswith(suffix):
+                    return col[: -len(suffix)]
+            return col
+
+        selected_cols: List[str] = []
+        available_bases = {base_name(col).lower() for col in df.columns}
+
+        for col in df.columns:
+            if base_name(col).lower() in requested:
+                selected_cols.append(col)
+
+        # For missing metrics, print one-time warning without interrupting main flow
+        missing = requested - available_bases
+        if missing:
+            print(f"Warning: The following metrics are not found in current results and will be ignored: {sorted(missing)}")
+
+        if not selected_cols:
+            # If no matching columns, return original DataFrame to avoid empty table causing debugging difficulties
+            return df
+        return df[selected_cols]
+
+    # ------------------------------------------------------------------
+    # Task-specific scores implementations (classification/regression, time series, clustering)
+    # ------------------------------------------------------------------
+
+    def _scores_supervised(
+        self,
+        mode: str,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+        train_size: float,
+        fold: int,
+    ) -> pd.DataFrame:
+        """
+        Scores implementation for supervised learning (classification / regression).
+        """
+        allowed_modes = {"auto", "holdout", "kfold", "leaveout", "custom", "train-only"}
+
+        if mode not in allowed_modes:
+            raise ValueError(f"Unknown evaluation mode '{mode}', available options: {sorted(allowed_modes)}")
+
+        has_any_test = external_test_data is not None or self.test_data is not None
+
+        # auto mode automatically selects based on test set availability and sample size
+        if mode == "auto":
+            if has_any_test:
+                resolved_mode = "custom"
+            else:
+                n_samples = len(self.data)
+                if n_samples < 100:
+                    resolved_mode = "leaveout"
+                elif n_samples <= 10000:
+                    resolved_mode = "kfold"
+                else:
+                    resolved_mode = "holdout"
+        else:
+            resolved_mode = mode
+
+        if resolved_mode == "holdout":
+            result = self._scores_supervised_holdout(
+                metrics=metrics,
+                external_test_data=external_test_data,
+                train_size=train_size,
+            )
+        elif resolved_mode == "custom":
+            result = self._scores_supervised_custom(
+                metrics=metrics,
+                external_test_data=external_test_data,
+            )
+        elif resolved_mode == "train-only":
+            result = self._scores_supervised_train_only(
+                metrics=metrics,
+                external_test_data=external_test_data,
+            )
+        elif resolved_mode == "kfold":
+            result = self._scores_supervised_kfold(
+                metrics=metrics,
+                fold=fold,
+            )
+        elif resolved_mode == "leaveout":
+            result = self._scores_supervised_leaveout(metrics=metrics)
+        else:
+            # Theoretically should not reach here
+            raise RuntimeError(f"Internal error: unhandled supervised learning evaluation mode '{resolved_mode}'")
+
+        return result
+
+    def _ensure_supervised_target(self) -> str:
+        """
+        Ensure current task is supervised learning and target column exists, return target column name.
+        """
+        if self.target is None:
+            raise ValueError("Current task has no target column configured, cannot evaluate as supervised learning")
+        if self.target not in self.data.columns:
+            raise ValueError(f"Target column '{self.target}' does not exist in internal data")
+        return self.target
+
+    def _eval_supervised_split(self, data_split: pd.DataFrame) -> Dict[str, float]:
+        """
+        Call PyCaret's predict_model on given data subset and extract numeric metrics.
+        """
+        self._ensure_setup()
+        if self.current_model is None:
+            raise ValueError("No evaluable model currently available, please create or train a model first")
+
+        # For supervised learning, require subset to contain target column, this constraint ensured by upstream splitting logic
+        self.experiment.predict_model(
+            estimator=self.current_model,
+            data=data_split,
+            verbose=self.verbose,
+        )
+        results_df = self.experiment.pull()
+        metrics_dict = self._extract_metrics_from_results(results_df, model_label=None)
+
+        numeric_metrics: Dict[str, float] = {}
+        for key, value in metrics_dict.items():
+            if isinstance(value, (int, float, np.floating)):
+                numeric_metrics[key] = float(value)
+        return numeric_metrics
+
+    def _scores_supervised_holdout(
+        self,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+        train_size: float,
+    ) -> pd.DataFrame:
+        """Supervised learning holdout mode: split train/test sets once according to train_size."""
+        target_col = self._ensure_supervised_target()
+        df = self.data
+
+        random_state = self._get_random_state()
+
+        # Classification tasks prioritize stratified sampling
+        usecase = getattr(self.experiment, "_ml_usecase", None)
+        usecase_str = str(usecase) if usecase is not None else ""
+        stratify = None
+        if "CLASSIFICATION" in usecase_str:
+            y = df[target_col]
+            stratify = y
+        try:
+            train_df, test_df = train_test_split(
+                df,
+                train_size=train_size,
+                random_state=random_state,
+                stratify=stratify,
+            )
+        except ValueError:
+            # When sample size too small or class imbalance too severe causing stratification failure, fall back to regular splitting
+            train_df, test_df = train_test_split(
+                df,
+                train_size=train_size,
+                random_state=random_state,
+            )
+
+        # If user explicitly passes external_test_data, override the split test set
+        if external_test_data is not None:
+            if target_col not in external_test_data.columns:
+                raise ValueError(
+                    f"Custom test set missing target column '{target_col}', cannot calculate supervised task evaluation metrics"
+                )
+            test_df = external_test_data
+
+        train_metrics = self._eval_supervised_split(train_df)
+        test_metrics = self._eval_supervised_split(test_df)
+
+        result_df = pd.DataFrame(
+            [train_metrics, test_metrics],
+            index=["train", "test"],
+        )
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_supervised_custom(
+        self,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+    ) -> pd.DataFrame:
+        """Supervised learning custom mode: training set is initialization data, test set provided by parameters/attributes."""
+        target_col = self._ensure_supervised_target()
+        train_df = self.data
+
+        # Priority: use test_data from scores call first, then use self.test_data from initialization
+        if external_test_data is not None:
+            test_df = external_test_data
+        elif self.test_data is not None:
+            test_df = self.test_data
+        else:
+            raise ValueError(
+                "Custom mode must provide test set: please pass in scores(test_data=...), or provide test_data when initializing AutoML."
+            )
+
+        if target_col not in test_df.columns:
+            raise ValueError(
+                f"Custom test set missing target column '{target_col}', cannot calculate supervised task evaluation metrics"
+            )
+
+        train_metrics = self._eval_supervised_split(train_df)
+        test_metrics = self._eval_supervised_split(test_df)
+
+        result_df = pd.DataFrame(
+            [train_metrics, test_metrics],
+            index=["train", "test"],
+        )
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_supervised_train_only(
+        self,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+    ) -> pd.DataFrame:
+        """
+        Supervised learning train-only mode:
+        Always evaluate training set, if test set exists (provided by parameters or initialization) also evaluate test set.
+        """
+        target_col = self._ensure_supervised_target()
+        train_df = self.data
+
+        rows: List[Dict[str, float]] = []
+        indices: List[str] = []
+
+        train_metrics = self._eval_supervised_split(train_df)
+        rows.append(train_metrics)
+        indices.append("train")
+
+        # Check if test set is available
+        test_df: Optional[pd.DataFrame] = None
+        if external_test_data is not None:
+            test_df = external_test_data
+        elif self.test_data is not None:
+            test_df = self.test_data
+
+        if test_df is not None:
+            if target_col not in test_df.columns:
+                raise ValueError(
+                    f"Custom test set missing target column '{target_col}', cannot calculate supervised task evaluation metrics"
+                )
+            test_metrics = self._eval_supervised_split(test_df)
+            rows.append(test_metrics)
+            indices.append("test")
+
+        result_df = pd.DataFrame(rows, index=indices)
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_supervised_kfold(
+        self,
+        metrics: Union[str, List[str]],
+        fold: int,
+    ) -> pd.DataFrame:
+        """
+        Supervised learning kfold mode: evaluate train/test subsets for each fold and provide mean.
+
+        Each fold row contains both training and testing metrics, column names use
+        ``<metric_name>_train`` / ``<metric_name>_test`` format; last row ``mean`` is column average.
+        """
+        target_col = self._ensure_supervised_target()
+        df = self.data
+
+        usecase = getattr(self.experiment, "_ml_usecase", None)
+        usecase_str = str(usecase) if usecase is not None else ""
+
+        random_state = self._get_random_state()
+        if "CLASSIFICATION" in usecase_str:
+            y = df[target_col]
+            splitter = StratifiedKFold(
+                n_splits=fold,
+                shuffle=True,
+                random_state=random_state,
+            )
+            split_iter = splitter.split(df, y)
+        else:
+            splitter = KFold(
+                n_splits=fold,
+                shuffle=True,
+                random_state=random_state,
+            )
+            split_iter = splitter.split(df)
+
+        rows: List[Dict[str, float]] = []
+        indices: List[str] = []
+
+        # Used for calculating column means
+        sum_accumulator: Dict[str, float] = {}
+        n_folds_actual = 0
+
+        for fold_idx, (train_idx, test_idx) in enumerate(split_iter):
+            train_df = df.iloc[train_idx]
+            test_df = df.iloc[test_idx]
+
+            train_metrics = self._eval_supervised_split(train_df)
+            test_metrics = self._eval_supervised_split(test_df)
+
+            row: Dict[str, float] = {}
+            # Unify key set to avoid some metrics only appearing in training or testing
+            all_keys = set(train_metrics.keys()) | set(test_metrics.keys())
+            for key in all_keys:
+                if key in train_metrics:
+                    row[f"{key}_train"] = train_metrics[key]
+                if key in test_metrics:
+                    row[f"{key}_test"] = test_metrics[key]
+
+            rows.append(row)
+            indices.append(f"fold_{fold_idx + 1}")
+            n_folds_actual += 1
+
+            for k, v in row.items():
+                sum_accumulator[k] = sum_accumulator.get(k, 0.0) + v
+
+        if n_folds_actual == 0:
+            raise ValueError("Kfold evaluation produced no folds, please check data volume and fold configuration")
+
+        mean_row = {k: v / n_folds_actual for k, v in sum_accumulator.items()}
+        rows.append(mean_row)
+        indices.append("mean")
+
+        result_df = pd.DataFrame(rows, index=indices)
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_supervised_leaveout(
+        self,
+        metrics: Union[str, List[str]],
+    ) -> pd.DataFrame:
+        """
+        Supervised learning leaveout mode: leave-one-out cross-validation, returns train/test average metrics.
+
+        Note: This mode has very high overhead when sample size is large, so in auto mode it's only automatically selected when n < 100.
+        """
+        target_col = self._ensure_supervised_target()
+        df = self.data
+        n_samples = len(df)
+        if n_samples <= 1:
+            raise ValueError("Leave-one-out cross-validation requires at least 2 samples")
+
+        loo = LeaveOneOut()
+
+        # Use sum and divide by rounds approach to accumulate average
+        train_sum: Dict[str, float] = {}
+        test_sum: Dict[str, float] = {}
+        n_rounds = 0
+
+        for train_idx, test_idx in loo.split(df):
+            train_df = df.iloc[train_idx]
+            test_df = df.iloc[test_idx]
+
+            train_metrics = self._eval_supervised_split(train_df)
+            test_metrics = self._eval_supervised_split(test_df)
+
+            for k, v in train_metrics.items():
+                train_sum[k] = train_sum.get(k, 0.0) + v
+            for k, v in test_metrics.items():
+                test_sum[k] = test_sum.get(k, 0.0) + v
+            n_rounds += 1
+
+        if n_rounds == 0:
+            raise ValueError("Leave-one-out cross-validation produced no rounds, please check data configuration")
+
+        all_keys = set(train_sum.keys()) | set(test_sum.keys())
+        train_mean = {k: train_sum.get(k, 0.0) / n_rounds for k in all_keys}
+        test_mean = {k: test_sum.get(k, 0.0) / n_rounds for k in all_keys}
+
+        result_df = pd.DataFrame(
+            [train_mean, test_mean],
+            index=["train_mean", "test_mean"],
+        )
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_time_series(
+        self,
+        mode: str,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+        train_size: float,
+        fold: int,
+    ) -> pd.DataFrame:
+        """
+        Scores implementation for time series tasks.
+
+        Notes:
+        - Does not support leaveout mode;
+        - Kfold mode based on backtesting results from PyCaret's create_model / tune_model steps;
+        - In holdout/custom/train-only modes:
+          * Training side uniformly uses average metrics from backtesting results as train;
+          * Testing side prioritizes scores(test_data=...) or self.test_data from initialization;
+            If neither exists, falls back to internal y_test (if available).
+        """
+        allowed_modes = {"auto", "holdout", "kfold", "custom", "train-only", "leaveout"}
+        if mode not in allowed_modes:
+            raise ValueError(f"Time series task does not support evaluation mode '{mode}', available options: {sorted(allowed_modes)}")
+
+        if mode == "leaveout":
+            raise ValueError("Time series tasks currently do not support leaveout mode")
+
+        has_any_test = external_test_data is not None or self.test_data is not None
+
+        if mode == "auto":
+            if has_any_test:
+                resolved_mode = "custom"
+            else:
+                n_samples = len(self.data)
+                if n_samples <= 10000:
+                    resolved_mode = "kfold"
+                else:
+                    resolved_mode = "holdout"
+        else:
+            resolved_mode = mode
+
+        if resolved_mode == "kfold":
+            result = self._scores_time_series_kfold(metrics=metrics)
+        elif resolved_mode == "holdout":
+            result = self._scores_time_series_holdout(
+                metrics=metrics,
+                external_test_data=external_test_data,
+            )
+        elif resolved_mode == "custom":
+            result = self._scores_time_series_custom(
+                metrics=metrics,
+                external_test_data=external_test_data,
+            )
+        elif resolved_mode == "train-only":
+            result = self._scores_time_series_train_only(
+                metrics=metrics,
+                external_test_data=external_test_data,
+            )
+        else:
+            raise RuntimeError(f"Internal error: unhandled time series evaluation mode '{resolved_mode}'")
+
+        return result
+
+    def _get_time_series_cv_results(self) -> Optional[pd.DataFrame]:
+        """
+        Try to retrieve cross-validation results table (ts_cv_results) for current time series model.
+
+        Priority:
+        1. First find entry in model list where model matches self.current_model and extra contains ts_cv_results;
+        2. If not found, fall back to finding most recent entry containing ts_cv_results by searching backwards through all models.
+        """
+        usecase = getattr(self.experiment, "_ml_usecase", None)
+        if usecase is None or "TIME_SERIES" not in str(usecase):
+            return None
+
+        # Priority: find record matching current model object
+        for info in self.models.values():
+            if info.model is self.current_model and isinstance(info.extra, dict):
+                cv_df = info.extra.get("ts_cv_results")
+                if isinstance(cv_df, pd.DataFrame):
+                    return cv_df
+
+        # Fallback: search backwards chronologically to find most recent model with ts_cv_results
+        for info in reversed(list(self.models.values())):
+            if isinstance(info.extra, dict):
+                cv_df = info.extra.get("ts_cv_results")
+                if isinstance(cv_df, pd.DataFrame):
+                    return cv_df
+
+        return None
+
+    def _get_time_series_train_metrics(self) -> Dict[str, float]:
+        """
+        Get metrics used to represent "training performance" in time series tasks.
+
+        Priority: use Mean row from ts_cv_results as proxy metric for overall training;
+        If backtesting results not found, fall back to current model's record in StoredModel.metrics.
+        """
+        cv_df = self._get_time_series_cv_results()
+        if cv_df is not None:
+            tmp = cv_df.copy()
+            # Try to use Mean row; if not exists, do column average on non-SD rows
+            metrics_series = None
+            if any(str(idx).lower() == "mean" for idx in tmp.index):
+                metrics_series = tmp.loc[[idx for idx in tmp.index if str(idx).lower() == "mean"][0]]
+            else:
+                if any(str(idx).lower() == "sd" for idx in tmp.index):
+                    tmp = tmp.drop(index=[idx for idx in tmp.index if str(idx).lower() == "sd"][0])
+                metrics_series = tmp.mean(axis=0)
+
+            # Remove non-metric columns (e.g. cutoff)
+            drop_cols = [col for col in ["cutoff"] if col in metrics_series.index]
+            metrics_series = metrics_series.drop(labels=drop_cols)
+
+            metrics_dict: Dict[str, float] = {}
+            for key, value in metrics_series.items():
+                if isinstance(value, (int, float, np.floating)):
+                    metrics_dict[key] = float(value)
+            if metrics_dict:
+                return metrics_dict
+
+        # Fallback: find current model's metrics in stored models
+        for info in self.models.values():
+            if info.model is self.current_model:
+                numeric_metrics: Dict[str, float] = {}
+                for key, value in info.metrics.items():
+                    if isinstance(value, (int, float, np.floating)):
+                        numeric_metrics[key] = float(value)
+                if numeric_metrics:
+                    return numeric_metrics
+
+        raise ValueError("Current time series model lacks training phase metric information, cannot construct train portion of scores")
+
+    def _get_internal_time_series_test_df(self) -> Optional[pd.DataFrame]:
+        """
+        Try to get internal y_test from PyCaret configuration and construct a DataFrame containing only the target column.
+        """
+        try:
+            y_test = self.experiment.get_config("y_test")
+        except Exception:
+            return None
+
+        if y_test is None:
+            return None
+
+        target_col = self.target
+        if target_col is None:
+            # If target not explicitly set, unify column name as 'y'
+            target_col = "y"
+        return pd.DataFrame({target_col: y_test})
+
+    def _eval_time_series_on_test(
+        self,
+        test_df: pd.DataFrame,
+    ) -> Dict[str, float]:
+        """
+        Use current model to predict on given test set in time series tasks and manually calculate metrics.
+
+        Requirements:
+        - test_df must contain at least one target column:
+          * If self.target is not None, try to use this column;
+          * If self.target is None and only one column exists, use that column;
+        """
+        if self.current_model is None:
+            raise ValueError("No evaluable time series model currently available")
+
+        target_col = self.target
+        if target_col is not None and target_col in test_df.columns:
+            y_true = test_df[target_col]
+        else:
+            # If target column not found and only one column exists, fall back to using that column
+            if target_col is None and test_df.shape[1] == 1:
+                y_true = test_df.iloc[:, 0]
+            else:
+                raise ValueError(
+                    "Time series test set lacks available target column, cannot calculate evaluation metrics"
+                )
+
+        n_periods = len(y_true)
+        if n_periods <= 0:
+            raise ValueError("Time series test set is empty, cannot calculate evaluation metrics")
+
+        # Delay importing sktime's ForecastingHorizon to avoid adding dependency burden when time series tasks are not used
+        try:
+            from sktime.forecasting.base import ForecastingHorizon
+        except ImportError as exc:
+            raise ImportError(
+                "Time series scores requires sktime support, please ensure PyCaret with time series dependencies is installed."
+            ) from exc
+
+        fh = ForecastingHorizon(np.arange(1, n_periods + 1), is_relative=True)
+        model = self.current_model
+
+        # Directly call underlying forecaster's predict to forecast future n_periods periods
+        y_pred = model.predict(fh=fh)
+
+        y_true_arr = np.asarray(y_true)
+        y_pred_arr = np.asarray(y_pred)
+        m = min(len(y_true_arr), len(y_pred_arr))
+        if m == 0:
+            raise ValueError("Time series test set and prediction results cannot be aligned, evaluation failed")
+        y_true_arr = y_true_arr[:m]
+        y_pred_arr = y_pred_arr[:m]
+
+        metrics_containers = getattr(self.experiment, "_all_metrics", {})
+        scores: Dict[str, float] = {}
+        for key, container in metrics_containers.items():
+            display_name = getattr(container, "display_name", key)
+            score_func = getattr(container, "score_func", None)
+            if score_func is None:
+                continue
+            try:
+                value = score_func(y_true_arr, y_pred_arr)
+            except Exception:
+                continue
+            if isinstance(value, (int, float, np.floating)):
+                scores[display_name] = float(value)
+
+        return scores
+
+    def _scores_time_series_kfold(
+        self,
+        metrics: Union[str, List[str]],
+    ) -> pd.DataFrame:
+        """
+        Time series kfold mode: construct folds and average results based on ts_cv_results.
+        """
+        cv_df = self._get_time_series_cv_results()
+        if cv_df is None:
+            raise ValueError(
+                "Backtesting results for current time series model not found, cannot calculate scores in kfold mode."
+            )
+
+        df = cv_df.copy()
+
+        # Keep only metric columns, remove non-metric information like cutoff
+        if "cutoff" in df.columns:
+            df = df.drop(columns=["cutoff"])
+
+        # Treat non-Mean/SD rows as folds
+        fold_mask = ~df.index.astype(str).isin(["Mean", "SD"])
+        fold_rows = df[fold_mask]
+
+        if fold_rows.empty:
+            raise ValueError("No valid fold information found in time series backtesting results")
+
+        if any(str(idx).lower() == "mean" for idx in df.index):
+            mean_row = df.loc[[idx for idx in df.index if str(idx).lower() == "mean"][0]]
+        else:
+            tmp = fold_rows
+            if any(str(idx).lower() == "sd" for idx in tmp.index):
+                tmp = tmp.drop(index=[idx for idx in tmp.index if str(idx).lower() == "sd"][0])
+            mean_row = tmp.mean(axis=0)
+
+        rows: List[Dict[str, float]] = []
+        indices: List[str] = []
+
+        for i, (_, row) in enumerate(fold_rows.iterrows(), start=1):
+            row_dict: Dict[str, float] = {}
+            for key, value in row.items():
+                if isinstance(value, (int, float, np.floating)):
+                    row_dict[key] = float(value)
+            rows.append(row_dict)
+            indices.append(f"fold_{i}")
+
+        mean_dict: Dict[str, float] = {}
+        for key, value in mean_row.items():
+            if isinstance(value, (int, float, np.floating)):
+                mean_dict[key] = float(value)
+        rows.append(mean_dict)
+        indices.append("mean")
+
+        result_df = pd.DataFrame(rows, index=indices)
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_time_series_holdout(
+        self,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+    ) -> pd.DataFrame:
+        """
+        Time series holdout mode:
+        - train row: use average metrics from backtesting results;
+        - test row: use external test set (if available), otherwise use internal y_test.
+        """
+        train_metrics = self._get_time_series_train_metrics()
+
+        # Determine test set source
+        if external_test_data is not None:
+            test_df = external_test_data
+        elif self.test_data is not None:
+            test_df = self.test_data
+        else:
+            internal_test_df = self._get_internal_time_series_test_df()
+            if internal_test_df is None:
+                raise ValueError(
+                    "No available test set found in time series holdout mode: "
+                    "Neither scores(test_data=...) provided nor y_test configured in experiment."
+                )
+            test_df = internal_test_df
+
+        test_metrics = self._eval_time_series_on_test(test_df)
+
+        result_df = pd.DataFrame(
+            [train_metrics, test_metrics],
+            index=["train", "test"],
+        )
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_time_series_custom(
+        self,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+    ) -> pd.DataFrame:
+        """
+        Time series custom mode:
+        - train row: use average metrics from backtesting results;
+        - test row: must use scores(test_data=...) or self.test_data from initialization.
+        """
+        train_metrics = self._get_time_series_train_metrics()
+
+        if external_test_data is not None:
+            test_df = external_test_data
+        elif self.test_data is not None:
+            test_df = self.test_data
+        else:
+            raise ValueError(
+                "Test set must be provided in time series custom mode: "
+                "Please pass in scores(test_data=...), or provide test_data when initializing TimeSeriesML."
+            )
+
+        test_metrics = self._eval_time_series_on_test(test_df)
+
+        result_df = pd.DataFrame(
+            [train_metrics, test_metrics],
+            index=["train", "test"],
+        )
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_time_series_train_only(
+        self,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+    ) -> pd.DataFrame:
+        """
+        Time series train-only mode:
+        - Always return training set performance;
+        - If external test set or initialized self.test_data exists, additionally return one test row.
+        """
+        train_metrics = self._get_time_series_train_metrics()
+
+        rows: List[Dict[str, float]] = [train_metrics]
+        indices: List[str] = ["train"]
+
+        test_df: Optional[pd.DataFrame] = None
+        if external_test_data is not None:
+            test_df = external_test_data
+        elif self.test_data is not None:
+            test_df = self.test_data
+
+        if test_df is not None:
+            test_metrics = self._eval_time_series_on_test(test_df)
+            rows.append(test_metrics)
+            indices.append("test")
+
+        result_df = pd.DataFrame(rows, index=indices)
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _scores_clustering(
+        self,
+        mode: str,
+        metrics: Union[str, List[str]],
+        external_test_data: Optional[pd.DataFrame],
+    ) -> pd.DataFrame:
+        """
+        Scores implementation for clustering tasks.
+
+        Only supports train-only semantics:
+        - Always evaluate internal clustering metrics on training data;
+        - If external test set or self.test_data provided during initialization exists, additionally evaluate test set;
+        - Only return internal metrics that don't depend on true labels (e.g. Silhouette / CHS / DB),
+          external metrics requiring ground truth (e.g. Homogeneity / ARI / Completeness) are not calculated.
+        """
+        if mode != "train-only":
+            raise ValueError("Clustering tasks currently only support train-only mode")
+
+        self._ensure_setup()
+        if self.current_model is None:
+            raise ValueError("No evaluable clustering model currently available, please create a model first")
+
+        # Get feature columns and preprocessing pipeline to ensure consistency with training phase
+        try:
+            X_cfg = self.experiment.get_config("X")
+        except Exception as exc:
+            raise ValueError("Cannot read clustering feature matrix X from experiment configuration") from exc
+
+        feature_cols = list(X_cfg.columns)
+        if not feature_cols:
+            raise ValueError("No feature columns detected for clustering task, cannot calculate metrics")
+
+        rows: List[Dict[str, float]] = []
+        indices: List[str] = []
+
+        # Clustering quality on training set
+        train_metrics = self._eval_clustering_on_data(self.data, feature_cols)
+        rows.append(train_metrics)
+        indices.append("train")
+
+        # Test set (optional): external_test_data first priority, then self.test_data
+        test_df: Optional[pd.DataFrame] = None
+        if external_test_data is not None:
+            test_df = external_test_data
+        elif self.test_data is not None:
+            test_df = self.test_data
+
+        if test_df is not None:
+            missing_cols = [col for col in feature_cols if col not in test_df.columns]
+            if missing_cols:
+                raise ValueError(
+                    f"Clustering task test set missing the following feature columns, cannot perform evaluation: {missing_cols}"
+                )
+            test_metrics = self._eval_clustering_on_data(test_df, feature_cols)
+            rows.append(test_metrics)
+            indices.append("test")
+
+        result_df = pd.DataFrame(rows, index=indices)
+        return self._filter_metrics_columns(result_df, metrics)
+
+    def _eval_clustering_on_data(
+        self,
+        data: pd.DataFrame,
+        feature_cols: List[str],
+    ) -> Dict[str, float]:
+        """
+        Calculate internal clustering metrics on given dataset (do not depend on true labels).
+        """
+        self._ensure_setup()
+        if self.current_model is None:
+            raise ValueError("No evaluable clustering model currently available")
+
+        # Select feature columns consistent with training
+        X = data[feature_cols]
+
+        # Use preprocessing pipeline consistent with training phase
+        try:
+            pipeline = self.experiment.get_config("pipeline")
+        except Exception as exc:
+            raise ValueError("Cannot get clustering preprocessing pipeline from experiment configuration") from exc
+
+        X_trans = pipeline.transform(X)
+
+        # Use current clustering model for prediction
+        model = self.current_model
+        labels = model.predict(X_trans)
+
+        metrics_containers = getattr(self.experiment, "_all_metrics", {})
+        scores: Dict[str, float] = {}
+
+        for key, container in metrics_containers.items():
+            # Only keep internal metrics that don't require ground truth
+            if getattr(container, "needs_ground_truth", False):
+                continue
+            score_func = getattr(container, "score_func", None)
+            if score_func is None:
+                continue
+            try:
+                value = score_func(X_trans, labels)
+            except Exception:
+                continue
+            if isinstance(value, (int, float, np.floating)):
+                display_name = getattr(container, "display_name", key)
+                scores[display_name] = float(value)
+
+        if not scores:
+            raise ValueError("Current clustering task failed to calculate any internal metrics, please check model and data configuration")
+
+        return scores
 
     def _setup_experiment(self, **kwargs: Any) -> None:
         """Setup is not implemented in the base class; override in subclass."""
