@@ -8,9 +8,14 @@ model storage and evaluation utilities; all task wrappers derive from this.
 from __future__ import annotations
 
 import inspect
-from contextlib import contextmanager, nullcontext
+import os
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+
+os.environ["PYCARET_CUSTOM_LOGGING_PATH"] = os.devnull
+os.environ["PYCARET_CUSTOM_LOGGING_LEVEL"] = "CRITICAL"
+os.environ["CATBOOST_ALLOW_WRITING_FILES"] = "0"
 
 import numpy as np
 import pandas as pd
@@ -18,9 +23,10 @@ from sklearn.model_selection import KFold, LeaveOneOut, StratifiedKFold, train_t
 
 # Import the global Chinese font configuration
 try:
-    from .. import zh_font_available
+    from .. import zh_font_available, zh_font_paths
 except ImportError:
     zh_font_available = []
+    zh_font_paths = {}
 
 DataLike = Union[str, pd.DataFrame, np.ndarray, Tuple[np.ndarray, np.ndarray]]
 TargetLike = Union[str, int, None]
@@ -45,6 +51,7 @@ class AutoMLBase:
     """
 
     primary_metric: Optional[str] = None
+    _catboost_patched: bool = False
 
     def __init__(
         self,
@@ -54,6 +61,8 @@ class AutoMLBase:
         primary_metric: Optional[str] = None,
         **setup_kwargs: Any,
     ) -> None:
+        # 预先禁用CatBoost产生本地文件夹（catboost_info等）
+        self._silence_catboost_artifacts()
         # Data loading and validation
         self.data, normalized_target = self._load_data(data, target)
         self.target = normalized_target
@@ -77,6 +86,38 @@ class AutoMLBase:
 
         # Auto-execute experiment initialization
         self._setup_experiment(**setup_kwargs)
+
+    def _silence_catboost_artifacts(self) -> None:
+        """通过猴子补丁为CatBoost默认加上allow_writing_files=False，避免生成日志目录。"""
+        if AutoMLBase._catboost_patched:
+            return
+        try:
+            import catboost  # type: ignore
+        except ImportError:
+            return
+
+        def _patch_init(cls: Any) -> None:
+            original_init = cls.__init__
+            sig = inspect.signature(original_init)
+            param_names = set(sig.parameters.keys())
+
+            def wrapped(self, *args: Any, **kwargs: Any):
+                # 只设置 allow_writing_files 参数来禁用文件写入
+                # 不设置 verbose/logging_level 因为 PyCaret 已经处理了这些
+                if "allow_writing_files" in param_names:
+                    kwargs.setdefault("allow_writing_files", False)
+                return original_init(self, *args, **kwargs)
+
+            wrapped.__signature__ = sig  # 保留签名便于反射
+            cls.__init__ = wrapped  # type: ignore
+
+        # 只补丁实际的分类器和回归器类
+        for name in ("CatBoostRegressor", "CatBoostClassifier"):
+            model_cls = getattr(catboost, name, None)
+            if model_cls is not None:
+                _patch_init(model_cls)
+
+        AutoMLBase._catboost_patched = True
 
     # ------------------------------------------------------------------
     # Data-related tools
@@ -201,90 +242,101 @@ class AutoMLBase:
         target: TargetLike,
     ) -> Tuple[pd.DataFrame, Optional[str]]:
         """Convert NumPy arrays to a DataFrame and handle target column.
-        
+
         Supports multiple input modes:
-        1. Single array with target index (backward compatible)
-        2. Tuple of (features, target) arrays  
-        3. Single array with no target
-        
-        Args:
-            data: Either a single 2D array or tuple of (features, target) arrays
-            target: None, string column name, integer index, or tuple index
-        
-        Returns:
-            Tuple of (DataFrame, target_column_name)
+        1. Single array with target index
+        2. Single array with separate target array/Series
+        3. Tuple of (features, target) arrays
+        4. Single array with no target
+
+        Note: Feature arrays must contain only numeric data. For mixed-type data,
+        use pandas DataFrame instead.
         """
+        # Convert single array + array/Series target to tuple mode for unified processing
+        if isinstance(data, np.ndarray) and not isinstance(data, tuple):
+            if isinstance(target, (np.ndarray, pd.Series)):
+                target_array = np.asarray(target) if isinstance(target, pd.Series) else target
+                data = (data, target_array)
+                target = None
+
         # Handle tuple input: (features, target)
         if isinstance(data, tuple):
             if len(data) != 2:
                 raise ValueError("When data is a tuple, it must contain exactly 2 arrays: (features, target)")
-            
+
             features_array, target_array = data
-            
-            # Validate arrays
+
             if not isinstance(features_array, np.ndarray) or not isinstance(target_array, np.ndarray):
                 raise TypeError("Both elements of the tuple must be NumPy arrays")
-            
+
             if features_array.ndim != 2:
                 raise ValueError("Features array must be 2-dimensional")
-            
+
             if target_array.ndim != 1:
                 raise ValueError("Target array must be 1-dimensional")
-            
+
             if len(features_array) != len(target_array):
                 raise ValueError("Features and target arrays must have the same length")
-            
-            # Create features DataFrame
+
+            if not np.issubdtype(features_array.dtype, np.number):
+                raise TypeError(
+                    "Features array must contain only numeric data (int, float, etc.). "
+                    "For mixed-type data containing strings or categorical values, "
+                    "please use pandas DataFrame instead."
+                )
+
             feature_columns = [f"feature_{idx}" for idx in range(features_array.shape[1])]
             features_df = pd.DataFrame(features_array, columns=feature_columns)
-            
-            # Handle target based on type
+
             if target is None:
-                # Simply add target as a column
                 target_column_name = "target"
-                features_df[target_column_name] = target_array
-                return features_df, target_column_name
             elif isinstance(target, str):
-                # Use provided column name
                 target_column_name = target
-                features_df[target_column_name] = target_array
-                return features_df, target_column_name
             elif isinstance(target, int):
-                # Use integer index to determine target column name
                 if target == -1:
                     target_column_name = "target"
+                elif 0 <= target < len(feature_columns):
+                    target_column_name = feature_columns[target]
                 else:
-                    try:
-                        target_column_name = feature_columns[target]
-                    except IndexError as exc:
-                        raise ValueError(f"Target index {target} out of range for {len(feature_columns)} features") from exc
-                features_df[target_column_name] = target_array
-                return features_df, target_column_name
+                    raise ValueError(f"Target index {target} out of range for {len(feature_columns)} features")
             else:
                 raise TypeError("Target must be None, string column name, or integer index")
-        
-        # Handle single array input (backward compatibility)
+
+            features_df[target_column_name] = target_array
+            return features_df, target_column_name
+
+        # Handle single array input
         elif isinstance(data, np.ndarray):
             if data.ndim != 2:
                 raise ValueError("Only 2-D arrays are supported as data input")
-            
+
+            if not np.issubdtype(data.dtype, np.number):
+                raise TypeError(
+                    "NumPy array must contain only numeric data (int, float, etc.). "
+                    "For mixed-type data containing strings or categorical values, "
+                    "please use pandas DataFrame instead."
+                )
+
             columns = [f"feature_{idx}" for idx in range(data.shape[1])]
             df = pd.DataFrame(data, columns=columns)
-            
+
             if target is None:
                 return df, None
-            
+
             if not isinstance(target, int):
-                raise TypeError("In NumPy array mode, target must be an integer index")
-            
+                raise TypeError(
+                    "In single array mode, target must be None or an integer index. "
+                    "To pass a separate target array, use data=X_array, target=y_array."
+                )
+
             try:
                 target_column = columns[target]
             except IndexError as exc:
-                raise ValueError(f"target column index {target} out of range") from exc
-            
+                raise ValueError(f"Target column index {target} out of range") from exc
+
             df.rename(columns={target_column: "target"}, inplace=True)
             return df, "target"
-        
+
         else:
             raise TypeError("data must be a NumPy array or tuple of (features, target) arrays")
 
@@ -401,207 +453,161 @@ class AutoMLBase:
         params = inspect.signature(func).parameters
         return {key: value for key, value in base_kwargs.items() if key in params}
 
-    def _build_plot_customization_context(
-        self,
-        title: Optional[str],
-        xlabel: Optional[str],
-        ylabel: Optional[str],
-        legend_title: Optional[str],
-        legend_labels: Optional[List[str]],
-        font_sizes: Optional[Dict[str, Union[int, float]]],
-    ):
-        """Build a plotting customization context; returns a null context when not provided."""
-        has_custom_text = any([title, xlabel, ylabel, legend_title, legend_labels])
-        has_font_customization = font_sizes is not None and len(font_sizes) > 0
-        if not (has_custom_text or has_font_customization):
-            return nullcontext()
-        return self._override_matplotlib_labels(
-            title=title,
-            xlabel=xlabel,
-            ylabel=ylabel,
-            legend_title=legend_title,
-            legend_labels=legend_labels,
-            font_sizes=font_sizes,
-        )
+    def _get_chinese_font(self) -> str:
+        """获取可用的中文字体名称。"""
+        if zh_font_available and isinstance(zh_font_available, list) and len(zh_font_available) > 0:
+            return zh_font_available[0]
+        return "DejaVu Sans"
 
-    @contextmanager
-    def _override_matplotlib_labels(
+    def _get_font_properties(self):
+        """
+        获取用于中文显示的 FontProperties 对象。
+        直接使用 __init__.py 中已检测到的字体路径。
+        """
+        from matplotlib.font_manager import FontProperties
+
+        chinese_font = self._get_chinese_font()
+
+        # 直接使用 __init__.py 中保存的字体路径
+        if zh_font_paths and chinese_font in zh_font_paths:
+            return FontProperties(fname=zh_font_paths[chinese_font])
+
+        # 回退到使用字体名称
+        return FontProperties(family=chinese_font)
+
+    def _apply_chinese_font_to_figure(
         self,
-        title: Optional[str],
-        xlabel: Optional[str],
-        ylabel: Optional[str],
-        legend_title: Optional[str],
-        legend_labels: Optional[List[str]],
-        font_sizes: Optional[Dict[str, Union[int, float]]],
-    ):
-        """Override Matplotlib labels/titles/legend to apply custom text and fonts with global Chinese font setting."""
-        import matplotlib.pyplot as plt
-        from matplotlib.axes import Axes
-        from matplotlib import rcParams
+        fig: Any,
+        title: Optional[str] = None,
+        xlabel: Optional[str] = None,
+        ylabel: Optional[str] = None,
+        legend_title: Optional[str] = None,
+        legend_labels: Optional[List[str]] = None,
+        font_sizes: Optional[Dict[str, Union[int, float]]] = None,
+    ) -> None:
+        """
+        将中文字体应用到 matplotlib Figure 的所有文本元素。
+        在 plt.show() 或 plt.savefig() 之前调用。
+        """
         import warnings
 
-        patches: List[Tuple[Any, str, Any]] = []
         fonts = font_sizes or {}
-        
-        # Set global Chinese font
-        if zh_font_available and isinstance(zh_font_available, list) and len(zh_font_available) > 0:
-            chinese_font = zh_font_available[0]
-        else:
-            chinese_font = "Arial"
-        
-        # Global Chinese font setting (permanent effect)
-        rcParams['font.sans-serif'] = [chinese_font]
-        rcParams['axes.unicode_minus'] = False
 
-        title_size = fonts.get("title")
-        xlabel_size = fonts.get("xlabel")
-        ylabel_size = fonts.get("ylabel")
-        legend_title_size = fonts.get("legend_title")
-        legend_label_size = fonts.get("legend_label")
-        xtick_size = fonts.get("xtick")
-        ytick_size = fonts.get("ytick")
+        # 使用智能字体获取方法
+        font_prop = self._get_font_properties()
 
-        def add_patch(target: Any, attr: str, new_func: Any) -> None:
-            original = getattr(target, attr)
-            setattr(target, attr, new_func)
-            patches.append((target, attr, original))
+        def apply_font_to_text(text_obj, new_text=None, fontsize=None):
+            """辅助函数：将中文字体应用到单个文本对象"""
+            if text_obj is None:
+                return
+            if new_text is not None:
+                text_obj.set_text(new_text)
+            text_obj.set_fontproperties(font_prop)
+            if fontsize is not None:
+                text_obj.set_fontsize(fontsize)
 
-        if title is not None or title_size is not None:
-            original_set_title = Axes.set_title
+        for ax in fig.get_axes():
+            # 标题
+            if ax.title:
+                apply_font_to_text(ax.title, title, fonts.get("title"))
 
-            def set_title_override(self, _text: str, *args: Any, **kwargs: Any):
-                kwargs = dict(kwargs)
-                if title_size is not None:
-                    kwargs["fontsize"] = title_size
-                actual = title if title is not None else _text
-                return original_set_title(self, actual, *args, **kwargs)
+            # X轴标签
+            if ax.xaxis.label:
+                apply_font_to_text(ax.xaxis.label, xlabel, fonts.get("xlabel"))
 
-            add_patch(Axes, "set_title", set_title_override)
+            # Y轴标签
+            if ax.yaxis.label:
+                apply_font_to_text(ax.yaxis.label, ylabel, fonts.get("ylabel"))
 
-            original_plt_title = plt.title
+            # 刻度标签
+            tick_size_x = fonts.get("tick") or fonts.get("xtick")
+            for label in ax.get_xticklabels():
+                apply_font_to_text(label, fontsize=tick_size_x)
 
-            def plt_title_override(_text: str = "", *args: Any, **kwargs: Any):
-                kwargs = dict(kwargs)
-                if title_size is not None:
-                    kwargs["fontsize"] = title_size
-                actual = title if title is not None else _text
-                return original_plt_title(actual, *args, **kwargs)
+            tick_size_y = fonts.get("tick") or fonts.get("ytick")
+            for label in ax.get_yticklabels():
+                apply_font_to_text(label, fontsize=tick_size_y)
 
-            add_patch(plt, "title", plt_title_override)
+            # 图例
+            legend = ax.get_legend()
+            if legend:
+                if legend_title is not None:
+                    legend.set_title(legend_title)
+                if legend.get_title():
+                    legend.get_title().set_fontproperties(font_prop)
+                    if fonts.get("legend_title"):
+                        legend.get_title().set_fontsize(fonts["legend_title"])
 
-        if xlabel is not None or xlabel_size is not None:
-            original_set_xlabel = Axes.set_xlabel
+                texts = legend.get_texts()
+                if legend_labels is not None:
+                    if len(legend_labels) != len(texts):
+                        warnings.warn(
+                            "legend_labels length mismatches legend entries; will truncate to the minimal length",
+                            UserWarning,
+                        )
+                    for text_obj, lbl in zip(texts, legend_labels):
+                        text_obj.set_text(lbl)
+                for text_obj in texts:
+                    text_obj.set_fontproperties(font_prop)
+                    if fonts.get("legend_label"):
+                        text_obj.set_fontsize(fonts["legend_label"])
 
-            def set_xlabel_override(self, _text: str, *args: Any, **kwargs: Any):
-                kwargs = dict(kwargs)
-                if xlabel_size is not None:
-                    kwargs["fontsize"] = xlabel_size
-                actual = xlabel if xlabel is not None else _text
-                return original_set_xlabel(self, actual, *args, **kwargs)
+            # 所有其他文本注释
+            for text in ax.texts:
+                text.set_fontproperties(font_prop)
 
-            add_patch(Axes, "set_xlabel", set_xlabel_override)
+        # Figure 级别的 suptitle
+        if hasattr(fig, "_suptitle") and fig._suptitle:
+            fig._suptitle.set_fontproperties(font_prop)
 
-            original_plt_xlabel = plt.xlabel
+    @contextmanager
+    def _chinese_font_context(
+        self,
+        title: Optional[str] = None,
+        xlabel: Optional[str] = None,
+        ylabel: Optional[str] = None,
+        legend_title: Optional[str] = None,
+        legend_labels: Optional[List[str]] = None,
+        font_sizes: Optional[Dict[str, Union[int, float]]] = None,
+    ):
+        """
+        上下文管理器：拦截 plt.show() 和 plt.savefig()，在执行前应用中文字体。
+        """
+        import matplotlib.pyplot as plt
 
-            def plt_xlabel_override(_text: str = "", *args: Any, **kwargs: Any):
-                kwargs = dict(kwargs)
-                if xlabel_size is not None:
-                    kwargs["fontsize"] = xlabel_size
-                actual = xlabel if xlabel is not None else _text
-                return original_plt_xlabel(actual, *args, **kwargs)
+        original_show = plt.show
+        original_savefig = plt.savefig
+        original_figure_savefig = plt.Figure.savefig
 
-            add_patch(plt, "xlabel", plt_xlabel_override)
+        def intercepted_show(*args, **kwargs):
+            fig = plt.gcf()
+            self._apply_chinese_font_to_figure(
+                fig, title, xlabel, ylabel, legend_title, legend_labels, font_sizes
+            )
+            return original_show(*args, **kwargs)
 
-        if ylabel is not None or ylabel_size is not None:
-            original_set_ylabel = Axes.set_ylabel
+        def intercepted_savefig(fname, *args, **kwargs):
+            fig = plt.gcf()
+            self._apply_chinese_font_to_figure(
+                fig, title, xlabel, ylabel, legend_title, legend_labels, font_sizes
+            )
+            return original_savefig(fname, *args, **kwargs)
 
-            def set_ylabel_override(self, _text: str, *args: Any, **kwargs: Any):
-                kwargs = dict(kwargs)
-                if ylabel_size is not None:
-                    kwargs["fontsize"] = ylabel_size
-                actual = ylabel if ylabel is not None else _text
-                return original_set_ylabel(self, actual, *args, **kwargs)
+        def intercepted_figure_savefig(self_fig, fname, *args, **kwargs):
+            self._apply_chinese_font_to_figure(
+                self_fig, title, xlabel, ylabel, legend_title, legend_labels, font_sizes
+            )
+            return original_figure_savefig(self_fig, fname, *args, **kwargs)
 
-            add_patch(Axes, "set_ylabel", set_ylabel_override)
-
-            original_plt_ylabel = plt.ylabel
-
-            def plt_ylabel_override(_text: str = "", *args: Any, **kwargs: Any):
-                kwargs = dict(kwargs)
-                if ylabel_size is not None:
-                    kwargs["fontsize"] = ylabel_size
-                actual = ylabel if ylabel is not None else _text
-                return original_plt_ylabel(actual, *args, **kwargs)
-
-            add_patch(plt, "ylabel", plt_ylabel_override)
-
-        if any([legend_title, legend_labels, legend_title_size, legend_label_size]):
-            original_axes_legend = Axes.legend
-
-            def legend_override(self, *args: Any, **kwargs: Any):
-                legend = original_axes_legend(self, *args, **kwargs)
-                if legend is not None:
-                    if legend_title is not None:
-                        legend.set_title(legend_title)
-                    if legend_labels is not None:
-                        texts = legend.get_texts()
-                        if len(legend_labels) != len(texts):
-                            warnings.warn(
-                                "legend_labels length mismatches legend entries; will truncate to the minimal length",
-                                UserWarning,
-                            )
-                        for text_obj, label in zip(texts, legend_labels):
-                            text_obj.set_text(label)
-                    if legend_title_size is not None and legend.get_title() is not None:
-                        legend.get_title().set_fontsize(legend_title_size)
-                    if legend_label_size is not None:
-                        for text_obj in legend.get_texts():
-                            text_obj.set_fontsize(legend_label_size)
-                return legend
-
-            add_patch(Axes, "legend", legend_override)
-
-            original_plt_legend = plt.legend
-
-            def plt_legend_override(*args: Any, **kwargs: Any):
-                legend = original_plt_legend(*args, **kwargs)
-                if legend is not None:
-                    if legend_title is not None:
-                        legend.set_title(legend_title)
-                    if legend_labels is not None:
-                        texts = legend.get_texts()
-                        if len(legend_labels) != len(texts):
-                            warnings.warn(
-                                "legend_labels length mismatches legend entries; will truncate to the minimal length",
-                                UserWarning,
-                            )
-                        for text_obj, label in zip(texts, legend_labels):
-                            text_obj.set_text(label)
-                    if legend_title_size is not None and legend.get_title() is not None:
-                        legend.get_title().set_fontsize(legend_title_size)
-                    if legend_label_size is not None:
-                        for text_obj in legend.get_texts():
-                            text_obj.set_fontsize(legend_label_size)
-                return legend
-
-            add_patch(plt, "legend", plt_legend_override)
-
-        # Set axis label sizes (global setting)
-        if xtick_size is not None:
-            rcParams["xtick.labelsize"] = xtick_size
-        if ytick_size is not None:
-            rcParams["ytick.labelsize"] = ytick_size
-        if "tick" in fonts and fonts["tick"] is not None:
-            value = fonts["tick"]
-            rcParams["xtick.labelsize"] = value
-            rcParams["ytick.labelsize"] = value
-        
         try:
+            plt.show = intercepted_show
+            plt.savefig = intercepted_savefig
+            plt.Figure.savefig = intercepted_figure_savefig
             yield
         finally:
-            # Restore all patches (only restore overridden functions, keep Chinese font settings)
-            for target, attr, original in patches:
-                setattr(target, attr, original)
+            plt.show = original_show
+            plt.savefig = original_savefig
+            plt.Figure.savefig = original_figure_savefig
 
     # ------------------------------------------------------------------
     # Model storage and management
@@ -945,7 +951,7 @@ class AutoMLBase:
     def plot(
         self,
         estimator: Optional[Any] = None,
-        plot: str = "auc",
+        plot_type: str = "auc",
         scale: float = 1.0,
         save: bool = False,
         title: Optional[str] = None,
@@ -967,34 +973,15 @@ class AutoMLBase:
             raise ValueError("No model available for plotting")
 
         verbose_flag = self.verbose if verbose is None else verbose
-        effective_title = title or self._get_default_plot_title(plot, estimator)
 
+        # 构建传递给 PyCaret 的参数（仅保留 figsize 等布局参数）
+        # 标题、坐标轴标签等通过 _chinese_font_context 后处理设置
         final_kwargs = dict(plot_kwargs or {})
         final_kwargs.setdefault("figsize", figsize)
 
-        if plot in {"auc", "pr", "confusion_matrix", "error", "learning", "vc", "residuals"}:
-            if effective_title:
-                final_kwargs.setdefault("title", effective_title)
-            if xlabel:
-                final_kwargs.setdefault("xlabel", xlabel)
-            if ylabel:
-                final_kwargs.setdefault("ylabel", ylabel)
-            if legend_title:
-                final_kwargs.setdefault("legend_title", legend_title)
-        elif plot in {"feature", "feature_all"}:
-            if effective_title:
-                final_kwargs.setdefault("title", effective_title)
-            if xlabel:
-                final_kwargs.setdefault("xaxis_title", xlabel)
-            if ylabel:
-                final_kwargs.setdefault("yaxis_title", ylabel)
-        else:
-            if effective_title:
-                final_kwargs.setdefault("title", effective_title)
-
         plot_call = {
             "estimator": estimator,
-            "plot": plot,
+            "plot": plot_type,
             "scale": scale,
             "save": save,
             "verbose": verbose_flag,
@@ -1003,7 +990,8 @@ class AutoMLBase:
         }
         filtered_call = self._filter_kwargs_for(self.experiment.plot_model, plot_call)
 
-        customization_context = self._build_plot_customization_context(
+        # 使用后处理上下文管理器设置中文字体和自定义文本
+        customization_context = self._chinese_font_context(
             title=title,
             xlabel=xlabel,
             ylabel=ylabel,
@@ -1014,12 +1002,17 @@ class AutoMLBase:
 
         with customization_context:
             try:
-                return self.experiment.plot_model(**filtered_call)
+                result = self.experiment.plot_model(**filtered_call)
+                # 处理 Plotly 图表的中文字体
+                result = self._apply_plotly_chinese_font(
+                    result, title=title, xlabel=xlabel, ylabel=ylabel
+                )
+                return result
             except Exception as exc:
                 warnings.warn(f"Plotting with custom parameters failed, falling back to default. Error: {exc}")
                 fallback = {
                     "estimator": estimator,
-                    "plot": plot,
+                    "plot": plot_type,
                     "scale": scale,
                     "save": save,
                     "verbose": verbose_flag,
@@ -1029,22 +1022,53 @@ class AutoMLBase:
                 )
                 return self.experiment.plot_model(**fallback_filtered)
 
-    def _get_default_plot_title(self, plot: str, estimator: Any) -> str:
-        """Generate default plot titles by plot type."""
-        model_name = self._safe_get_model_name(estimator)
-        mapping = {
-            "auc": f"{model_name} - ROC Curve",
-            "pr": f"{model_name} - Precision-Recall Curve",
-            "confusion_matrix": f"{model_name} - Confusion Matrix",
-            "error": f"{model_name} - Prediction Error",
-            "feature": f"{model_name} - Feature Importance",
-            "feature_all": f"{model_name} - All Features Importance",
-            "learning": f"{model_name} - Learning Curve",
-            "vc": f"{model_name} - Validation Curve",
-            "residuals": f"{model_name} - Residuals",
-            "cooks": f"{model_name} - Cook's Distance",
-        }
-        return mapping.get(plot, f"{model_name} - {plot.upper()} visualization")
+    def _apply_plotly_chinese_font(
+        self,
+        fig: Any,
+        title: Optional[str] = None,
+        xlabel: Optional[str] = None,
+        ylabel: Optional[str] = None,
+    ) -> Any:
+        """
+        检测并处理 Plotly 图表的中文字体设置。
+
+        如果返回的 fig 是 Plotly Figure 对象，则设置其字体为 zh_font_available 中的中文字体。
+        """
+        # 检测是否为 Plotly Figure
+        try:
+            import plotly.graph_objects as go
+        except ImportError:
+            # 未安装 plotly，直接返回原对象
+            return fig
+
+        if not isinstance(fig, go.Figure):
+            # 不是 Plotly Figure，直接返回
+            return fig
+
+        # 获取中文字体
+        if zh_font_available and isinstance(zh_font_available, list) and len(zh_font_available) > 0:
+            chinese_font = zh_font_available[0]
+        else:
+            chinese_font = "Arial"
+
+        # 更新全局字体设置
+        fig.update_layout(
+            font=dict(family=chinese_font),
+        )
+
+        # 如果用户指定了标题，更新标题
+        if title is not None:
+            fig.update_layout(
+                title=dict(text=title, font=dict(family=chinese_font)),
+            )
+
+        # 如果用户指定了坐标轴标签，更新坐标轴
+        if xlabel is not None:
+            fig.update_xaxes(title=dict(text=xlabel, font=dict(family=chinese_font)))
+        if ylabel is not None:
+            fig.update_yaxes(title=dict(text=ylabel, font=dict(family=chinese_font)))
+
+        return fig
 
     def predict(
         self,

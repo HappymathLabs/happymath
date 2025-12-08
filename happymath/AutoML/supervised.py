@@ -9,9 +9,6 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pycaret.classification import ClassificationExperiment
-from pycaret.regression import RegressionExperiment
-
 from .base import AutoMLBase
 
 
@@ -49,6 +46,9 @@ class ClassificationML(AutoMLBase):
         )
 
     def _setup_experiment(self, **kwargs: Any) -> None:
+        # 延迟导入，确保环境变量已设置避免日志文件生成
+        from pycaret.classification import ClassificationExperiment
+
         setup_params = {
             "data": self.data,
             "target": self.target,
@@ -59,12 +59,16 @@ class ClassificationML(AutoMLBase):
             "n_jobs": self.n_jobs,
             "html": self.html,
             "verbose": self.verbose,
+            "system_log": False,
+            "log_experiment": False,
         }
         setup_params.update(kwargs)
 
         self.experiment = ClassificationExperiment()
         self.experiment.setup(**setup_params)
         self.is_setup = True
+        # 延迟导入，确保环境变量已设置避免日志文件生成
+        from pycaret.classification import ClassificationExperiment
 
 
 class RegressionML(AutoMLBase):
@@ -101,6 +105,9 @@ class RegressionML(AutoMLBase):
         )
 
     def _setup_experiment(self, **kwargs: Any) -> None:
+        # 延迟导入，确保环境变量已设置避免日志文件生成
+        from pycaret.regression import RegressionExperiment
+
         setup_params = {
             "data": self.data,
             "target": self.target,
@@ -111,6 +118,8 @@ class RegressionML(AutoMLBase):
             "n_jobs": self.n_jobs,
             "html": self.html,
             "verbose": self.verbose,
+            "system_log": False,
+            "log_experiment": False,
         }
         setup_params.update(kwargs)
 
@@ -121,7 +130,7 @@ class RegressionML(AutoMLBase):
     def plot(
         self,
         estimator: Optional[Any] = None,
-        plot: str = "residuals",
+        plot_type: str = "residuals",
         scale: float = 1.0,
         save: bool = False,
         title: Optional[str] = None,
@@ -134,11 +143,11 @@ class RegressionML(AutoMLBase):
     ):
         """Issue a gentle hint when plot type is not typical for regression."""
         regression_plots = {"residuals", "error", "cooks", "feature", "learning"}
-        if plot not in regression_plots:
-            print(f"Warning: plot type '{plot}' may not be suited for regression (可能不适用于回归任务)")
+        if plot_type not in regression_plots:
+            print(f"Warning: plot type '{plot_type}' may not be suited for regression (可能不适用于回归任务)")
         return super().plot(
             estimator=estimator,
-            plot=plot,
+            plot_type=plot_type,
             scale=scale,
             save=save,
             title=title,

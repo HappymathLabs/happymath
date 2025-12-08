@@ -8,9 +8,6 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pycaret.anomaly import AnomalyExperiment
-from pycaret.clustering import ClusteringExperiment
-
 from .base import AutoMLBase
 
 
@@ -49,8 +46,13 @@ class ClusteringML(AutoMLBase):
             "n_jobs": self.n_jobs,
             "html": self.html,
             "verbose": self.verbose,
+            "system_log": False,
+            "log_experiment": False,
         }
         setup_params.update(kwargs)
+
+        # 延迟导入，确保环境变量已设置避免日志文件生成
+        from pycaret.clustering import ClusteringExperiment
 
         self.experiment = ClusteringExperiment()
         self.experiment.setup(**setup_params)
@@ -130,8 +132,13 @@ class AnomalyML(AutoMLBase):
             "n_jobs": self.n_jobs,
             "html": self.html,
             "verbose": self.verbose,
+            "system_log": False,
+            "log_experiment": False,
         }
         setup_params.update(kwargs)
+
+        # 延迟导入，确保环境变量已设置避免日志文件生成
+        from pycaret.anomaly import AnomalyExperiment
 
         self.experiment = AnomalyExperiment()
         self.experiment.setup(**setup_params)

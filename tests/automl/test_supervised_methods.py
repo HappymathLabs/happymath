@@ -113,7 +113,7 @@ def test_classification_plot_kwargs(monkeypatch, iris_df):
     monkeypatch.setattr(clf.experiment, "plot_model", fake_plot_model)
 
     result = clf.plot(
-        plot="auc",
+        plot_type="auc",
         title="Test Title",
         xlabel="X-axis",
         ylabel="Y-axis",
@@ -236,6 +236,6 @@ def test_regression_plot_warning(monkeypatch, capsys, diabetes_df):
         "plot_model",
         lambda **kwargs: "OK",
     )
-    reg.plot(plot="auc", verbose=False)
+    reg.plot(plot_type="auc", verbose=False)
     output = capsys.readouterr().out
     assert "may not be suitable for regression tasks" in output

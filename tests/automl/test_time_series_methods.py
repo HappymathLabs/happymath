@@ -85,7 +85,7 @@ def test_time_series_full_workflow(ts_series, tmp_path, monkeypatch):
 
     monkeypatch.setattr(ts.experiment, "plot_model", fake_plot_model)
     plot_result = ts.plot(
-        plot="ts",
+        plot_type="ts",
         title="Time Series Trend",
         xlabel="Date",
         ylabel="Value",

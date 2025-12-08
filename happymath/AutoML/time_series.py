@@ -6,8 +6,6 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pycaret.time_series import TSForecastingExperiment
-
 from .base import AutoMLBase
 
 
@@ -57,8 +55,13 @@ class TimeSeriesML(AutoMLBase):
             "n_jobs": self.n_jobs,
             "html": self.html,
             "verbose": self.verbose,
+            "system_log": False,
+            "log_experiment": False,
         }
         setup_params.update(kwargs)
+
+        # 延迟导入，确保环境变量已设置避免日志文件生成
+        from pycaret.time_series import TSForecastingExperiment
 
         self.experiment = TSForecastingExperiment()
         self.experiment.setup(**setup_params)
