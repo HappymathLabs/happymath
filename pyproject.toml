@@ -66,6 +66,9 @@ dependencies = [
     "ipython",
     "ipykernel",
     "watchfiles"
+
+    # For OpenFE
+    "pyarrow"
 ]
 
 [project.optional-dependencies]
