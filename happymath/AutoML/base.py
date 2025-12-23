@@ -446,11 +446,30 @@ class AutoMLBase(ChineseFontMixin):
     ) -> Optional[str]:
         """Call PyCaret plotting with friendly default titles."""
         import warnings
+        from typing import Any as _Any
 
         self._ensure_setup()
         estimator = estimator or self.current_model
         if estimator is None:
             raise ValueError("No model available for plotting")
+
+        # Special handling for decision tree visualization: use custom implementation to avoid relying on PyCaret's internal tree plotting logic
+        if plot_type in {"tree", "tree_text"}:
+            return self._plot_decision_tree_auto(
+                estimator=estimator,
+                plot_type=plot_type,
+                scale=scale,
+                save=save,
+                title=title,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                legend_title=legend_title,
+                legend_labels=legend_labels,
+                figsize=figsize,
+                plot_kwargs=plot_kwargs or {},
+                font_sizes=font_sizes,
+                verbose=verbose,
+            )
 
         verbose_flag = self.verbose if verbose is None else verbose
 
@@ -497,6 +516,143 @@ class AutoMLBase(ChineseFontMixin):
                     self.experiment.plot_model, fallback
                 )
                 return self.experiment.plot_model(**fallback_filtered)
+
+    def _plot_decision_tree_auto(
+        self,
+        estimator: Any,
+        plot_type: str,
+        scale: float,
+        save: bool,
+        title: Optional[str],
+        xlabel: Optional[str],
+        ylabel: Optional[str],
+        legend_title: Optional[str],
+        legend_labels: Optional[List[str]],
+        figsize: Tuple[int, int],
+        plot_kwargs: Dict[str, Any],
+        font_sizes: Optional[Dict[str, Union[int, float]]],
+        verbose: Optional[bool],
+    ) -> Optional[str]:
+        """
+        Decision tree visualization (graph and text), only supports single decision tree models.
+
+        - plot_type='tree'     Use graphviz to draw the structure diagram;
+        - plot_type='tree_text' Use sklearn.tree.export_text to output text structure.
+        """
+        from sklearn.tree import BaseDecisionTree, export_graphviz, export_text
+        from sklearn.pipeline import Pipeline
+
+        # Only supports single decision tree models, unpack Pipeline if necessary
+        base_estimator = estimator
+        if isinstance(estimator, Pipeline):
+            if not estimator.steps:
+                raise TypeError("Pipeline has no estimator, cannot perform decision tree visualization.")
+            base_estimator = estimator.steps[-1][1]
+
+        if not isinstance(base_estimator, BaseDecisionTree):
+            raise TypeError(
+                "plot_type='tree' and 'tree_text' currently only support single decision tree models "
+                "(e.g., DecisionTreeClassifier / DecisionTreeRegressor)."
+            )
+
+        # Get preprocessed feature names to ensure consistency with user-provided data column names (including Chinese)
+        X_train_transformed = self.get_config("X_train_transformed")
+        if X_train_transformed is None or not hasattr(X_train_transformed, "columns"):
+            raise ValueError("Unable to get X_train_transformed from config for decision tree visualization.")
+        feature_names = list(X_train_transformed.columns)
+
+        # Class names for classification tasks (if available)
+        class_names: Optional[List[str]] = None
+        if hasattr(base_estimator, "classes_"):
+            class_names = [str(c) for c in base_estimator.classes_]
+
+        # Text format decision tree
+        if plot_type == "tree_text":
+            # Use sklearn's export function to ensure reliable structure and compatibility with Chinese feature names
+            tree_text = export_text(
+                base_estimator,
+                feature_names=feature_names,
+            )
+
+            plot_name = "Decision_Tree_Text"
+            base_plot_filename = f"{plot_name}.txt"
+
+            if save:
+                import os
+
+                if isinstance(save, str):
+                    plot_filename = os.path.join(save, base_plot_filename)
+                else:
+                    plot_filename = base_plot_filename
+                with open(plot_filename, "w", encoding="utf-8") as f:
+                    f.write(tree_text)
+                return plot_filename
+            else:
+                # Return text content directly when not saving, for caller to process further
+                return tree_text
+
+        # Graphical decision tree: use graphviz for plotting
+        if plot_type == "tree":
+            try:
+                import graphviz
+            except ImportError as exc:
+                raise ImportError(
+                    "Using plot_type='tree' requires graphviz library. Please run: pip install graphviz, "
+                    "and ensure Graphviz executable (e.g., dot) is installed on your system."
+                ) from exc
+
+            # Export DOT format string
+            dot_data = export_graphviz(
+                base_estimator,
+                out_file=None,
+                feature_names=feature_names,
+                class_names=class_names,
+                filled=True,
+                rounded=True,
+                special_characters=True,
+                proportion=False,
+                precision=2,
+            )
+
+            # Set Chinese font for nodes and edges to ensure Chinese feature names display correctly
+            chinese_font = self._get_chinese_font()
+            lines = dot_data.splitlines()
+            if lines:
+                insert_idx = 1 if len(lines) > 1 else 0
+                lines.insert(insert_idx, f'node [fontname="{chinese_font}"];')
+                lines.insert(insert_idx + 1, f'edge [fontname="{chinese_font}"];')
+                dot_data = "\n".join(lines)
+
+            # Generate graphviz Source object
+            src = graphviz.Source(dot_data, format="png")
+            # Try to improve image resolution: fixed high dpi (equivalent to scale=5)
+            try:
+                dpi_val = int(300 * 5)
+                src.graph_attr.update(dpi=str(dpi_val))
+            except Exception:
+                # Ignore if dpi attribute not supported in some environments
+                pass
+
+            plot_name = "Decision_Tree"
+            base_plot_filename = f"{plot_name}.png"
+
+            if save:
+                import os
+
+                # filename is base name without extension, graphviz will add .png automatically
+                if isinstance(save, str):
+                    filename_base = os.path.join(save, plot_name)
+                else:
+                    filename_base = plot_name
+                # render returns the path of the generated file (with extension)
+                output_path = src.render(filename=filename_base, cleanup=True)
+                return output_path
+            else:
+                # Return Source directly in notebook for self-rendering
+                return src  # type: ignore[return-value]
+
+        # Theoretically should not reach here, defensive return
+        raise ValueError(f"Unsupported decision tree plot type: {plot_type!r}")
 
     def predict(
         self,
