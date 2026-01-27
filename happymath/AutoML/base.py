@@ -242,6 +242,7 @@ class AutoMLBase(ChineseFontMixin):
         optimize: Optional[str] = None,
         verbose: Optional[bool] = None,
         tuner_verbose: Union[int, bool] = True,
+        choose_better: bool = True,
         **kwargs: Any,
     ) -> Any:
         """Tune hyperparameters for the current or a specified model."""
@@ -261,7 +262,7 @@ class AutoMLBase(ChineseFontMixin):
             optimize=metric,
             verbose=verbose_flag,
             tuner_verbose=tuner_verbose,
-            choose_better=True,
+            choose_better=choose_better,
             **kwargs,
         )
 
