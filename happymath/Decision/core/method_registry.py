@@ -542,6 +542,9 @@ class MethodRegistry:
             'description': 'Comparison with Profiles using Thresholds'
         }
     }
+
+    # 特殊方法注册表（预留）
+    SPECIAL_METHODS = {}
     
     @classmethod
     def get_all_methods(cls) -> Dict[str, Dict[str, Any]]:

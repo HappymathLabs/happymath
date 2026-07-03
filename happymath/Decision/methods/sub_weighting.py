@@ -152,8 +152,8 @@ class SubWeighting(DecisionBase):
                     # AHP方法返回 (weights, consistency_ratio)
                     return result[0]
                 elif method == 'simplified_bwm':
-                    # 简化BWM方法返回 (CR, weights)
-                    return result[1] if len(result) > 1 else result[0]
+                    # 简化BWM方法返回 (weights, cr)
+                    return result[0]
                 else:
                     # 部分方法（如 AHP）返回 (weights, consistency_ratio)
                     return result[0]
@@ -180,11 +180,11 @@ class SubWeighting(DecisionBase):
             if isinstance(result, tuple) and len(result) > 1:
                 ratios['ahp'] = result[1]
         
-        # 简化 BWM 提供 CR（返回元组第一个元素）
+        # 简化 BWM 提供 CR（返回元组第二个元素）
         if 'simplified_bwm' in self.results:
             result = self.results['simplified_bwm']
             if isinstance(result, tuple) and len(result) > 1:
-                ratios['simplified_bwm'] = result[0]  # CR is first element
+                ratios['simplified_bwm'] = result[1]  # CR is second element
         
         return ratios
     

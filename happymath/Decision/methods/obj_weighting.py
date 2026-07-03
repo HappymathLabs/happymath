@@ -144,7 +144,15 @@ class ObjWeighting(DecisionBase):
             # 返回所有方法的权重
             return self.result_manager.get_all_weights()
     
-    def compare_weights(self) -> Any:
-        """Compare weights across methods (returns a DataFrame)."""
-        return self.result_manager.compare_weights()
+    def compare_weights(self, methods: Optional[List[str]] = None, add_stats: bool = False) -> Any:
+        """Compare weights across methods (returns a DataFrame).
+
+        Args:
+            methods: List of method names to compare (None for all).
+            add_stats: Whether to add statistical columns (mean, std, min, max).
+
+        Returns:
+            DataFrame containing weight comparison across methods.
+        """
+        return self.result_manager.compare_weights(methods=methods, add_stats=add_stats)
     

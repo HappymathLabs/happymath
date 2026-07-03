@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="HappyMath 数学建模与机器学习库文档">
+        <meta name="author" content="HappyMathLabs">
+        
+        <link rel="shortcut icon" href="img/favicon.ico">
+        <title>HappyMath 文档</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/fontawesome.min.css" rel="stylesheet">
+        <link href="css/brands.min.css" rel="stylesheet">
+        <link href="css/solid.min.css" rel="stylesheet">
+        <link href="css/v4-font-face.min.css" rel="stylesheet">
+        <link href="css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body class="homepage">
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href=".">HappyMath 文档</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="." class="nav-link active" aria-current="page">首页</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="installation/" class="nav-link">安装指南</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="quickstart/" class="nav-link">快速开始</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">模块教程</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="modules/automl/" class="dropdown-item">AutoML 自动化机器学习</a>
+</li>
+                                    
+<li>
+    <a href="modules/decision/" class="dropdown-item">Decision 多准则决策</a>
+</li>
+                                    
+<li>
+    <a href="modules/diffeq/" class="dropdown-item">DiffEq 微分方程</a>
+</li>
+                                    
+<li>
+    <a href="modules/opt/" class="dropdown-item">Opt 数学优化</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">API 参考</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="api/happymath/" class="dropdown-item">happymath 顶层接口</a>
+</li>
+                                    
+<li>
+    <a href="api/automl/" class="dropdown-item">AutoML</a>
+</li>
+                                    
+<li>
+    <a href="api/decision/" class="dropdown-item">Decision</a>
+</li>
+                                    
+<li>
+    <a href="api/diffeq/" class="dropdown-item">DiffEq</a>
+</li>
+                                    
+<li>
+    <a href="api/opt/" class="dropdown-item">Opt</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" class="nav-link disabled">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="installation/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#happymath" class="nav-link">HappyMath 文档</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#_1" class="nav-link">核心模块</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_2" class="nav-link">设计哲学</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_3" class="nav-link">版本信息</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_4" class="nav-link">文档结构</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_5" class="nav-link">许可证</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="happymath">HappyMath 文档<a class="headerlink" href="#happymath" title="Permanent link">&para;</a></h1>
+<p>欢迎来到 <strong>HappyMath</strong> 官方文档！</p>
+<p>HappyMath 是一个面向数学建模、科学计算与机器学习的 Python 库，致力于通过高层次的统一接口降低用户的学习成本。它特别适合数学建模竞赛、应用数学研究以及快速原型开发。</p>
+<h2 id="_1">核心模块<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>HappyMath 目前包含四大核心模块：</p>
+<ul>
+<li><strong>AutoML</strong>：自动化机器学习，支持分类、回归、聚类、异常检测与时序预测</li>
+<li><strong>Decision</strong>：多准则决策分析（MCDM），集成 80+ 种权重计算、排序与模糊决策算法</li>
+<li><strong>DiffEq</strong>：微分方程统一求解接口，支持常微分方程（ODE）与偏微分方程（PDE）</li>
+<li><strong>Opt</strong>：数学优化框架，支持单目标/多目标、线性/非线性、代数与微分代数（DAE）优化问题</li>
+</ul>
+<h2 id="_2">设计哲学<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>HappyMath 的核心设计理念是：<strong>用统一、简洁的高层接口封装底层复杂的数学工具链</strong>。用户无需深入了解 PyCaret、SciPy、SymPy、Pyomo、Pymoo、py-pde 等库的具体用法，即可快速完成从数据到模型、从方程到解、从决策到优化的完整流程。</p>
+<h2 id="_3">版本信息<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>当前版本：<code>0.2.0</code>（预览版）</p>
+<blockquote>
+<p>⚠️ <strong>注意</strong>：当前为预览/开发版本，API 可能会发生变化，生产环境使用请等待 1.0.0 稳定版发布。</p>
+</blockquote>
+<h2 id="_4">文档结构<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="installation/">安装指南</a>：Conda 与 Pip 安装方式及环境准备</li>
+<li><a href="quickstart/">快速开始</a>：5 分钟上手 HappyMath 四大模块</li>
+<li><a href="modules/automl/">模块教程</a>：各模块的详细说明与可运行案例</li>
+<li><a href="api/happymath/">API 参考</a>：基于 mkdocstrings 自动生成的 API 文档</li>
+</ul>
+<h2 id="_5">许可证<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>HappyMath 使用 MIT 许可证开源。</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = ".",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="js/base.js"></script>
+        <script src="search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2026-07-03 07:57:57.113122+00:00
+-->

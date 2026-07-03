@@ -261,14 +261,24 @@ class ScoringDecision(DecisionBase):
             # 返回所有方法的排名
             return self.result_manager.get_all_rankings()
     
-    def compare_rankings(self) -> Any:
+    def compare_rankings(self, methods: Optional[List[str]] = None) -> Any:
+        """Compare rankings across methods (returns a DataFrame).
+
+        Args:
+            methods: List of method names to compare (None for all).
+
+        Returns:
+            DataFrame containing ranking comparison across methods.
         """
-        比较不同方法的排名结果（返回 DataFrame）。
-        """
-        return self.result_manager.compare_rankings()
+        return self.result_manager.compare_rankings(methods=methods)
     
-    def compare_scores(self) -> Any:
+    def compare_scores(self, methods: Optional[List[str]] = None) -> Any:
+        """Compare scores across methods (returns a DataFrame).
+
+        Args:
+            methods: List of method names to compare (None for all).
+
+        Returns:
+            DataFrame containing score comparison across methods.
         """
-        比较不同方法的得分结果（返回 DataFrame）。
-        """
-        return self.result_manager.compare_scores()
+        return self.result_manager.compare_scores(methods=methods)

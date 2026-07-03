@@ -142,9 +142,9 @@ class RegressionML(AutoMLBase):
         verbose: Optional[bool] = None,
     ):
         """Issue a gentle hint when plot type is not typical for regression."""
-        regression_plots = {"residuals", "error", "cooks", "feature", "learning"}
+        regression_plots = {"residuals", "error", "cooks", "feature", "learning", "tree", "tree_text"}
         if plot_type not in regression_plots:
-            print(f"Warning: plot type '{plot_type}' may not be suited for regression (可能不适用于回归任务)")
+            print(f"Warning: plot type '{plot_type}' may not be suited for regression.")
         return super().plot(
             estimator=estimator,
             plot_type=plot_type,
