@@ -1,11 +1,11 @@
 ---
 name: happymath-skill
-description: "当用户提出以下任务时必须调用本技能：使用 happymath、HappyMath 或 HappyMathLabs/happymath；自动化机器学习、分类、回归、聚类、异常检测、时间序列预测；多准则决策分析、指标赋权、TOPSIS/VIKOR/AHP/熵权法/CRITIC 等决策方法；常微分方程或偏微分方程求解；数学优化、线性规划、非线性规划、多目标优化、最优控制；数学建模竞赛代码实现；科研或工作中的建模求解；安装、配置、更新、排查或验证 happymath 环境；基于 happymath 生成可运行代码、案例代码、课程示例、文档示例或建模流程；需要根据数学建模内容进行写作事。"
+description: "当用户提出以下任务时必须调用本技能：使用 happymath、HappyMath 或 HappyMathLabs/happymath；自动化机器学习、分类、回归、聚类、异常检测、时间序列预测；多准则决策分析、指标赋权、TOPSIS/VIKOR/AHP/熵权法/CRITIC 等决策方法；常微分方程或偏微分方程求解；数学优化、线性规划、非线性规划、多目标优化、最优控制；数学建模竞赛代码实现；科研或工作中的建模求解；安装、配置、更新、排查或验证 happymath 环境；基于 happymath 生成可运行代码、案例代码、课程示例、文档示例或建模流程；数学建模相关内容撰写（如整篇论文或部分章节）。"
 ---
 
 # HappyMath 使用技能
 
-本技能用于帮助 AI 快速安装、配置、更新、学习和使用 `happymath` 库。并且本技能还提供数学建模相关的写作，包括完整论文写作或部分内容撰写。
+本技能用于帮助 AI 快速安装、配置、更新、学习和使用 `happymath` 库。若任务涉及数学建模相关的内容撰写（如完整论文或部分章节），请按下方「数学建模写作」部分的指引，访问专用论文写作 Skill。
 
 `happymath` 是一个面向数学建模、应用数学、科研分析和建模竞赛场景的高层 Python 数学建模库。它通过统一封装自动化机器学习、多准则决策、微分方程和数学优化等常见建模方法，降低用户学习和实现数学建模方法的成本。
 
@@ -122,6 +122,25 @@ pip install happymath
 ```
 
 如果使用 pip 安装，仍然必须在 conda 环境中执行 pip，而不是在系统 Python 中执行 pip。
+
+---
+
+## 数学建模写作
+
+当用户任务涉及数学建模相关的内容撰写时，不直接在本 Skill 中实现写作逻辑，而是访问以下专用数学建模论文写作 Skill：
+
+```text id="math-modeling-paper-writer"
+https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/SKILL.md
+```
+
+触发场景包括但不限于：
+
+- 撰写完整数学建模论文（国赛、美赛、MCM/ICM 等）。
+- 撰写论文中的某一部分，如摘要、问题重述、问题分析、模型假设、符号说明、模型建立与求解、模型评价、参考文献、附录等。
+- 根据赛题和建模结果生成 solution report。
+- 将建模相关 markdown 转换为 docx。
+
+访问该 Skill 后，按其内部流程完成写作任务；本 Skill 不再重复其写作规范。
 
 ---
 
@@ -706,6 +725,7 @@ https://gitee.com/HappymathLabs/happymath/tree/main/happymath/Opt
 使用 `Opt` 前，必须阅读对应模块说明文档和 API 文档。
 
 ---
+
 
 ## 通用文档入口
 
