@@ -1,0 +1,1736 @@
+[
+    {
+        "type": "text",
+        "text": "Problem Chosen 2025 Team Control Number MCM/ICM 2507817 C Summary Sheet",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Olympic Medals Unveiled:",
+        "text_level": 1,
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "A Mathematical Exploration of Achievement Trends",
+        "text_level": 1,
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Summary",
+        "text_level": 1,
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "In the Olympic Games, the pinnacle of sports competition, the quest for medals reflects not only the physical prowess of athletes but also the overall strength of their countries. As competitive sports evolve, medal rankings shift over time. This paper analyzes the key factors influencing Olympic performance and explores future trends in the medal competition landscape from various perspectives.",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "For Task 1, we developed a Grid- Search Random Forest (GSRF) prediction model using preprocessed data. Through Cross- Validation, we obtained correlation coefficients for predicting the number of gold medals and the total medals, which were 0.710 and 0.784, respectively, validating the model. Based on this model, we projected the gold and total medal standings for the 2028 Olympic Games, concluding that China and the United States are likely to continue leading in both categories. We also calculated prediction intervals using the t- distribution, as shown in Figure 9. Additionally, we identified the countries most likely to advance and regress, which are illustrated in Figure 10.",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "For Task 2, we established a Logistic Regression Model to classify countries that have not yet won medals in the 2028 Olympic Games into two categories: winners and non- winners. This transformed the probability of winning a medal into a binary classification problem. We selected appropriate feature variables and calculated the weights of each feature vector using the maximum likelihood estimation method. By applying the sigmoid function and L1 regularization, we identified countries with a higher likelihood of winning medals among those yet to medal, as shown in Table 11.",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "For Task 3, based on the results of Task 1, we calculated the number of medals won by each country in each event and quantified the significance of each event's contributions by calculating the ratio of medals in that event to total medals. We noted that some countries (e.g., KOS in Judo) have achieved their only medals through specific programs that are particularly critical for them. Overall, countries tend to prioritize sports in which they have both strengths and potential to optimize their chances of winning more medals.",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "For Task 4, we created a \"Great Coach\" Model. By quantifying the weights of medals and calculating the scores of each country, we identified that there were \"Great Coach\" in women's gymnastics in Romania and the United States, and the Spearman's Correlation Coefficient between their scores and the scores of these two countries was 0.874. After building the model by using the Lasso Regression, we selected three countries and identify sports and applied it to them. After the introduction of the \"Great Coach\" concept, the predicted scores for each country in 2028 are presented in Table 15, with Romania showing a remarkable increase from a score of 3 to 36.65.",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Finally, we offer original insights for the IOC regarding the host effect and the impact of talented athletes. Additionally, we performed a sensitivity analysis that demonstrated the model's stability and robustness following perturbations.",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Keywords: Olympic; GSRF; Logistic Regression; Lasso Regression",
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Contents",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1 Introduction. 3",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1.1 Background 3  1.2 Clarifications and Restatements. 3  1.3 Our work 4",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2 Basic Assumption 5",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "3 Symbols 5",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "4 Data Preprocessing 5",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "5 Task 1 Predicting Gold & Total Medals Based on GSRF Model 6",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "5.1 GSRF Prediction Model. 6  5.2 Predicting the 2028 Gold & Medal Tables. 11",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "6 Task 2 Projections for Non-Awarded Countries 13",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "6.1 Bicategory Logistic Regression Modeling. 13  6.2 Bicategory Logistic Regression Results. 14",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "7 Task 3 Relationship Between Sports and Medals 17",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "7.1 Relationship of the Sports to gold medals & total medals. 17  7.2 The most Important Sports for the Country. 17  7.3 Impact of Nationally Selected Sports on results. 18",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "8 Task 4 The Impact of Great Coach 19",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "8.1 Lasso Regression Model. 19  8.2 Lasso Regression Results. 21",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "9 Task 5 Original Opinion 22",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "9.1 Host Effect. 22  9.2 Talented Athletes. 23",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "10 Error Analysis and Sensitivity Analysis 23",
+        "text_level": 1,
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "10.1 Definition of Sensitivity. 23  10.2 Impact of Athletes Number, Gold & Total Medals on Predicted Results. 24",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "11 Evaluation of Model. 24",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "12 References 25",
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1 Introduction",
+        "text_level": 1,
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "1.1 Background",
+        "text_level": 1,
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "When viewers follow the Summer Olympics, they appreciate the performance of the athletes as well as the medal standings. Since 1896, sports powerhouses such as the United States have been at the top of the list, demonstrating their strength. Countries that have won many gold medals are globally recognized, and countries that have won their first Olympic medals are celebrated, marking historical milestones. Here are the top 10 medalists for the 2024 Summer Olympics:",
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/7c0d9af88440f6ba483df45ff78d1d7757fd60a20d05a58e92ee2f2fd4da13e9.jpg",
+        "img_caption": [
+            "Figure 1 Medal list of 2024 Summer Olympic Games"
+        ],
+        "img_footnote": [],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "1.2 Clarifications and Restatements",
+        "text_level": 1,
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "In this problem, models need to be developed to predict the medal table using relevant event and athlete data. Based on the data of previous years' Summer Olympics medal table, host country, number of events and participants, the analysis deals with the following problems:",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Task 1 Predicts the medal standings for the 2028 Summer Olympics based on a model, giving prediction intervals that include each statistic, indicating the countries most likely to make progress and regress.",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "The feature values affecting the number of medals are counted and integrated into a dataset for model training and testing. After model validation, predict the number of gold medals and total medals for each country in 2028 based on 2024 data, calculate prediction intervals and visualize them.",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Task 2 For countries that have not yet won a medal, predict how many countries will win their first medal at the next Olympic Games and calculate their probability",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Essentially, it is a classification problem that categorizes the predicted outcomes of non- winning countries in 2028 into two categories: winning and not winning. Judgment calculates how probable it is that the country falls into the winning category.",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Task 3 Consider the effect of the number and type of sports in previous Olympic Games on the number of medals won by each country. Determine the most important sport for each country and give reasons. Also consider the effect of the host country's choice of sport on the results.",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "We sort out the cumulative number of medals for each country and analyze the relationship. Also introduce a concept that can quantify the importance of the program to the country. Use the data to make judgments and explain why.",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Task 4 Predict the contribution of the \"great coach\" effect to the number of medals. Select",
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "three countries and consider the sports in which \"great coaches\" should be introduced and estimate their impact.",
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "- First identify the countries and programs that have been impacted, and then calculate the regression equation between the variables that include the impact of great coaches and the final predicted values. Then identify countries and programs with potential to predict changes in their performance",
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Task 5 Given original insights on Olympic medal counts, analyze the information these insights can provide to the NOC.",
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "- Find the eigenvalues from the previous Tasks that have some influence on the number of gold medals & medals, and investigate them",
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "1.3 Our work",
+        "text_level": 1,
+        "page_idx": 3
+    },
+    {
+        "type": "image",
+        "img_path": "images/727e0682c8e801d4f631a9e064e6890c1ee508a65058a2cf8b637a30ed73680c.jpg",
+        "img_caption": [
+            "Figure 2 Our Work"
+        ],
+        "img_footnote": [],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "2 Basic Assumption",
+        "text_level": 1,
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Hypothesis 1: Assume that the number of athletes participating in the 2028 Olympics, the number of countries, and the number of events held are the same as in 2024.",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Legitimacy: The data review revealed that the number of countries participating in recent Olympic Games and the number of events held have not changed much. To simplify the calculation of the model, it is assumed that the number remains constant.",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Hypothesis 2: The variables are independent of each other and only affect the results.",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Justification: while these variables interact, considering them in the model adds complexity and unpredictability. For extensive analysis, we focus more on measurable and consistent factors",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Assumption 3: Excluding the cost of investing in great coaches",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Justification: focuses on the direct impact of coaching quality on athlete performance, team performance, or overall sport system development.",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "3 Symbols",
+        "text_level": 1,
+        "page_idx": 4
+    },
+    {
+        "type": "table",
+        "img_path": "images/19728802177c2783f62da1ca9b95e65924876ce90eaa56292fdd70f52249b50a.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Symbols</td><td>Definition</td></tr><tr><td>Aij</td><td>Total number of athletes from the i-th country in the j-th Olympic Games</td></tr><tr><td>Gij</td><td>The number of gold medals won by the i-th country before the j-th Olympic Games</td></tr><tr><td>Tij</td><td>The total number of medals won by the i-th country before the j-th Olympic Games</td></tr><tr><td>Eij</td><td>Total number of events in the j Olympic Games</td></tr><tr><td>Yg</td><td>Number of gold medals predicted</td></tr><tr><td>Yt</td><td>Total number of medals predicted</td></tr><tr><td>ak</td><td>Number of athletes in the kth country</td></tr><tr><td>ek</td><td>Number of projects participated by the kth country</td></tr><tr><td>pk</td><td>Number of historical entries of the kth country</td></tr></table>",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "4 Data Preprocessing",
+        "text_level": 1,
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Outlier handling: each country may have different teams for the same program, and the names of these teams contain markers representing the order of the teams, and there is garbled code after the name of the country. We dealt with cleaning these outliers.",
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Data standardization: In forecasting, to ensure that the data have relatively equal weights for each feature value, data standardization is used, where the mean  $(\\bar{x})$  and standard deviation  $(SD)$  of each feature are to be calculated",
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nx^{\\prime} = \\frac{(x - \\overline{x})}{SD} \\tag{0}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Conversion of country and region names: To build the model, we utilized two files: \"summerOly_medal_counts.csv\" and \"summerOly_athletes.csv.\" Since these files represent countries in different formats, we employed an ISO mapping table to convert the full names of all countries and regions into standardized codes prior to data integration. Data for countries that were dissolved or banned, such as the USSR and Russia, was excluded.",
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Athlete & Event Counts: Athletes and events are categorized by country and year and their total value is calculated. Individual Neutral Athletes (AIN) sport results do not represent any one country and should also be cleared in the forecast.",
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "5 Task 1 Predicting Gold & Total Medals Based on GSRF Model",
+        "text_level": 1,
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "5.1 GSRF Prediction Model",
+        "text_level": 1,
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "5.1.1 ARIMA Model Initial Prediction",
+        "text_level": 1,
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "The ARIMA model is widely used in time series analysis for its flexibility and powerful forecasting ability to adapt to a wide range of data characteristics and make accurate predictions. The ARIMA model integrates autoregressive (AR) and moving average (MA) methods and incorporates differencing (I) to enhance data smoothing. By examining autocorrelation in historical data, the model assumes that future trends will mimic historical patterns and thus predicts future data points. ARIMA (p, d, q) can be expressed as equation (2):",
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nX_{t} = c + \\phi_{1}X_{t - 1} + \\phi_{2}X_{t - 2} + \\dots +\\phi_{p}X_{t - p} + \\theta_{1}\\epsilon_{t - 1} + \\theta_{2}\\epsilon_{t - 2} + \\dots +\\theta_{q}\\epsilon_{t - q} + \\epsilon_{t} \\tag{1}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Among them:",
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "$X_{t}$  represents the time series data we are considering;  $c$  is a constant term;  $\\phi_{1},\\phi_{2},\\dots,\\phi_{p}$  are the parameters of the AR model, which are used to describe the relationship between the current value and the value at the past p time points;  $\\theta_{1},\\theta_{2},\\dots \\theta_{q}$  are the parameters of the MA model that are used to describe the relationship between the current value and the error at the past q time points;  $\\epsilon_{t}$  is the error term at time point t.",
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Our initial ARIMA projections of the number of gold medals and the total number of medals for the United States and China resulted in the projection charts shown below:",
+        "page_idx": 5
+    },
+    {
+        "type": "image",
+        "img_path": "images/8c9ba46198744500109616ad450c825e9c9406948800e5a214ccfcc32c5c365f.jpg",
+        "img_caption": [
+            "Figure 3 Prediction chart of medal numbers for the United States and China"
+        ],
+        "img_footnote": [],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "The ARIMA (p, d, q) model corresponding to the above predictions and the correlation coefficients  $R^2$  are shown in the table below:",
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/45427d597846f52eb9be4314edf9e296fe10238286bf447f1c1a1b884e4060c7.jpg",
+        "table_caption": [
+            "Table 1 Relevant data for predictive models"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>ARIMA (p, d, q)</td><td>R²</td></tr><tr><td>United States Gold Predict</td><td>ARIMA (2, 0, 2)</td><td>0.218</td></tr><tr><td>United States Total Predict</td><td>ARIMA (2, 1, 1)</td><td>0.257</td></tr><tr><td>China Gold Predict</td><td>ARIMA (1, 1, 0)</td><td>0.430</td></tr><tr><td>China Total Predict</td><td>ARIMA (1, 1, 0)</td><td>0.494</td></tr></table>",
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "The correlation coefficients derived from the prediction are small not close to 1, proving that the use of ARIMA model to predict the number of medals is not ideal, so we use the GSRF swing prediction model to make predictions",
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "5.1.2 GSRF Prediction Modeling",
+        "text_level": 1,
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "First, we need to build a model for predicting the fluctuations in the number of medals for each country, as well as finding the factors that are most relevant to this fluctuation. From this we use the GSRF swing prediction model.",
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "In order to predict the number of medals the country will win in the next Olympics, we start with the previous years' awards of the participating athletes and use the network search random forest algorithm to predict the number of gold medals won in the future and the total number of medals, respectively.",
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Next, we describe the selected metrics data and explain the algorithmic process.",
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "1) Selected indicators",
+        "text_level": 1,
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Using the dataset from previous years, we selected four characteristic input indicators:",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Total number of athletes from this country in the current Olympics: more athletes means more opportunities to compete and a wider range of selections, increasing the likelihood of winning medals. We denote the total number of athletes from country i in the jth Olympics as:  $\\mathrm{A_{ij}}$",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "The number of gold medals and total medals won by the country up to the current Olympics: The medal table of previous years gives a preliminary idea of the strength of the country and the trend of its strength. We denote the total number of gold medals won by country i before the jth Olympics as  $\\mathrm{G_{ij}}$  and the total number of medals as  $\\mathrm{T_{(ij)}}$",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Current total number of Olympic events: The total number of Olympic events determines the basis of medal distribution, the more events the more medals. The more programs a country participates in, the more chances it has to win. An increase in the number of events results in a wider distribution of medals, with more countries having a chance to win. We denote the total number of events in the jth Olympics as  $\\mathrm{E_j}$",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Is the country hosting the Games: As a host, the country has advantages in terms of venues, facilities and logistics. The host can increase the number of events it specializes in, decrease the number of events it does not specialize in, and automatically get more places, increasing the chances of athletes to participate. If it is the host of the jth Olympic Games, let  $\\mathrm{H_{ij}} = 1$  , and vice versa, let  $\\mathrm{H_{ij}} = 0$",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "2) GSRF Algorithm",
+        "text_level": 1,
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "The GSRF algorithm optimizes the random forest model using a grid search algorithm.",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Random forests are machine learning algorithms trained using multiple decision trees, with a randomly selected subset of features per tree, and voting to integrate the results when classifying. To prevent overfitting or underfitting, grid search optimization is used. The grid search algorithm traverses a grid of predefined parameters, trains and evaluates each combination, and outputs the best set of parameters and model performance.",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Compared with the standard random forest algorithm, the GSRF algorithm uses an optimal combination of hyperparameters to train and predict the model. This improvement significantly improves the performance of the model and effectively mitigates problems such as overfitting or underfitting. The following figure illustrates the workflow of the GSRF algorithm.",
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/d3275039ccb2d6fc8784e61d7edc0f38941cbf02969ce4c4f487a2abdd411701.jpg",
+        "img_caption": [
+            "Figure 4 GSRF Algorithm Flow Diagram"
+        ],
+        "img_footnote": [],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "3) Make Predictions on Gold & Total Medals",
+        "text_level": 1,
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "According to the literature, it is known that a series of data such as the number of strengths of athletes, the number of types of events and so on have an impact on the number of medals in the next Olympic Games. Therefore, we use the above four characteristic input indicators as",
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "the input parameters of the random forest model to predict the number of medals:",
+        "page_idx": 8
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\n\\begin{array}{r}(A_{ij,g},G_{ij},E_{j,g},H_{ij,g})\\xrightarrow{GSRF}Y_g\\\\(A_{ij,t},T_{ij},E_{j,t},H_{ij,t})\\xrightarrow{GSRF}Y_t\\end{array} \\tag{2}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Among them.",
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "$A_{ij,g},E_{j,g},H_{ij,g}$  represent the total number of athletes from the country in the gold medal prediction model, the total number of Olympic events, and whether this country is the host of this Olympics, respectively.  $Y_{g}$  Represents the number of gold medals predicted.",
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "$A_{ij,t},E_{j,t},H_{ij,t}$  Represent the total number of athletes from the country in the total medal count prediction model, the total number of Olympic events, and whether this country is the host of this Olympics, respectively.  $Y_{t}$  Represents the number of gold medals predicted.",
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "We use data prior to 2024 as the training set and 2024 as the test set. The k- fold cross- validation method is used, taking k to be 10. The training set is divided equally into 10 equal sized subsets. For each subset, that subset is used as the validation set and the rest use the remaining 9 subsets as the training set. The random forest model is trained on the training set and the model performance is evaluated on the validation set and the evaluation metrics are recorded. Finally, the average evaluation metrics of all the subsets are calculated, giving a comprehensive estimate of the model performance, as a way to assess the stability and generalization ability of the model. The schematic diagram is shown below:",
+        "page_idx": 8
+    },
+    {
+        "type": "image",
+        "img_path": "images/9fdc9868b0434beb5ef37c52892dca61bc076eae5e215ed5899c5de4ad129cff.jpg",
+        "img_caption": [
+            "Figure 5 10 Fold Cross Validation Diagram"
+        ],
+        "img_footnote": [],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "The Random Forest Regressor algorithm from the integration module in the scikit- learn (sklearn) machine learning library[1] and the GridSearchCV algorithm from sklearn were used via . The optimal parameter combination obtained by GridSearchCV is as follows:",
+        "page_idx": 8
+    },
+    {
+        "type": "table",
+        "img_path": "images/ebd99e382027f4074a985aba29ef2d9e1e73c0d23db4b05a0b7bf1f92159fd00.jpg",
+        "table_caption": [
+            "Table 2 The impact of various indicators on the prediction results"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td colspan=\"4\">Gold Medals</td><td colspan=\"4\">Total Medal</td></tr><tr><td>Aij,g</td><td>Gij</td><td>Ej,g</td><td>Hij,g</td><td>Aij,t</td><td>Tij</td><td>Ej,t</td><td>Hij,t</td></tr><tr><td>74.10%</td><td>1.71%</td><td>7.40%</td><td>16.90%</td><td>85.70%</td><td>7.20%</td><td>6.30%</td><td>0.80%</td></tr></table>",
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "We use radar charts to visualize the impact of each indicator on the forecast results as follows:",
+        "page_idx": 8
+    },
+    {
+        "type": "image",
+        "img_path": "images/16b8972df202ea466a69a5920ab1f3be17c07fc24d88b9cf56df00a8badae5b5.jpg",
+        "img_caption": [
+            "Figure 6 Feature Importance Radar Chart"
+        ],
+        "img_footnote": [],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "The graph shows that the number of athletes has the greatest impact on gold and total medal predictions. Host status has a significant impact on gold medal predictions and a small impact on total medal predictions. The total number of Olympic events has some impact on the number of medals, but not significant.",
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "The comparison between the predicted and actual values for some of the test sets is obtained as shown below:",
+        "page_idx": 9
+    },
+    {
+        "type": "image",
+        "img_path": "images/16f073158d9a87e6af5460714dc95368986c5f54bee715f930660abf6245533a.jpg",
+        "img_caption": [
+            "Figure 7 Comparison Chart of Actual and Predicted Values for Some Countries in 2024"
+        ],
+        "img_footnote": [],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "5.1.3 Model Prediction Effectiveness and Performance Evaluation",
+        "text_level": 1,
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "We trained the random forest model using the first  $80\\%$  of the data and tested it using the second  $20\\%$  of the data. Based on the predicted and true values, the coefficient of determination  $(\\mathbb{R}^2)$ , Mean Absolute Error (MAE), Root Mean Square Error (RMSE) of this model are calculated as follows:",
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Correlation coefficient  $\\mathbb{R}^2$ : comparing the predictions obtained using the model with the predictions using only the mean, the closer  $\\mathbb{R}^2$  is to 1 the more accurate the model is.",
+        "page_idx": 9
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nR^2 = 1 - \\frac{\\sum_{i = 1}^{n}(Y_i - \\widehat{Y}_i)^2}{\\sum_{i = 1}^{n}(Y_i - \\overline{Y}_i)^2} \\tag{3}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Mean Absolute Error MAE: The average value of the absolute error, which can reflect the actual situation of the prediction value error. The smaller the value, the higher the accuracy of the model.",
+        "page_idx": 9
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nMAE = \\frac{1}{n}\\sum_{i = 1}^{n}\\left|Y_{i} - \\widehat{Y}_{i}\\right| \\tag{4}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Root Mean Square Error RMSE: the square root of the MSE, the smaller the RMSE, the more accurate the model is",
+        "page_idx": 9
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nRMSE = \\sqrt{\\frac{1}{n}\\sum_{i = 1}^{n}(Y_i - \\widehat{Y}_i)^2} \\tag{5}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "The model evaluation results obtained from the calculations are as follows:",
+        "page_idx": 10
+    },
+    {
+        "type": "table",
+        "img_path": "images/764d74d44a431268affbf82bf1e11020178f80a1bcc4807b3342b8427caff1fc.jpg",
+        "table_caption": [
+            "Table 4 Evaluation Results of the Prediction Model for the Total Number of Medals"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>R²</td><td>MAE</td><td>RMSE</td></tr><tr><td>Training set</td><td>0.903</td><td>0.626</td><td>1.829</td></tr><tr><td>Cross validation set</td><td>0.710</td><td>0.994</td><td>3.145</td></tr><tr><td>Test set</td><td>0.795</td><td>0.914</td><td>2.574</td></tr></table>",
+        "page_idx": 10
+    },
+    {
+        "type": "table",
+        "img_path": "images/32bc4a332113c1bef694ae339a03d4b6405e8ca7035b8f2cd97869b869bd6587.jpg",
+        "table_caption": [
+            "Table 3 Evaluation Results of Gold Medal Prediction Model"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>R²</td><td>MAE</td><td>RMSE</td></tr><tr><td>Training set</td><td>0.933</td><td>1.947</td><td>4.11</td></tr><tr><td>Cross validation set</td><td>0.784</td><td>2.744</td><td>7.162</td></tr><tr><td>Test set</td><td>0.736</td><td>2.430</td><td>7.145</td></tr></table>",
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "The  $\\mathbb{R}^2$  of both prediction models is very close to 1, and the MAE and RMSE are small. This indicates that the accuracy of the prediction models we constructed is higher and the model performance is better.",
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "5.2 Predicting the 2028 Gold & Medal Tables",
+        "text_level": 1,
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "5.2.1 Predicting the 2028 Gold & Medal Tables",
+        "text_level": 1,
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Based on the GSRF prediction model we established in the previous section, this paper predicts the medal table of the 2028 Summer Olympics in Los Angeles, U.S.A. We predict the top ten gold medals won and the top ten total medals won at the 2028 Los Angeles Olympics corresponding to the countries and the number of countries in the following table.",
+        "page_idx": 10
+    },
+    {
+        "type": "table",
+        "img_path": "images/418d70fd319ac130578a429353f88dd38a19a6ae41d35d0be8fe775b77e906ea.jpg",
+        "table_caption": [
+            "Table 5Top 10 Predicted Gold Medals for the 2028 Olympic Games"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Country</td><td>USA</td><td>CHN</td><td>ITA</td><td>FRA</td><td>GBR</td><td>GBR</td><td>AUS</td><td>GER</td><td>JPN</td><td>CAN</td></tr><tr><td>old medals</td><td>51</td><td>34</td><td>29</td><td>28</td><td>26</td><td>26</td><td>20</td><td>19</td><td>15</td><td>15</td></tr></table>",
+        "page_idx": 10
+    },
+    {
+        "type": "table",
+        "img_path": "images/b4bbe58017991f5ef95b732a24b4468cc48a15217dc34ddc122b769f6725d619.jpg",
+        "table_caption": [
+            "Table 6Top 10 Predicted Medals for the 2028 Olympic Games"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Country</td><td>USA</td><td>FRA</td><td>CHN</td><td>GBR</td><td>AUS</td><td>GER</td><td>ITA</td><td>JPN</td><td>CAN</td><td>NED</td><td>BRA</td></tr><tr><td>Total medals</td><td>124</td><td>81</td><td>74</td><td>72</td><td>65</td><td>61</td><td>55</td><td>52</td><td>35</td><td>34</td><td>34</td></tr></table>",
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "We visualized the results using plotting software as shown below:",
+        "page_idx": 10
+    },
+    {
+        "type": "image",
+        "img_path": "images/88a3d18be99bdbfc3c5fb3464fa66cf9346c2798936c80a9202209a70c230050.jpg",
+        "img_caption": [
+            "Figure 8 Predicted Gold&Total Medals Table for 2028 Los Angeles Olympics"
+        ],
+        "img_footnote": [],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "USA tops the table in both gold and total medals, France is second in total medals but not many gold medals, China is second in gold medals and third in total medals. Predicting the 2028 gold medal table, Canada is on the list and South Korea is out, the rest of the countries have changed their rankings.",
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "The above predictions are only the most likely scenarios, next we solve for the prediction intervals at the  $95\\%$  confidence level:",
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "5.2.2 Calculate the prediction interval",
+        "text_level": 1,
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "First, we determine whether the residuals of the two prediction models satisfy a normal distribution:",
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "We plotted and fitted a histogram of residuals and also performed a Shapiro- Wilk test on the data, the results of which are shown below:",
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/cfc296629bc4e374cb8eb451d10cfd76733c2b62f4b6e5820d491b3a2367cd15.jpg",
+        "img_caption": [
+            "Figure 9 histogram of residuals"
+        ],
+        "img_footnote": [],
+        "page_idx": 11
+    },
+    {
+        "type": "table",
+        "img_path": "images/b5617efc47bd7f0d2373a55854d9449077432dfbe1642ae57b2763f1f863cd80.jpg",
+        "table_caption": [
+            "Table 7 Fitting data and SW test results"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>Standard Deviation</td><td>Skewness</td><td>Kurtosis</td><td>Shapiro-Wilk Test</td></tr><tr><td>Gold Medals</td><td>2.908</td><td>4.723</td><td>35.429</td><td>0.438</td></tr><tr><td>Total Medals</td><td>7.123</td><td>-4.644</td><td>40.523</td><td>0.434</td></tr></table>",
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Based on the above graphs, it can be found that both predictive models have large peaks and skewness, and the significance of the Shapiro- Wilk test on the data is  $\\mathrm{P< 0.05}$  ,which indicates that both predictive models do not conform to a normal distribution.",
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "So we compute the prediction interval using the t distribution",
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\n\\mathrm{Prediction~Interval} = \\hat{y}\\pm t_{\\alpha /2,n - p}\\times SE\\left(\\hat{y}\\right) \\tag{6}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Among them.",
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "$\\hat{y}$  represents the predicted value,  $t_{\\alpha /2,n - p}$  is the quantile of the t- distribution, n is the number of samples,  $\\mathfrak{p}$  is the number of parameters in the model, and  $\\hat{SE}\\left(\\hat{y}\\right)$  is the standard error of the prediction. The correlation results were calculated as shown below:",
+        "page_idx": 11
+    },
+    {
+        "type": "table",
+        "img_path": "images/2dae09bd086430fc9a76b39e060e58955f1bb719e853ead41b793362306c514e.jpg",
+        "table_caption": [
+            "Table 8 Prediction Model T-Distribution Related Data"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>tα/2,n-p</td><td>SE( ̃y)</td></tr><tr><td>Prediction of Gold Medals</td><td>2.404</td><td>2.908</td></tr><tr><td>Prediction of Total Medal Count</td><td>1.993</td><td>7.123</td></tr></table>",
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Then the prediction interval for the number of gold medals at the  $95\\%$  confidence level is  $\\hat{y}\\pm 7$  and the total prediction interval for the number of medals is  $\\hat{y}\\pm 15$",
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/a466046eb5fa0314973f4f2d0e528e67c2f3fb35e4cbfd508d7f892843e3a845.jpg",
+        "img_caption": [
+            "Figure 10 Error bar chart of prediction model"
+        ],
+        "img_footnote": [],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "5.2.3 Predicting progress and regressions in national performance",
+        "text_level": 1,
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "The question asked us to predict the countries most likely to advance or retreat, we calculated the predicted number of gold medals & total medals and the difference between the awards in 2024 to find the change in value, and plotted a histogram as shown below:",
+        "page_idx": 12
+    },
+    {
+        "type": "image",
+        "img_path": "images/148538e1e052caa46e6f97d3c37f85c5212bdec17519c8ae4cb3fdfefde1a9ba.jpg",
+        "img_caption": [
+            "a) Gold medal, with fluctuations exceeding 2 b) Total medal, with fluctuations exceeding 5 Figure 11 Countries with significant fluctuations in medal numbers"
+        ],
+        "img_footnote": [],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "The graphic shows that Great Britain had the most significant increase in gold medals and Germany had the most significant increase in total medals, both making significant progress. South Korea had the largest decrease in gold medals and China had the largest decrease in total medals. With the exception of the United States, the countries with significant gold medal growth also saw varying degrees of progress in total medals. The U.S. had more gold medal growth, but less significant total medal growth.",
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "6 Task 2 Projections for Non-Awarded Countries",
+        "text_level": 1,
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "The question asks us to predict whether or not a country that has never won a medal will win its first medal at the 2028 Summer Olympics and to predict the probability of winning. The question is essentially a binary classification problem. The predicted outcomes are categorized into those that will win and those that will not. Therefore, we build a binary logistic regression model.",
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "6.1 Bicategory Logistic Regression Modeling",
+        "text_level": 1,
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "We recorded non- winning countries as Category 1 if they could win at the 2028 Summer Olympics and Category 0 if they could not.",
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "6.1.1 Sigmoid Function (math.)",
+        "text_level": 1,
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Logistic regression is a generalized linear regression that combines a nonlinear function with a linear function to map it. We use the Sigmoid function to map the output value of a linear function to a probability between 0 and 1. The Sigmoid function formula is as follows:",
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\n\\sigma (z) = \\frac{1}{1 + e^{-z}} \\tag{7}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Among them:",
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nz = \\omega_{1}a_{k} + \\omega_{2}e_{k} + \\omega_{3}p_{k} + b \\tag{8}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "$a_{k}, e_{k}, p_{k}$  is the input eigenvalue",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "$a_{k}$ : The number of athletes from the kth country in the 2028 Olympics. More athletes means that more people can compete in more events, or more people can compete in the same event, which greatly increases the probability of winning.",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "$e_{k}$ : The number of events in which the kth country participates in the 2028 Olympics. Participating in more events increases the probability of winning to some extent compared to concentrating on the same event.",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "$p_{k}$ : Historical participation of the kth country: the more a country participates in international events, the more experience it accumulates, which can largely increase its probability of winning.",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "$\\omega_{1}, \\omega_{2}, \\dots , \\omega_{n}$  are the weights and we calculate their values using gradient descent.",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "$b$  is the bias term",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "When the output of the sigmoid function is close to 1, the probability that the country belongs to category 1 is considered higher, i.e. the probability of winning the prize is higher. When the output value is close to 0, the probability that the country belongs to category 0 is higher, i.e. the probability of not winning the prize is higher.",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "6.1.2 Introducing the Loss Function",
+        "text_level": 1,
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Let  $p_{i} = \\sigma (z) = \\frac{1}{1 + e^{- z}}$ , we get  $P(z = 0 \\mid x) = 1 - P(z = 1 \\mid x) = 1 - p_{i}$ , then",
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nP(y\\mid x,\\omega) = (p_i)^y (1 - p_i)^{1 - y} \\tag{9}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "To further optimize the model, we introduce a cross- entropy loss function (log loss) to measure the gap between the model's predicted probability and the true category, log loss is defined as follows:",
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nL = \\sum_{i = 1}^{m}\\bigl [z_i\\ln (p_i) + (1 - z_i)\\ln (1 - p_i)\\bigr ] \\tag{10}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "where  $z_{i}$  is the true category;  $p_{i}$  is the predicted probability of the model; and  $m$  is the sample size.",
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "6.2 Bicategory Logistic Regression Results",
+        "text_level": 1,
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "The results of the parameters of the model were calculated using MATLAB as shown in the table below:",
+        "page_idx": 13
+    },
+    {
+        "type": "table",
+        "img_path": "images/24efa703ddd8fab38cb274fd06f8f2f924c6d46c83faa6ca3b64410b008c9951.jpg",
+        "table_caption": [
+            "Table 9 Parameter results of Binary Logistic Regression Model"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>Regression Coefficient</td><td>Standard Error</td><td>Wald</td><td>P</td></tr><tr><td>b</td><td>2.425</td><td>0.098</td><td>607.134</td><td>&amp;lt;0.01</td></tr><tr><td>ak</td><td>-0.012</td><td>0.004</td><td>10.62</td><td>&amp;lt;0.01</td></tr><tr><td>ek</td><td>-0.068</td><td>0.008</td><td>76.036</td><td>&amp;lt;0.01</td></tr><tr><td>pk</td><td>-0.013</td><td>0.010</td><td>1.665</td><td>0.197</td></tr></table>",
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "As can be seen from the table,  $p_k$  corresponds to  $\\mathrm{P} > 0.05$  , which indicates that  $p_k$  has no effect on the predicted results. We stipulate that a dependent variable of 1 represents that the non- winning country can win at the 2028 Summer Olympics. A dependent variable of 0 represents not being able to win a prize. The regression equation for whether or not the nonwinning country wins the 2028 Olympics is derived:",
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nz = -0.012a_{k} - 0.068e_{k} + 2.425 \\tag{11}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "6.2.1 Model Evaluation and Modification",
+        "text_level": 1,
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "In order to evaluate the classification effectiveness of the model, we start with the sensitivity and specificity of the model:",
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Sensitivity (TPR): the proportion of results that are actually positive samples that are predicted to be positive samples. Specificity (FPR): the proportion of results that are actually negative samples that are predicted to be positive samples. AUC: is the area under the ROC curve and is used to measure the overall performance of the binary classification model.",
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "The ROC curve of the model is plotted as shown below:",
+        "page_idx": 14
+    },
+    {
+        "type": "image",
+        "img_path": "images/51355f15dc113afeb1e7d5de352bc4e39d5e44719c338f55724f9f24687be63a.jpg",
+        "img_caption": [
+            "Figure 12 ROC curve"
+        ],
+        "img_footnote": [],
+        "page_idx": 14
+    },
+    {
+        "type": "image",
+        "img_path": "images/315c6c2e48b864db9f407e8e6f2901b60c7903e5aedeebef420b9954ca086577.jpg",
+        "img_caption": [
+            "Figure 13 Hybrid Matrix Thermodynamic Diagram"
+        ],
+        "img_footnote": [],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "The ROC plot combines sensitivity (TPR) and specificity (FPR), which can measure the relationship simultaneously. Ideally, TPR should be close to 1, FPR should be close to 0, and the AUC value should be close to 1. Calculation from the ROC graph shows that  $\\mathrm{AUC} = 0.918$  It can be seen that the sensitivity of this model is good.",
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "To further measure the classification effectiveness of logistic regression through quantitative metrics, a heat map of the confusion matrix was drawn as shown above. Based on this, the classification evaluation metrics of the model are calculated as shown in the table below",
+        "page_idx": 14
+    },
+    {
+        "type": "table",
+        "img_path": "images/8169e6b6833121a484ae342ff927cd4b219b7f31d0775984af986029cf4cc768.jpg",
+        "table_caption": [
+            "Table 10 Classification Evaluation Index"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Accuracy</td><td>Recall</td><td>Precision</td><td>F1</td></tr><tr><td>0.841</td><td>0.841</td><td>0.848</td><td>0.839</td></tr></table>",
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "$\\bullet$  Accuracy:The proportion of positive samples to the total samples, the greater the accuracy, the better.  $\\bullet$  Recall:The proportion of results from actual positive samples that predict positive samples, the greater the recall the better.  $\\bullet$  Precision:The proportion of the results of the predicted positive sample that are actually positive, the greater the precision the better.  $\\bullet$  F1:A reconciled average of precision and recall, where precision and recall are mutually influential.",
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "The above table shows that Accuracy, Recall and Precision are all larger and F1 is also larger, which indicates that this classification model ensures higher accuracy while recall is also high, and the classification effect of this classification model is better.",
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "6.2.2 The Classification Results are Given",
+        "text_level": 1,
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "We need to solve for the probability p that the dependent variable is 1:",
+        "page_idx": 15
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\np = \\frac{1}{1 + e^{-z}} \\tag{12}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 15
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nz = -0.012a_{k} - 0.068e_{k} + 2.425\n$$\n",
+        "text_format": "latex",
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "After calculating the results, we took only the countries with a probability of winning the prize greater than 0.2 as shown in the table below",
+        "page_idx": 15
+    },
+    {
+        "type": "table",
+        "img_path": "images/f5542f96433cfa461c9adadcaa83bde5d4b06a929d178a240f5705dc538dacff.jpg",
+        "table_caption": [
+            "Table 11 Countries and Probability of Winning Medals"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>LBN</td><td>GUM</td><td>PLE</td><td>ANG</td><td>ESA</td></tr><tr><td>0.290</td><td>0.230</td><td>0.220</td><td>0.206</td><td>0.201</td></tr></table>",
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "The resulting visualization is shown below:",
+        "page_idx": 15
+    },
+    {
+        "type": "image",
+        "img_path": "images/5a2f073ccf6c29f3956ebe8eba8e8cabf920ebf709f27f67f98f82972c50fb75.jpg",
+        "img_caption": [
+            "Figure 14 Countries and Probability of Winning Medals"
+        ],
+        "img_footnote": [],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "We found that these non- winning countries are mainly concentrated in the Middle East, the eastern and southern regions of Asia, sub- Saharan Africa, and some island regions. Some of these countries have suffered from wars due to political issues, while others do not have access to professional training grounds due to natural constraints. Some are economically backward and cannot afford to develop sports. However, they still have a chance to win medals in the 2028 Summer Olympics, and we look forward to their wonderful performance.",
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "7 Task 3 Relationship Between Sports and Medals",
+        "text_level": 1,
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "7 Task 3 Relationship Between Sports and MedalsThe question requires us to count the number of medals won by each country in each event based on the GSRF prediction model that we have built. Solve for the relationship between the sports and the number of medals won by each country. Identify the sports that are most important to each country and explore why. Host countries usually add events in sports that their country specializes in, and explore the effect of this on the medals won by other countries.",
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "7.1 Relationship of the Sports to gold medals & total medals",
+        "text_level": 1,
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Based on the previously drawn radar Figure 6 , we found that programs have a nonnegligible impact on the number of medals. We have selected the countries that have done well in the Olympics, counted the number of medals won, and selected the events in which they have won more medals as shown below:",
+        "page_idx": 16
+    },
+    {
+        "type": "table",
+        "img_path": "images/cb1d1dd3fe6a9e4ffeafea1c083f4d64d4e790417a38c9cb2c3467947ad2966e.jpg",
+        "table_caption": [
+            "Table 12 Some Countries and Sports They are Good at"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>NOC</td><td>Sport</td><td>Medals</td><td>NOC</td><td>Sport</td><td>Medals</td></tr><tr><td rowspan=\"5\">USA</td><td>Swimming</td><td>1206</td><td rowspan=\"5\">CHN</td><td>Swimming</td><td>120</td></tr><tr><td>Athletics</td><td>1190</td><td>Diving</td><td>119</td></tr><tr><td>Rowing</td><td>388</td><td>Gymnastics</td><td>109</td></tr><tr><td>Basketball</td><td>341</td><td>Table Tennis</td><td>94</td></tr><tr><td>Gymnastics</td><td>166</td><td>Swimming</td><td>505</td></tr><tr><td rowspan=\"3\">JPN</td><td>Swimming</td><td>127</td><td rowspan=\"3\">AUS</td><td>Hockey</td><td>188</td></tr><tr><td>Judo</td><td>102</td><td>Rowing</td><td>162</td></tr><tr><td>Volleyball</td><td>101</td><td>Athletics</td><td>100</td></tr><tr><td rowspan=\"2\">KOR</td><td>Handball</td><td>96</td><td rowspan=\"2\">GBR</td><td>Athletics</td><td>393</td></tr><tr><td>Archery</td><td>90</td><td>Rowing</td><td>319</td></tr></table>",
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "As can be seen from the table, these countries will win more medals in the events they specialize in",
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "7.2 The most Important Sports for the Country",
+        "text_level": 1,
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "To assess the importance of the project for the country, we introduce the project importance  $\\mathrm{I}_{\\mathrm{(j)}}$  ..",
+        "page_idx": 16
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nI_{j} = \\frac{m_{k}}{M_{k}} \\tag{13}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Among them:",
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "$m_{k}$  stands for the number of medals won by the country in this event;  $M_{k}$  stands for the total number of medals won by the country",
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "For countries with strong comprehensive sports strength, they will achieve medals in many sports, and their program importance is not a single value, we take the United States and China as an example, calculate the importance of each program to them, and plot the radial histogram as shown below:",
+        "page_idx": 16
+    },
+    {
+        "type": "image",
+        "img_path": "images/c8ccec8e318f7f387e4431bcd4f20deeb6d12167d8075b0905c8e9d17d19ed40.jpg",
+        "img_caption": [
+            "Figure 15 Radial Histogram of Sport Importance"
+        ],
+        "img_footnote": [],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "From the figure we can easily see that the most important sport for both the United States and China is swimming. According to the related literature, it can be seen that China's performance in diving is better than that of swimming $^{[2]}$ , but the importance of swimming is higher than that of diving, which is because swimming has a lot of events, which greatly increases the probability of winning medals. This also aptly reflects the effect of the number of events on the results.",
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "For countries that are weak in sports, they may have won medals in only one sport, which is the most important for that country when the importance of that sport is 1 and the importance of the rest of the sports is 0. The countries in this category and their corresponding sports in our statistics office are shown in the following chart.",
+        "page_idx": 17
+    },
+    {
+        "type": "image",
+        "img_path": "images/0dd3fe533dfce2e18b231aab048c429010a4cfc4980ee2685fe3a99ed639019c.jpg",
+        "img_caption": [
+            "Figure 16 Countries that won medals in only one sport"
+        ],
+        "img_footnote": [],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "The graph above shows that Athletics is the most important sport for many countries, this is because Athletics has a lot of events, which provides more chances to win prizes for countries that are weaker in sports. These countries are mostly African countries, which have an advantage in Athletics.",
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "7.3 Impact of Nationally Selected Sports on results",
+        "text_level": 1,
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Preparation for the Olympic Games is a long and continuous process of fluctuation and adjustment, and the country will adjust its preparation program based on the combined results of previous Olympic Games and different international events.",
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "The country will invest more time and energy in the development of this sport for those who already have an advantage, and more people will participate in this sport, providing more excellent human resources to promote the development of this sport, so as to achieve better",
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "results in the Olympic Games.",
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "For programs with high potential, which have had mediocre results in the past, the country will increase funding and adopt a strategy appropriate to the program, thus improving Olympic performance.",
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "In the case of projects that have never won an award, they are usually not prevalent in the country, or the people of the country are generally not good at them. The country does not invest much time and money in such programs.",
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "8 Task 4 The Impact of Great Coach",
+        "text_level": 1,
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "The question asks us to search for fluctuations in performance due to the hiring of \"great coaches\" in previous years, to estimate the effect of this effect on the number of medals, and to identify the countries that need to hire great coaches the most. We need to build a regression model to measure the impact of this effect.",
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "8.1 Lasso Regression Model",
+        "text_level": 1,
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "8.1.1 Model Preparation",
+        "text_level": 1,
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "In order to further quantify the country's performance at each Olympic Games, we have chosen to assign points to the different medals, with the following rules for assigning points:",
+        "page_idx": 18
+    },
+    {
+        "type": "table",
+        "img_path": "images/34f7968d6235eda5443aeac9e8c8d3db37947660a42167c80e0b521e066831e9.jpg",
+        "table_caption": [
+            "Table 13 Score table"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Gold Medal</td><td>Silver Medal</td><td>Bronze Medal</td><td>No Medal</td></tr><tr><td>10</td><td>6</td><td>3</td><td>0</td></tr></table>",
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "We checked the famous and great coaches of history and found out that women's gymnastics coach Bela Karolyi coached many Olympic champions[4]. He coached in Romania in the 1976 and 1980 Olympics, and in the USA in the Olympics from 1984~2016[4]. We counted the scores of Romania and USA in women's gymnastics in every Olympics between 1952 and 2024, as shown below:",
+        "page_idx": 18
+    },
+    {
+        "type": "image",
+        "img_path": "images/9a99450ccea0cd0bdfbb15c851ee927a9a39b5ad2b2b87e685a02ca3f8227481.jpg",
+        "img_caption": [
+            "Figure 17 ROU vs USA Women's Gymnastics Scores"
+        ],
+        "img_footnote": [],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "We found a significant improvement in the country's women's gymnastics scores after this coach began coaching. When he left ROU, ROU's scores improved slightly, but generally trended slowly downward. When he came to USA, USA's gymnastics scores still fluctuated significantly, but had an overall upward trend. The Spearman correlation coefficient was then analyzed with the following formula:",
+        "page_idx": 18
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\n\\rho = \\frac{\\sum_{i}\\left(x_{i} - \\overline{x}\\right)\\left(y_{i} - \\overline{y}\\right)}{\\sqrt{\\sum_{i}\\left(x_{i} - \\overline{x}\\right)^{2}\\sum_{i}\\left(y_{i} - \\overline{y}\\right)^{2}}} \\tag{14}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "The correlation coefficient between \"great coaches\" and the number of medals was calculated to be 0.874.",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "From the above analysis we can clearly realize that great coaches play a not insignificant role in improving sports performance, so we establish Lasso regression model for quantitative analysis",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "8.1.2 Lasso Regression Modeling",
+        "text_level": 1,
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "Lasso regression is an alternative to least squares for compression estimation, and its main goal is to find a balance between model simplicity and accuracy.",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "1) Linear Regression Model",
+        "text_level": 1,
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "A linear regression model is developed as follows",
+        "page_idx": 19
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\ny = \\beta_{0} + \\beta_{1}I + \\beta_{2}V + \\beta_{3}S + \\beta_{4}A + \\beta_{5}H + \\beta_{6}C + \\epsilon \\tag{15}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "I,V,S,H,C are the indicators of the regression",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "I: Importance of the program to the state. According to the analysis in Task3, the state will use quality strategies to improve performance in programs of high importance, and these strategies include hiring great coaches.",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "V: Average number of points scored by the country in the last two Olympic Games. This indicator represents the average of the sum of the total points of the two most recent editions and reflects the country's overall performance in the two most recent Olympic Games.",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "S: theoretical points for the country on the program.  $s = I\\mathrm{V}$  is the program importance vs. average points score",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "A: The number of participants from that country in the current Olympic Games. The more athletes that participate, the greater the probability of winning a prize",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "H: The country's historical average points score for the project. This indicator reflects the level of the country's program and can reflect fluctuations in its performance.",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "C: Coaching Impact. To quantify the impact of coaching on performance, we define: coaching the first year of coaching  $\\mathrm{C} = 1$  , the length of each increase in the number of Olympic cycles, the performance has a linear increase of 0.1, when the coach leaves, the performance of the exponential decline,t represents the number of Olympic cycles that have begun & have ceased to coach:",
+        "page_idx": 19
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nC = \\left\\{ \\begin{array}{ll}1 + 0.1t & \\mathrm{Start~Coaching}\\\\ e^{-t} & \\mathrm{Stop~Coaching} \\end{array} \\right. \\tag{16}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "y is the score obtained from the regression  $\\beta_{i}$  is the coefficient to be estimated and  $\\epsilon$  is the error term",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "2) L1 Regularization",
+        "text_level": 1,
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "In the regression, we introduce an  $\\mathrm{L}_1$  penalty term so that the regression does not prioritize the reduction of any particular model parameter, retaining a few important features and",
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "promoting model sparsity:",
+        "page_idx": 20
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nL_{1} = \\lambda \\sum_{i = 1}^{6}\\left|\\beta_{i}\\right| \\tag{17}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "where is used to control the degree of regularization:",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "$\\bullet$  When  $= 0$  , all features are considered and the effect of regularization disappears, which is equivalent to ordinary linear regression  $\\bullet$  When tends to infinity, no features are considered and some coefficients are pushed to exactly zero,which will gradually eliminate more features. Effectively control the model complexity.",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "The resulting Lasso regression shrinks the coefficients toward 0, with the deviation increasing with and the variance increasing with decreasing .",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "3) Objective Function",
+        "text_level": 1,
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "Our goal with Lasso regression is to find the coefficients that minimize the sum of squared differences between the predicted and true values:",
+        "page_idx": 20
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\nRSS = \\sum_{i = 1}^{6}\\left(\\widehat{y_i} -y_i\\right)^2 \\tag{18}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "8.2 Lasso Regression Results",
+        "text_level": 1,
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "8.2.1 The Regression Equation is Given",
+        "text_level": 1,
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "We use cross- validation to select . The selected should minimize the model mean square error (MSE), and the following figure visualizes the process of selecting :",
+        "page_idx": 20
+    },
+    {
+        "type": "image",
+        "img_path": "images/30aba0977ad6488b2f6ffdc9caf948fdb42bfc612054aab3c6cb0715d9c7b342.jpg",
+        "img_caption": [
+            "Figure 18 Cross-Validation Diagram"
+        ],
+        "img_footnote": [],
+        "page_idx": 20
+    },
+    {
+        "type": "image",
+        "img_path": "images/e2bd40af1d14e1409f1036dd80d54b483be14a900c55f7a2f25e5ff471252264.jpg",
+        "img_caption": [
+            "Figure 19 Plot of vs. Model Coefficients"
+        ],
+        "img_footnote": [],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "Figure 18 shows that as the logarithmic value of changes, the coefficients of the individual variables also change, and can be considered to be excluded from the model when they become zero.",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "The coefficients of the regression equation were calculated using Python as shown in the table below:",
+        "page_idx": 20
+    },
+    {
+        "type": "table",
+        "img_path": "images/85ad582caf493886b04da214d627c0b6ed0b6300d70739909dd5589a7cf9d63f.jpg",
+        "table_caption": [
+            "Table 14 Coefficient of regression equation"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Variable Names</td><td>Intercept</td><td>I</td><td>V</td><td>S</td><td>A</td><td>H</td><td>C</td></tr><tr><td>Standardized coefficient</td><td>2.721</td><td>0</td><td>-0.046</td><td>0.906</td><td>0.027</td><td>0.144</td><td>26.944</td></tr><tr><td>R²</td><td></td><td></td><td></td><td>0.708</td><td></td><td></td><td></td></tr></table>",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "When the coefficient of the standardized variable in the model is 0, it means that this",
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "variable is excluded from the model. It can be seen that the coefficient of the importance of the project to the country (I) is 0, which proves that this variable does not have an impact on the results of the model and is excluded from the model. The regression equation is as follows:",
+        "page_idx": 21
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\ny = 2.721 - 0.046V + 0.906S + 0.027A + 0.144H + 26.944C \\tag{19}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "8.2.2 Advice on Investing in \"Great Coach\"",
+        "text_level": 1,
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "After in- depth analysis and data visualization, we have selected the following sports with great potential: Chinese women's volleyball, Brazilian women's soccer and Romanian women's gymnastics. These programs have been excellent in the past, but are now average and of high importance:",
+        "page_idx": 21
+    },
+    {
+        "type": "image",
+        "img_path": "images/21252b51d620f0acb7c89fe49e06e692acdae7cfa3df4f8b60272f15638dd822.jpg",
+        "img_caption": [
+            "Figure 20 Fluctuations in the Country's Score on the Item"
+        ],
+        "img_footnote": [],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Based on Lasso's regression model, we predict that if these three countries invest in the \"Great Coach\" program in their respective sports, then their 2028 Olympic scores in this sport will be as shown in the table below.",
+        "page_idx": 21
+    },
+    {
+        "type": "table",
+        "img_path": "images/81e9ba7d282a7734f5b3424dcc218d8ea4a86a17c4d942d9f01ef06b03970641.jpg",
+        "table_caption": [
+            "Table 15 2024 Scores vs 2028 Scores"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>CHN, Women&#x27;s Volleyball</td><td>BRA, Women&#x27;s Soccer</td><td>ROU, Women&#x27;s Gymnastics</td></tr><tr><td>2024</td><td>0</td><td>6</td><td>3</td></tr><tr><td>2028</td><td>5.33</td><td>8.86</td><td>36.65</td></tr></table>",
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "We have found that after investing in Great Coaching, countries have seen significant improvements in the performance of these potential programs, thus proving the importance of Great Coaching for these countries and programs.",
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "9 Task 5 Original Opinion",
+        "text_level": 1,
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "9.1 Host Effect",
+        "text_level": 1,
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "In Task 1 we found that being a host has an advantage in terms of getting more medals, so we picked two countries, the United States and Japan, and compared the change in the number of gold medals and the total number of medals when they were hosts and non- hosts:",
+        "page_idx": 21
+    },
+    {
+        "type": "image",
+        "img_path": "images/0ef4f29b48dfd5876a0ad0981a6bfde3706d7070fe56b7ec88efd722743e2d94.jpg",
+        "img_caption": [
+            "Figure 21 Change in number of medals"
+        ],
+        "img_footnote": [],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "We have found that when the United States and Japan are the hosts, there is a 1.4 to 1.9 times increase in the number of gold medals and the total number of medals. The IOC can encourage countries to apply to host the Olympics based on this phenomenon.",
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "9.2 Talented Athletes",
+        "text_level": 1,
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "In competition, there are athletes who train hard and achieve good results, and there are also highly talented competitors. If a country has been competing in an event for a long time and has only won a medal once, the winner can be called a \"gifted athlete\". For example, in the men's hurdles, China has been competing since 1984, and only Liu Xiang won the title in 2004; the rest of the athletes have not won a medal.",
+        "page_idx": 22
+    },
+    {
+        "type": "image",
+        "img_path": "images/538fb71c48e3f61c1c21fc8559ce85b075dc176c795ae973f3ba28a031049790.jpg",
+        "img_caption": [
+            "Figure 22 Chinese men's hurdles"
+        ],
+        "img_footnote": [],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Accordingly, the IOC could encourage countries to tap talent in such programs and invest more in finding more talented players, who in turn could drive more hard- working players to the Olympic podium.",
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "10 Error Analysis and Sensitivity Analysis",
+        "text_level": 1,
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Based on the GSRF model established in the first problem, the sensitivity of athletes_num, Total event to Model can be obtained by changing athletes_num  $A_{ij}$ , Total event  $E_{ij}$  in the model and observing the corresponding changes in Model.",
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "10.1 Definition of Sensitivity",
+        "text_level": 1,
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Define the result of this forecast as  $y$ , the difference between this result and the previous forecast as  $\\Delta y$ , and the average sensitivity is defined  $s_p$  as:",
+        "page_idx": 22
+    },
+    {
+        "type": "equation",
+        "text": "\n$$\ns_p = \\Delta y / y \\tag{20}\n$$\n",
+        "text_format": "latex",
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "This indicator reflects the magnitude of change in the projected number of medals",
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "following a change in the indicator.",
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "10.2 Impact of Athletes Number, Gold & Total Medals on Predicted Results",
+        "text_level": 1,
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "In Task 1, we found that there are many eigenvalues that affect the prediction of the number of gold medals & medals. We control the other eigenvalues unchanged, respectively change the athletes_num  $A_{ij}$ , the total number of events  $E_{ij}$ , observe the corresponding changes in the predicted number of medals won, and get the average sensitivity: athletes_num: 0.058329%; Total event: - 1.2113%.",
+        "page_idx": 23
+    },
+    {
+        "type": "image",
+        "img_path": "images/babcf6b7165c5d07f5bbe8b43ff3771fd1fbd1f4dde34d77a47aaaff25c7c159.jpg",
+        "img_caption": [
+            "Figure 23 Sentivity analysis"
+        ],
+        "img_footnote": [],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "From the figure, it is found that the model basically does not fluctuate much after being perturbed, and the average sensitivity is also very low. It shows that our model has strong stability and robustness.",
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "11 Evaluation of Model",
+        "text_level": 1,
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "(1) Strengths",
+        "text_level": 1,
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "- GSRF uses an optimal combination of hyperparameters on top of the traditional stochastic model to train and predict the model. It significantly improves the performance of the model and effectively mitigates problems such as overfitting or underfitting- Both the MAE and RMSE of the GSRF model are smaller, proving that the model is more accurate and predicts more credible results- The binary logistic regression model has a larger F1 metric, which ensures that the recall is also high while guaranteeing higher accuracy and better classification.- By changing the eigenvalues of the model, it is found that the model basically does not fluctuate too much after being perturbed, indicating that the model has strong stability and robustness.",
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "(2) Possible Improvements",
+        "text_level": 1,
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "- It is assumed that the number of athletes, countries and sports at the 2028 Olympics will be the same as in 2024, but the actual situation may change, which will affect the model's predictions.- There may be interactions between variables, for example, there may be a positive correlation between the number of athletes and the number of programs, which can lead to biased model predictions.",
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "12 References",
+        "text_level": 1,
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "[1] Christoph S, L. S S, Dominik S, et al. Forecasting the Olympic medal distribution - A socioeconomic machine learning model[J]. Technological Forecasting &amp; Social Change,2022,175[2] Tan Kaifeng, Zhang Qingyi. Analysis of World Sports Competition Pattern and China's Athletic Level in Paris Olympics [J]. Liaoning: Sports Science and Technology,2025,47(01):56- 62. DOI:10.13940/j.cnki.lntykj.2025.01.023. [3] Coaching Team - Bela and Martha Karolyi, USA Gymnastic, https://usagym.org/halloffame/inductee/coaching- team- bela- martha- karolyi/[4] [Nov 16, 2024] Bela Karolyi, famed yet polarizing U.S. gymnastics coach, dies, ESPN News Services, https://www.espn.com/olympics/gymnastics/story / /id/42433795/belakarolyi- famed- us- gymnastics- coach- dies- 82",
+        "page_idx": 24
+    }
+]

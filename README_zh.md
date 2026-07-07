@@ -108,69 +108,94 @@ conda install -c conda-forge lightgbm
 ### AutoML示例
 
 ```python
-from happymath import AutoML
+from happymath.AutoML import ClassificationML
+from sklearn.datasets import load_iris
 import pandas as pd
 
 # 加载数据
-data = pd.read_csv('your_data.csv')
-X, y = data.drop('target', axis=1), data['target']
+iris = load_iris(as_frame=True)
+data = iris.data.copy()
+data["target"] = iris.target
 
-# 自动化分类
-automl = AutoML.ClassificationML()
-model = automl.fit(X, y)
-predictions = model.predict(X_test)
+# 创建分类实验
+clf = ClassificationML(
+    data=data,
+    target="target",
+    train_size=0.8,
+    fold=2,
+    seed=42,
+    verbose=False,
+    html=False,
+)
+
+# 训练逻辑回归模型并预测
+model = clf.create("lr", verbose=False)
+predictions = clf.predict(data=data.head())
+print(predictions[["target", "prediction_label"]].head())
 ```
 
 ### 决策分析示例
 
 ```python
-from happymath import Decision
+from happymath.Decision import ObjWeighting, ScoringDecision
 import numpy as np
 
 # 决策矩阵和准则类型
 dm_data = np.array([[250, 16, 12], [200, 16, 8], [300, 32, 16]])
-criteria = ['min', 'max', 'max']
+criteria = ["min", "max", "max"]
 
-# 计算权重和排名
-weighting = Decision.ObjWeighting()
-weights = weighting.decide(dataset=dm_data, criterion_type=criteria).get_weights()
+# 使用熵权法计算客观权重
+weighting = ObjWeighting(methods=["entropy"])
+weights = weighting.decide(
+    dataset=dm_data, criterion_type=criteria
+).get_weights(method="entropy")
+print("权重:", weights)
 
-scoring = Decision.ScoringDecision()
-rankings = scoring.decide(dataset=dm_data, weights=weights, criterion_type=criteria).get_rankings()
-print(rankings)
+# 使用 TOPSIS 排序
+scoring = ScoringDecision(methods=["topsis"])
+rankings = scoring.decide(
+    dataset=dm_data, weights=weights, criterion_type=criteria
+).get_rankings(method="topsis")
+print("排序:", rankings)
 ```
 
 ### 微分方程示例
 
 ```python
-from happymath import DiffEq
+import sympy
 import numpy as np
+from scipy.integrate import solve_ivp
+from happymath.DiffEq.ODE.ODEModule import ODEModule
 
-# 定义ODE系统
-def ode_func(t, y):
-    return -y + np.sin(t)
+# 定义 dy/dt = 2*y + t, y(0) = 1
+t = sympy.symbols("t")
+y = sympy.Function("y")
+ode_expr = -y(t).diff(t, 1) + 2 * y(t) + t
+ics = {y(0): 1}
 
-# 求解ODE
-solver = DiffEq.ODE()
-result = solver.solve(ode_func, t_span=[0, 10], y0=[1.0])
-t, y = result.get_solution()
+ode_obj = ODEModule(ode_expr)
+t_span = np.linspace(0, 5, 50)
+
+# 转换为 SciPy 格式并求解
+func, y0, const = ode_obj.ode2scipy("IVP", ics)
+sol = solve_ivp(func, (0, 5), y0, t_eval=t_span, args=const)
+print("t=5 时 y ≈", sol.y[0, -1])
 ```
 
 ### 优化示例
 
 ```python
-from happymath import Opt
-import numpy as np
+import sympy as sp
+from happymath.Opt.OptModule import OptModule
 
-# 定义优化问题
-def objective(x):
-    return x[0]**2 + x[1]**2
+x1, x2 = sp.symbols("x1 x2", real=True)
+obj = {"min": (x1 - 1) ** 2 + (x2 - 2) ** 2}
+constraints = [x1 >= -5, x1 <= 5, x2 >= -5, x2 <= 5]
 
-# 求解优化问题
-optimizer = Opt.Optimization()
-result = optimizer.minimize(objective, x0=[1.0, 1.0])
-optimal_x = result.x
-optimal_value = result.fun
+opt = OptModule(obj, constraints, mode="pymoo", default_search_range=5.0)
+res = opt.solve(solver="GA", use_auto_solvers=False, max_solvers=1)
+print("最优解:", res.variables)
+print("最优值:", res.objective_value)
 ```
 
 ## 许可证

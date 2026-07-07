@@ -108,69 +108,94 @@ conda install -c conda-forge lightgbm
 ### AutoML Example
 
 ```python
-from happymath import AutoML
+from happymath.AutoML import ClassificationML
+from sklearn.datasets import load_iris
 import pandas as pd
 
-# Load your data
-data = pd.read_csv('your_data.csv')
-X, y = data.drop('target', axis=1), data['target']
+# Load data
+iris = load_iris(as_frame=True)
+data = iris.data.copy()
+data["target"] = iris.target
 
-# Automated classification
-automl = AutoML.ClassificationML()
-model = automl.fit(X, y)
-predictions = model.predict(X_test)
+# Create a classification experiment
+clf = ClassificationML(
+    data=data,
+    target="target",
+    train_size=0.8,
+    fold=2,
+    seed=42,
+    verbose=False,
+    html=False,
+)
+
+# Train a logistic regression model and predict
+model = clf.create("lr", verbose=False)
+predictions = clf.predict(data=data.head())
+print(predictions[["target", "prediction_label"]].head())
 ```
 
 ### Decision Analysis Example
 
 ```python
-from happymath import Decision
+from happymath.Decision import ObjWeighting, ScoringDecision
 import numpy as np
 
 # Decision matrix and criteria types
 dm_data = np.array([[250, 16, 12], [200, 16, 8], [300, 32, 16]])
-criteria = ['min', 'max', 'max']
+criteria = ["min", "max", "max"]
 
-# Calculate weights and rankings
-weighting = Decision.ObjWeighting()
-weights = weighting.decide(dataset=dm_data, criterion_type=criteria).get_weights()
+# Calculate objective weights using entropy
+weighting = ObjWeighting(methods=["entropy"])
+weights = weighting.decide(
+    dataset=dm_data, criterion_type=criteria
+).get_weights(method="entropy")
+print("Weights:", weights)
 
-scoring = Decision.ScoringDecision()
-rankings = scoring.decide(dataset=dm_data, weights=weights, criterion_type=criteria).get_rankings()
-print(rankings)
+# Rank using TOPSIS
+scoring = ScoringDecision(methods=["topsis"])
+rankings = scoring.decide(
+    dataset=dm_data, weights=weights, criterion_type=criteria
+).get_rankings(method="topsis")
+print("Rankings:", rankings)
 ```
 
 ### Differential Equations Example
 
 ```python
-from happymath import DiffEq
+import sympy
 import numpy as np
+from scipy.integrate import solve_ivp
+from happymath.DiffEq.ODE.ODEModule import ODEModule
 
-# Define ODE system
-def ode_func(t, y):
-    return -y + np.sin(t)
+# Define dy/dt = 2*y + t, y(0) = 1
+t = sympy.symbols("t")
+y = sympy.Function("y")
+ode_expr = -y(t).diff(t, 1) + 2 * y(t) + t
+ics = {y(0): 1}
 
-# Solve ODE
-solver = DiffEq.ODE()
-result = solver.solve(ode_func, t_span=[0, 10], y0=[1.0])
-t, y = result.get_solution()
+ode_obj = ODEModule(ode_expr)
+t_span = np.linspace(0, 5, 50)
+
+# Convert to SciPy format and solve
+func, y0, const = ode_obj.ode2scipy("IVP", ics)
+sol = solve_ivp(func, (0, 5), y0, t_eval=t_span, args=const)
+print("y at t=5 ≈", sol.y[0, -1])
 ```
 
 ### Optimization Example
 
 ```python
-from happymath import Opt
-import numpy as np
+import sympy as sp
+from happymath.Opt.OptModule import OptModule
 
-# Define optimization problem
-def objective(x):
-    return x[0]**2 + x[1]**2
+x1, x2 = sp.symbols("x1 x2", real=True)
+obj = {"min": (x1 - 1) ** 2 + (x2 - 2) ** 2}
+constraints = [x1 >= -5, x1 <= 5, x2 >= -5, x2 <= 5]
 
-# Solve optimization problem
-optimizer = Opt.Optimization()
-result = optimizer.minimize(objective, x0=[1.0, 1.0])
-optimal_x = result.x
-optimal_value = result.fun
+opt = OptModule(obj, constraints, mode="pymoo", default_search_range=5.0)
+res = opt.solve(solver="GA", use_auto_solvers=False, max_solvers=1)
+print("Optimal variables:", res.variables)
+print("Optimal value:", res.objective_value)
 ```
 
 ## License
