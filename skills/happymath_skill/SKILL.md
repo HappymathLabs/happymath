@@ -23,7 +23,7 @@ Opt
 
 但如果用户任务需要的能力不在这四个模块中，或者 AI 预期某个模块应该存在但本地环境中没有找到，不能直接认定 `happymath` 不支持该任务，而是必须访问项目地址、文档目录和源码目录进行确认。
 
-当 `happymath` 库更新、PyPI 版本更新、API 发生变化、案例文档发生变化、模块新增或模块调整时，AI 必须优先读取线上最新文档和必要源码，再编写代码，而不是依赖本地技能中可能过时的 API 记忆。
+当 `happymath` 库更新、PyPI 版本更新、API 发生变化、案例文档发生变化、模块新增或模块调整时，AI 必须确保读取的文档与当前安装版本一致：版本一致时优先读取当前路径下 `.happymath` 文件夹中的本地文档缓存；版本不一致时，先更新库并同步更新 `.happymath` 中的模块文档，再编写代码，而不是依赖本地技能中可能过时的 API 记忆。
 
 ---
 
@@ -57,9 +57,39 @@ https://github.com/HappyMathLabs/happymath/blob/main/happymath/AutoML/docs/READM
 
 ## 核心工作原则
 
-### 1. 不依赖本地过时记忆
+### 1. 优先读取本地 `.happymath` 文档缓存
 
 在编写任何 `happymath` 代码前，必须先确认当前库版本、当前文档和当前 API。
+
+但文档来源按以下优先级确定：
+
+1. **优先检查当前工作路径下是否存在 `.happymath` 文件夹**，且其中是否存在本次任务需要使用模块的文档目录，即 `.happymath/<Module>/docs/`。如果存在，则**优先读取其中的模块文档**（`README.md`、`quickstart.md`、`api.md`、`examples.md`），而不是直接访问线上文档。
+2. **如果 `.happymath` 文件夹不存在，或其中没有对应模块的文档**：在调用具体模块（例如 `AutoML`）之前，必须在当前工作路径下创建 `.happymath` 文件夹，并下载该模块 docs 目录下的全部文档，组织方式为：
+
+   ```text
+   .happymath/<Module>/docs/README.md
+   .happymath/<Module>/docs/quickstart.md
+   .happymath/<Module>/docs/api.md
+   .happymath/<Module>/docs/examples.md
+   ```
+
+   例如使用 `AutoML` 模块时，需要构建：
+
+   ```text
+   .happymath/AutoML/docs/README.md
+   .happymath/AutoML/docs/quickstart.md
+   .happymath/AutoML/docs/api.md
+   .happymath/AutoML/docs/examples.md
+   ```
+
+   下载来源（Gitee 优先，GitHub 兜底）：
+
+   ```text
+   https://gitee.com/HappymathLabs/happymath/raw/main/happymath/<Module>/docs/<file>
+   https://raw.githubusercontent.com/HappyMathLabs/happymath/main/happymath/<Module>/docs/<file>
+   ```
+
+3. **版本一致时才信任本地缓存**：在版本检查中，如果本地安装的 `happymath` 版本与 PyPI 最新版本一致，则优先读取 `.happymath` 中的文档；如果版本不一致，则必须**同时更新 happymath 库和 `.happymath` 中需要用到的模块文档**（重新下载覆盖对应模块的 docs 内容），之后再开始编写代码。
 
 不能因为本技能中写过某个函数、类或参数，就直接假设它一定仍然存在。
 
@@ -80,16 +110,16 @@ https://github.com/HappyMathLabs/happymath/blob/main/happymath/AutoML/docs/READM
 
 ### 3. 先读文档，再写代码
 
-选择模块后，必须读取该模块对应的文档内容，包括：
+选择模块后，必须读取该模块对应的文档内容。读取时遵循本地缓存优先原则：
 
-1. `happymath/<Module>/docs/README.md`（模块文档入口，包含阅读顺序说明）
-2. 按 README 指引继续阅读该目录下的 `quickstart.md`、`api.md` 和 `examples.md`
-3. 必要时读取对应源码目录
-4. 必要时读取 `tests` 目录中的测试样例
+1. 优先读取当前路径下 `.happymath/<Module>/docs/README.md`（若不存在，先按「优先读取本地 `.happymath` 文档缓存」中的规则创建并下载）。
+2. 按 README 指引继续阅读该目录下的 `quickstart.md`、`api.md` 和 `examples.md`。
+3. 必要时读取对应源码目录。
+4. 必要时读取 `tests` 目录中的测试样例。
 
 只有在完成模块学习后，才能编写代码。
 
-如果找不到对应模块文档，不能直接放弃，需要继续检查：
+如果本地缓存和线上都找不到对应模块文档，不能直接放弃，需要继续检查：
 
 ```text
 happymath/<Module>/docs/
@@ -306,6 +336,8 @@ PY
 
 ### 第三步：比较版本
 
+如果当前安装版本与 PyPI 最新版本一致，则**优先读取当前路径下 `.happymath` 文件夹中的模块文档**（若缺失则先下载补齐），无需重复访问线上文档。
+
 如果当前安装版本低于 PyPI 最新版本，则需要更新。
 
 优先尝试 conda 更新：
@@ -331,6 +363,8 @@ python -m pip install -U happymath
 ```bash
 python -c "import importlib.metadata as m; print(m.version('happymath'))"
 ```
+
+**版本更新后必须同步更新本地文档缓存**：重新下载 `.happymath/<Module>/docs/` 中本次任务需要用到模块的全部文档（`README.md`、`quickstart.md`、`api.md`、`examples.md`），覆盖旧内容，确保文档与库版本一致。
 
 ---
 
@@ -799,18 +833,29 @@ https://github.com/HappyMathLabs/happymath/tree/main/tests
 
 ### 第三步：读取模块文档
 
-确定模块后，必须读取该模块 docs 目录下的文档入口 README：
+确定模块后，先检查当前路径下是否存在 `.happymath/<Module>/docs/`：
+
+- **存在**：直接读取其中的文档入口 README：
+
+  ```text
+  .happymath/<Module>/docs/README.md
+  ```
+
+- **不存在**：创建 `.happymath` 文件夹并下载该模块 docs 目录下的全部文档（Gitee 优先）：
+
+  ```text
+  https://gitee.com/HappymathLabs/happymath/raw/main/happymath/<Module>/docs/README.md
+  https://gitee.com/HappymathLabs/happymath/raw/main/happymath/<Module>/docs/quickstart.md
+  https://gitee.com/HappymathLabs/happymath/raw/main/happymath/<Module>/docs/api.md
+  https://gitee.com/HappymathLabs/happymath/raw/main/happymath/<Module>/docs/examples.md
+  ```
+
+然后按 README 中的推荐阅读顺序，继续读完该目录下的：
 
 ```text
-happymath/<Module>/docs/README.md
-```
-
-并按 README 中的推荐阅读顺序，继续读完该目录下的：
-
-```text
-happymath/<Module>/docs/quickstart.md
-happymath/<Module>/docs/api.md
-happymath/<Module>/docs/examples.md
+quickstart.md
+api.md
+examples.md
 ```
 
 例如使用 `Decision` 时，需要读取：
@@ -1247,16 +1292,17 @@ conda run -n happymath python check_happymath_env.py
 8. 判断任务对应模块
 9. 优先在 AutoML、Decision、DiffEq、Opt 中匹配模块
 10. 如果四个已知模块不适合，则检查项目是否有新增模块或相关接口
-11. 阅读对应模块 happymath/<Module>/docs/README.md
-12. 按 README 指引阅读该目录下的 quickstart.md、api.md、examples.md
-13. 必要时阅读源码和 tests
-14. 如果预期模块不存在，则访问项目链接确认是否真的不存在
-15. 如果确认 happymath 没有对应模块或接口，则向用户说明，并使用其他方式继续完成任务
-16. 编写最小验证代码
-17. 编写正式任务代码
-18. 在安装 happymath 的 conda 环境中运行
-19. 根据运行结果修正代码
-20. 向用户解释模块选择、运行方式和结果
+11. 检查当前路径下是否存在 .happymath/<Module>/docs/，存在则优先读取
+12. 不存在则创建 .happymath 文件夹并下载该模块 docs 目录下全部文档
+13. 阅读 .happymath/<Module>/docs/README.md，并读 quickstart.md、api.md、examples.md
+14. 必要时阅读源码和 tests
+15. 如果预期模块不存在，则访问项目链接确认是否真的不存在
+16. 如果确认 happymath 没有对应模块或接口，则向用户说明，并使用其他方式继续完成任务
+17. 编写最小验证代码
+18. 编写正式任务代码
+19. 在安装 happymath 的 conda 环境中运行
+20. 根据运行结果修正代码
+21. 向用户解释模块选择、运行方式和结果
 ```
 
 ---
