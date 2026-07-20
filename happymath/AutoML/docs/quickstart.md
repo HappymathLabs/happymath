@@ -19,7 +19,7 @@ PyCaret 官方示例的基本顺序也是 `setup -> compare_models`，需要调�
 ## compare 和 tune 的关系
 
 - `compare()` 对应 PyCaret 的 `compare_models()`：训练并用交叉验证评估候选模型，按 `sort` 或 `primary_metric` 选择最佳模型。它不会自动调用 `tune_model()`，也不会做轻量调参。
-- `tune()` 对应 PyCaret 的 `tune_model()`：对一个已训练模型做超参数搜索，默认 `n_iter=10`。这是一个独立步骤，搜索强度主要由 `n_iter`、`custom_grid`、`search_library`、`search_algorithm` 等参数决定。
+- `tune()` 对应 PyCaret 的 `tune_model()`：对一个已训练模型做超参数搜索，默认 `n_iter=300`（默认迭代次数为 300 次）。这是一个独立步骤，搜索强度主要由 `n_iter`、`custom_grid`、`search_library`、`search_algorithm` 等参数决定。
 - 因此，`compare()` 得到最佳模型后是否继续 `tune()` 取决于需求：如果只是快速比较模型效果，停止在 `compare()` 即可；如果需要更充分优化某个入选模型，再调用 `tune(best, n_iter=...)`。
 - `tune(choose_better=True)` 默认在调参结果变差时保留输入模型，适合自动脚本；但调参仍可能耗时明显增加。
 

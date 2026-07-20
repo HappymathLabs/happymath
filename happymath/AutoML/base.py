@@ -237,7 +237,7 @@ class AutoMLBase(ChineseFontMixin):
     def tune(
         self,
         estimator: Optional[Any] = None,
-        n_iter: int = 10,
+        n_iter: int = 300,
         custom_grid: Optional[Dict[str, List[Any]]] = None,
         optimize: Optional[str] = None,
         verbose: Optional[bool] = None,

@@ -6,7 +6,7 @@
 
 - `ClassificationML`、`RegressionML`、`ClusteringML`、`AnomalyML`、`TimeSeriesML` 在初始化时自动完成 PyCaret `setup()`。
 - `compare()` 对应 PyCaret `compare_models()`，用于横向比较候选模型，不会自动调用 `tune_model()`，也不存在内置“轻量调参”。
-- `tune()` 对应 PyCaret `tune_model()`，用于对一个已训练模型进行超参数搜索。默认 `n_iter=10`，搜索越深耗时越长。
+- `tune()` 对应 PyCaret `tune_model()`，用于对一个已训练模型进行超参数搜索。默认 `n_iter=300`，搜索越深耗时越长。
 - `ensemble()`、`blend()`、`stack()` 是高级集成接口，不是基础比较流程的默认步骤。
 - 最近一次 PyCaret 评分表保存在 `results`，可通过 `get_results()` 读取；已训练模型会存入 `models`，可通过 `get_best_model()` 按主指标选择。
 
@@ -207,7 +207,7 @@ create(
 ```python
 tune(
     estimator=None,
-    n_iter=10,
+    n_iter=300,
     custom_grid=None,
     optimize=None,
     verbose=None,
@@ -224,7 +224,7 @@ tune(
 | 参数 | 功能 |
 |---|---|
 | `estimator` | 待调参模型；不传时使用 `current_model`。 |
-| `n_iter` | 搜索迭代次数，默认 `10`。越大越深，耗时越长。 |
+| `n_iter` | 搜索迭代次数，默认 `300`。越大越深，耗时越长。 |
 | `custom_grid` | 自定义参数网格或搜索空间。 |
 | `optimize` | 优化指标；不传时使用 `primary_metric`。 |
 | `verbose` | 是否输出 PyCaret 过程信息。 |

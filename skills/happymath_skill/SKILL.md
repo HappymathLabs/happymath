@@ -243,6 +243,18 @@ conda activate happymath
 conda install -c conda-forge happymath -y
 ```
 
+安装 Jupyter 相关包（如果需要在 Jupyter Notebook / JupyterLab 中使用 `happymath`）：
+
+```bash
+conda install -c conda-forge jupyterlab notebook ipykernel -y
+```
+
+并将当前环境注册为 Jupyter 内核，方便在 Notebook 中选择：
+
+```bash
+python -m ipykernel install --user --name happymath --display-name "Python (happymath)"
+```
+
 安装完成后验证：
 
 ```bash
