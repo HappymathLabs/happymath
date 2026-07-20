@@ -1,643 +1,618 @@
 # HappyMath AutoML API 文档
 
-本页按类整理 `happymath.AutoML` 模块的公开接口，所有参数含义均来自源码与 PyCaret 封装逻辑，未经验证的信息不予列出。
+本页说明 `happymath.AutoML` 的公开接口、设计思想、参数功能和输出形式。AutoML 模块底层使用 PyCaret，HappyMath 负责统一数据载入、任务初始化、模型存储、结果读取和评估表生成。
 
-## 目录
+## 核心设计
 
-- [AutoMLBase](#automlbase)
-- [ClassificationML](#classificationml)
-- [RegressionML](#regressionml)
-- [ClusteringML](#clusteringml)
-- [AnomalyML](#anomalyml)
-- [TimeSeriesML](#timeseriesml)
+- `ClassificationML`、`RegressionML`、`ClusteringML`、`AnomalyML`、`TimeSeriesML` 在初始化时自动完成 PyCaret `setup()`。
+- `compare()` 对应 PyCaret `compare_models()`，用于横向比较候选模型，不会自动调用 `tune_model()`，也不存在内置“轻量调参”。
+- `tune()` 对应 PyCaret `tune_model()`，用于对一个已训练模型进行超参数搜索。默认 `n_iter=10`，搜索越深耗时越长。
+- `ensemble()`、`blend()`、`stack()` 是高级集成接口，不是基础比较流程的默认步骤。
+- 最近一次 PyCaret 评分表保存在 `results`，可通过 `get_results()` 读取；已训练模型会存入 `models`，可通过 `get_best_model()` 按主指标选择。
 
----
+## 数据输入
 
-## AutoMLBase
+`data` 支持以下形式：
 
-所有任务类的公共基类，封装了 PyCaret experiment 生命周期、模型存储、指标处理与通用训练接口。通常不应直接实例化，而是通过 `ClassificationML`、`RegressionML` 等子类使用。
+| 类型 | 说明 |
+|---|---|
+| `pandas.DataFrame` | 推荐形式；监督学习需包含目标列。 |
+| `pandas.Series` | 常用于单变量时序；会转成一列 DataFrame。 |
+| `.csv` / `.xlsx` / `.xls` 路径 | 自动读取为 DataFrame。 |
+| `numpy.ndarray` | 自动生成 `feature_0`、`feature_1` 等列名；监督学习可用整数 `target` 指定目标列。 |
+| `(X, y)` 元组 | 自动合并为 DataFrame，目标列默认为 `target`。 |
+| sklearn Bunch | 如 `load_iris(as_frame=True)` 返回对象；未指定目标列时自动命名为 `target`。 |
 
-### 构造函数
+## 任务类
+
+### ClassificationML
 
 ```python
-AutoMLBase(
-    data: DataLike,
-    target: TargetLike = None,
-    test_data: Optional[DataLike] = None,
-    primary_metric: Optional[str] = None,
-    **setup_kwargs: Any,
+ClassificationML(
+    data,
+    target=None,
+    test_data=None,
+    train_size=0.7,
+    fold=5,
+    seed=42,
+    n_jobs=-1,
+    verbose=False,
+    html=False,
+    primary_metric=None,
+    **setup_kwargs,
 )
 ```
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | `DataLike` | 必填 | 训练数据，通常为 pandas DataFrame。 |
-| `target` | `TargetLike` | `None` | 目标列名称；聚类、异常检测任务不传。 |
-| `test_data` | `Optional[DataLike]` | `None` | 外部测试集，不传时使用 PyCaret 内部分割。 |
-| `primary_metric` | `Optional[str]` | `None` | 主指标，用于 `get_best_model` 与优化方向判断。 |
-| `**setup_kwargs` | `Any` | - | 透传给 PyCaret `setup()` 的额外参数。 |
+用于分类任务。默认主指标为 `Accuracy`。
 
-### 通用属性
+输出：实例化后返回 `ClassificationML` 对象，内部已完成 PyCaret `ClassificationExperiment.setup()`。后续模型训练接口输出分类器或 sklearn pipeline，预测输出通常包含原特征、目标列（若输入中存在）、`prediction_label` 和 `prediction_score` / `prediction_score_*`。
 
-| 属性 | 类型 | 说明 |
+### RegressionML
+
+构造参数与 `ClassificationML` 基本一致。用于回归任务，默认主指标为 `MAE`。
+
+输出：实例化后返回 `RegressionML` 对象，内部已完成 PyCaret `RegressionExperiment.setup()`。预测输出通常包含原特征、目标列（若输入中存在）和 `prediction_label`。
+
+### ClusteringML
+
+```python
+ClusteringML(
+    data,
+    test_data=None,
+    seed=42,
+    n_jobs=-1,
+    verbose=False,
+    html=False,
+    primary_metric=None,
+    **setup_kwargs,
+)
+```
+
+用于聚类任务，无 `target`。默认主指标为 `Silhouette`。
+
+输出：实例化后返回 `ClusteringML` 对象。`create()` 输出聚类模型，`assign()` 输出带 `Cluster` 列的 DataFrame。
+
+### AnomalyML
+
+```python
+AnomalyML(
+    data,
+    test_data=None,
+    fraction=0.05,
+    seed=42,
+    n_jobs=-1,
+    verbose=False,
+    html=False,
+    primary_metric=None,
+    **setup_kwargs,
+)
+```
+
+用于异常检测任务，无 `target`。`fraction` 表示预期异常比例。
+
+输出：实例化后返回 `AnomalyML` 对象。`create()` 输出异常检测模型，`assign()` 输出带 `Anomaly` 和 `Anomaly_Score` 列的 DataFrame。
+
+### TimeSeriesML
+
+```python
+TimeSeriesML(
+    data,
+    target=None,
+    test_data=None,
+    fh=12,
+    fold=3,
+    seasonal_period=None,
+    seed=42,
+    n_jobs=-1,
+    verbose=False,
+    html=False,
+    primary_metric=None,
+    **setup_kwargs,
+)
+```
+
+用于时序预测任务。默认主指标为 `MASE`。
+
+输出：实例化后返回 `TimeSeriesML` 对象。`compare()` / `create()` 输出时序预测器或 pipeline，`predict()` 输出包含 `y_pred` 的 DataFrame；请求预测区间时可能额外包含区间列。
+
+## 通用属性
+
+| 属性 | 类型 | 含义 |
 |---|---|---|
-| `data` | `pd.DataFrame` | 加载并校验后的训练数据。 |
-| `target` | `Optional[str]` | 目标列名称。 |
-| `test_data` | `Optional[pd.DataFrame]` | 外部测试集（若有）。 |
-| `primary_metric` | `Optional[str]` | 当前任务的主指标。 |
-| `setup_kwargs` | `Dict[str, Any]` | 初始化时传入的额外 setup 参数。 |
+| `data` | `pd.DataFrame` | 规范化后的训练数据。 |
+| `target` | `Optional[str]` | 目标列名；无监督任务为 `None`。 |
+| `test_data` | `Optional[pd.DataFrame]` | 外部测试集。 |
+| `primary_metric` | `Optional[str]` | 主指标，用于排序和最优模型选择。 |
 | `experiment` | PyCaret Experiment | 底层 PyCaret 实验对象。 |
-| `current_model` | `Optional[Any]` | 当前选中的模型对象。 |
-| `results` | `Optional[Any]` | 最近一次 `pull()` 得到的结果表。 |
-| `is_setup` | `bool` | 实验是否已完成 setup。 |
-| `models` | `Dict[str, StoredModel]` | 已存储模型的字典（向后兼容属性）。 |
+| `current_model` | `Optional[Any]` | 当前模型，通常为最近一次训练/调参/集成输出。 |
+| `results` | `Optional[Any]` | 最近一次 `pull()` 得到的评分表。 |
+| `models` | `Dict[str, StoredModel]` | HappyMath 内部保存的模型记录。 |
 
-### compare
+## compare
 
 ```python
 compare(
-    include: Optional[List[Any]] = None,
-    exclude: Optional[List[str]] = None,
-    sort: Optional[str] = None,
-    budget_time: Optional[float] = None,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
+    include=None,
+    exclude=None,
+    sort=None,
+    budget_time=None,
+    verbose=None,
+    **kwargs,
 ) -> Any
 ```
 
-比较多个基线模型并返回表现最好的模型。
+思想：横向比较候选模型，快速找出最适合作为下一步候选的基础模型。它调用 PyCaret `compare_models()`，会训练并交叉验证候选模型，然后按指标排序。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `include` | `Optional[List[Any]]` | `None` | 指定参与对比的模型 ID 列表，例如 `["lr", "dt"]`。 |
-| `exclude` | `Optional[List[str]]` | `None` | 排除的模型 ID 列表。 |
-| `sort` | `Optional[str]` | `None` | 排序指标；默认使用 `self.primary_metric`。 |
-| `budget_time` | `Optional[float]` | `None` | 单模型最大训练时间（秒），用于 `budget_time` 模式。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出；默认使用实例的 `verbose`。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `compare_models`。 |
+参数：
 
-### create
+| 参数 | 功能 |
+|---|---|
+| `include` | 只比较指定模型 ID 或模型对象，例如 `["lr", "dt"]`。 |
+| `exclude` | 排除指定模型 ID。 |
+| `sort` | 排序指标；不传时使用 `primary_metric`。 |
+| `budget_time` | 训练时间预算，透传给 PyCaret。 |
+| `verbose` | 是否输出 PyCaret 过程信息。 |
+| `**kwargs` | 透传给 PyCaret `compare_models()`，如 `fold`、`cross_validation`、`probability_threshold`、`errors` 等。 |
+
+输出：
+
+- 返回排序最优的模型对象。
+- 更新 `current_model` 为该模型。
+- 更新 `results` 为模型比较表，通常为 `pd.DataFrame`。
+- 在 `models` 中保存记录名 `compare_best`。
+
+常见 `results` 列：
+
+| 任务 | 常见列 |
+|---|---|
+| 分类 | `Model`, `Accuracy`, `AUC`, `Recall`, `Prec.`, `F1`, `Kappa`, `MCC`, `TT (Sec)` |
+| 回归 | `Model`, `MAE`, `MSE`, `RMSE`, `R2`, `RMSLE`, `MAPE`, `TT (Sec)` |
+| 时序 | `Model`, `MASE`, `RMSSE`, `MAE`, `RMSE`, `MAPE`, `SMAPE`, `TT (Sec)` |
+
+注意：`compare()` 不会调参。如果比较后需要深度优化，显式调用 `tune(estimator=best, ...)`。
+
+## create
 
 ```python
 create(
-    estimator: Any,
-    return_train_score: bool = False,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
+    estimator,
+    return_train_score=False,
+    verbose=None,
+    **kwargs,
 ) -> Any
 ```
 
-使用指定算法创建并训练一个模型。
+思想：用指定算法训练一个模型，适合已知模型类型、需要创建多个基模型、或为后续 `tune()` / `blend()` / `stack()` 准备模型。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Any` | 必填 | 模型 ID（如 `"lr"`）或模型对象。 |
-| `return_train_score` | `bool` | `False` | 是否返回训练集得分。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `create_model`。 |
+参数：
 
-### tune
+| 参数 | 功能 |
+|---|---|
+| `estimator` | PyCaret 模型 ID，如 `"lr"`、`"dt"`、`"rf"`、`"arima"`，或 sklearn 风格模型对象。 |
+| `return_train_score` | 是否在评分表中包含训练集分数。 |
+| `verbose` | 是否输出训练过程。 |
+| `**kwargs` | 透传给 PyCaret `create_model()`，可传模型超参数或 `fold` 等。 |
+
+输出：
+
+- 返回训练后的模型对象。
+- 更新 `results` 为交叉验证评分表。
+- 若 `current_model` 为空，将当前模型设为该模型。
+- 在 `models` 中保存记录名 `create_<模型名>`。
+
+常见输出表：按折数展示指标，包含每折、`Mean` 和 `Std` 行。
+
+## tune
 
 ```python
 tune(
-    estimator: Optional[Any] = None,
-    n_iter: int = 10,
-    custom_grid: Optional[Dict[str, List[Any]]] = None,
-    optimize: Optional[str] = None,
-    verbose: Optional[bool] = None,
-    tuner_verbose: Union[int, bool] = True,
-    choose_better: bool = True,
-    **kwargs: Any,
+    estimator=None,
+    n_iter=10,
+    custom_grid=None,
+    optimize=None,
+    verbose=None,
+    tuner_verbose=True,
+    choose_better=True,
+    **kwargs,
 ) -> Any
 ```
 
-对当前模型或指定模型进行超参数调优。
+思想：对一个已训练模型做超参数搜索。PyCaret 官方建议先创建或比较出模型，再将模型传给 `tune_model()`；HappyMath 中对应先 `create()` / `compare()`，再 `tune()`。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Optional[Any]` | `None` | 待调优模型；默认使用 `current_model`。 |
-| `n_iter` | `int` | `10` | 搜索迭代次数。 |
-| `custom_grid` | `Optional[Dict[str, List[Any]]]` | `None` | 自定义参数网格。 |
-| `optimize` | `Optional[str]` | `None` | 优化指标；默认使用 `primary_metric`。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出。 |
-| `tuner_verbose` | `Union[int, bool]` | `True` | 调优器本身的输出级别。 |
-| `choose_better` | `bool` | `True` | 若调优后效果变差，是否保留原模型。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `tune_model`。 |
+参数：
 
-### ensemble
+| 参数 | 功能 |
+|---|---|
+| `estimator` | 待调参模型；不传时使用 `current_model`。 |
+| `n_iter` | 搜索迭代次数，默认 `10`。越大越深，耗时越长。 |
+| `custom_grid` | 自定义参数网格或搜索空间。 |
+| `optimize` | 优化指标；不传时使用 `primary_metric`。 |
+| `verbose` | 是否输出 PyCaret 过程信息。 |
+| `tuner_verbose` | 底层调参器输出级别。脚本中常用 `False`。 |
+| `choose_better` | 调参后指标变差时是否返回输入模型。默认 `True`。 |
+| `**kwargs` | 透传给 PyCaret `tune_model()`，如 `search_library`、`search_algorithm`、`early_stopping`、`return_tuner`、`fold` 等。 |
+
+输出：
+
+- 默认返回调参后的模型对象；若 `choose_better=True` 且调参变差，可能返回输入模型。
+- 如果透传 `return_tuner=True`，底层 PyCaret 可能返回 `(model, tuner)`，HappyMath 会原样接收并存储时需注意对象结构。
+- 更新 `current_model` 和 `results`。
+- 在 `models` 中保存记录名 `tuned`。
+
+常见输出表：调参模型的交叉验证评分表，按 `optimize` 选择最佳参数。
+
+## ensemble
 
 ```python
 ensemble(
-    estimator: Optional[Any] = None,
-    method: str = "Bagging",
-    n_estimators: int = 10,
-    optimize: Optional[str] = None,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
+    estimator=None,
+    method="Bagging",
+    n_estimators=10,
+    optimize=None,
+    verbose=None,
+    **kwargs,
 ) -> Any
 ```
 
-对基模型做 Bagging 或 Boosting 集成。
+思想：对一个基模型进行 Bagging 或 Boosting 集成，适合题目明确要求单模型集成时使用。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Optional[Any]` | `None` | 基模型；默认使用 `current_model`。 |
-| `method` | `str` | `"Bagging"` | 集成方法，`"Bagging"` 或 `"Boosting"`（受 PyCaret 版本限制）。 |
-| `n_estimators` | `int` | `10` | 集成中基学习器数量。 |
-| `optimize` | `Optional[str]` | `None` | 优化指标；默认使用 `primary_metric`。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `ensemble_model`。 |
+参数：
 
-### blend
+| 参数 | 功能 |
+|---|---|
+| `estimator` | 基模型；不传时使用 `current_model`。 |
+| `method` | `"Bagging"` 或 `"Boosting"`，受 PyCaret 支持范围限制。 |
+| `n_estimators` | 集成中基学习器数量。 |
+| `optimize` | 优化指标；不传时使用 `primary_metric`。 |
+| `verbose` | 是否输出过程信息。 |
+| `**kwargs` | 透传给 PyCaret `ensemble_model()`。HappyMath 会过滤当前 PyCaret 版本不支持的参数。 |
+
+输出：
+
+- 返回集成模型，例如 `BaggingClassifier`、`BaggingRegressor` 等。
+- 更新 `current_model` 和 `results`。
+- 在 `models` 中保存 `ensemble_bagging` 或 `ensemble_boosting`。
+
+## blend
 
 ```python
 blend(
-    estimator_list: Optional[List[Any]] = None,
-    optimize: Optional[str] = None,
-    method: str = "auto",
-    weights: Optional[List[float]] = None,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
+    estimator_list=None,
+    optimize=None,
+    method="auto",
+    weights=None,
+    verbose=None,
+    **kwargs,
 ) -> Any
 ```
 
-通过投票（分类）或平均（回归）方式融合多个模型。
+思想：多个模型的投票或平均融合。分类任务中通常是 VotingClassifier，回归任务中通常是 VotingRegressor 或平均器。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator_list` | `Optional[List[Any]]` | `None` | 待融合模型列表；默认使用内部存储的全部模型。 |
-| `optimize` | `Optional[str]` | `None` | 优化指标；默认使用 `primary_metric`。 |
-| `method` | `str` | `"auto"` | 融合方法，如 `"auto"`、`"soft"`、`"hard"` 等。 |
-| `weights` | `Optional[List[float]]` | `None` | 各模型投票权重。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `blend_models`。 |
+参数：
 
-### stack
+| 参数 | 功能 |
+|---|---|
+| `estimator_list` | 待融合模型列表；不传时使用 `models` 中已保存的模型。至少需要两个模型。 |
+| `optimize` | 优化指标。 |
+| `method` | `"auto"`、`"soft"`、`"hard"` 等。`auto` 会优先尝试 soft，不支持概率时回退。 |
+| `weights` | 各模型权重。 |
+| `verbose` | 是否输出过程信息。 |
+| `**kwargs` | 透传给 PyCaret `blend_models()`。 |
+
+输出：
+
+- 返回融合模型。
+- 更新 `current_model` 和 `results`。
+- 在 `models` 中保存 `blended`。
+
+注意：HappyMath 的 `compare()` 固定 `n_select=1`，不会像 PyCaret 官方示例 `compare_models(n_select=3)` 那样直接返回多个模型。需要融合时请显式 `create()` 多个模型，或手动传入 `estimator_list`。
+
+## stack
 
 ```python
 stack(
-    estimator_list: Optional[List[Any]] = None,
-    meta_model: Optional[Any] = None,
-    meta_model_fold: Optional[int] = 5,
-    method: str = "auto",
-    restack: bool = False,
-    optimize: Optional[str] = None,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
+    estimator_list=None,
+    meta_model=None,
+    meta_model_fold=5,
+    method="auto",
+    restack=False,
+    optimize=None,
+    verbose=None,
+    **kwargs,
 ) -> Any
 ```
 
-构建两层 Stacking 集成。
+思想：两层模型结构。第一层多个基模型输出预测，第二层元模型学习如何组合这些预测。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator_list` | `Optional[List[Any]]` | `None` | 第一层基模型列表；默认使用内部存储的全部模型。 |
-| `meta_model` | `Optional[Any]` | `None` | 第二层元模型；默认使用 PyCaret 推荐模型。 |
-| `meta_model_fold` | `Optional[int]` | `5` | 元模型训练时的折数。 |
-| `method` | `str` | `"auto"` | Stacking 方法。 |
-| `restack` | `bool` | `False` | 是否在最终预测中使用原始特征与基模型预测共同输入。 |
-| `optimize` | `Optional[str]` | `None` | 优化指标；默认使用 `primary_metric`。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `stack_models`。 |
+参数：
 
-### predict
+| 参数 | 功能 |
+|---|---|
+| `estimator_list` | 第一层基模型列表；不传时使用内部已保存模型。至少需要两个模型。 |
+| `meta_model` | 第二层元模型；不传时使用 PyCaret 默认。 |
+| `meta_model_fold` | 训练元模型时的折数。 |
+| `method` | 基模型输出给元模型的方式，受 PyCaret 支持范围限制。 |
+| `restack` | 是否把原始特征和基模型预测一起输入元模型。 |
+| `optimize` | 优化指标。 |
+| `verbose` | 是否输出过程信息。 |
+| `**kwargs` | 透传给 PyCaret `stack_models()`。 |
+
+输出：
+
+- 返回 Stacking 模型。
+- 更新 `current_model` 和 `results`。
+- 在 `models` 中保存 `stacked`。
+
+## predict
 
 ```python
 predict(
-    estimator: Optional[Any] = None,
-    data: Optional[pd.DataFrame] = None,
-    raw_score: bool = False,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
+    estimator=None,
+    data=None,
+    raw_score=False,
+    verbose=None,
+    **kwargs,
 ) -> pd.DataFrame
 ```
 
-使用指定模型或当前模型进行预测。若未提供 `data`，则使用 `self.test_data`。
+思想：用当前模型或指定模型预测 holdout/test 数据或新数据。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Optional[Any]` | `None` | 用于预测的模型；默认使用 `current_model`。 |
-| `data` | `Optional[pd.DataFrame]` | `None` | 待预测数据；默认使用测试集。 |
-| `raw_score` | `bool` | `False` | 是否输出原始概率分；仅在分类等支持的任务中生效。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `predict_model`。 |
+参数：
 
-### finalize
+| 参数 | 功能 |
+|---|---|
+| `estimator` | 用于预测的模型；不传时使用 `current_model`。 |
+| `data` | 待预测数据；不传时使用 PyCaret 可用的 holdout/test 数据。 |
+| `raw_score` | 分类任务是否输出每个类别的概率分数。 |
+| `verbose` | 是否输出过程信息。 |
+| `**kwargs` | 透传给 PyCaret `predict_model()`，如二分类 `probability_threshold`。 |
 
-```python
-finalize(estimator: Optional[Any] = None) -> Any
-```
+输出：
 
-在全量数据上重新训练模型，得到最终部署模型。
+- 返回 `pd.DataFrame`。
+- 分类常见新增列：`prediction_label`、`prediction_score` 或 `prediction_score_0`、`prediction_score_1` 等。
+- 回归常见新增列：`prediction_label`。
+- 时序预测请使用 `TimeSeriesML.predict()`，输出通常包含 `y_pred`。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Optional[Any]` | `None` | 待 finalize 的模型；默认使用 `current_model`。 |
-
-### evaluate
+## TimeSeriesML.predict
 
 ```python
-evaluate(estimator: Optional[Any] = None) -> None
+predict(
+    estimator=None,
+    fh=None,
+    X=None,
+    return_pred_int=False,
+    verbose=None,
+    **kwargs,
+)
 ```
 
-启动 PyCaret 交互式评估 UI（在 Notebook 中可用）。
+思想：对未来时间步进行预测。`fh` 表示预测步长或 forecasting horizon。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Optional[Any]` | `None` | 待评估模型；默认使用 `current_model`。 |
+参数：
 
-### plot
+| 参数 | 功能 |
+|---|---|
+| `estimator` | 时序预测模型；不传时使用 `current_model`。 |
+| `fh` | 预测步长；不传时使用初始化时的 `fh`。 |
+| `X` | 外生变量。 |
+| `return_pred_int` | 是否返回预测区间。 |
+| `verbose` | 是否输出过程信息。 |
+| `**kwargs` | 透传给 PyCaret time_series `predict_model()`。 |
+
+输出：通常为 `pd.DataFrame`，至少包含 `y_pred` 列；开启预测区间时包含区间上下界列。
+
+## finalize
+
+```python
+finalize(estimator=None) -> Any
+```
+
+思想：在全量数据上重新拟合已选模型，得到最终模型。对应 PyCaret `finalize_model()`。
+
+参数：`estimator` 为待 finalize 的模型；不传时使用 `current_model`。
+
+输出：
+
+- 返回全量数据重新拟合后的模型。
+- 更新 `current_model`。
+- 在 `models` 中保存 `final`。
+
+注意：`finalize()` 不会改变超参数，不会重新比较模型，也不会自动调参。
+
+## evaluate
+
+```python
+evaluate(estimator=None) -> None
+```
+
+思想：启动 PyCaret 的交互式评估界面，主要适合 Notebook。
+
+输出：无返回值；会调用底层 `evaluate_model()`。
+
+## plot
 
 ```python
 plot(
-    estimator: Optional[Any] = None,
-    plot_type: str = "auc",
-    scale: float = 1.0,
-    save: bool = False,
-    title: Optional[str] = None,
-    xlabel: Optional[str] = None,
-    ylabel: Optional[str] = None,
-    legend_title: Optional[str] = None,
-    legend_labels: Optional[List[str]] = None,
-    figsize: Tuple[int, int] = (10, 6),
-    plot_kwargs: Optional[Dict[str, Any]] = None,
-    font_sizes: Optional[Dict[str, Union[int, float]]] = None,
-    verbose: Optional[bool] = None,
-) -> Optional[str]
+    estimator=None,
+    plot_type="auc",
+    scale=1.0,
+    save=False,
+    title=None,
+    xlabel=None,
+    ylabel=None,
+    legend_title=None,
+    legend_labels=None,
+    figsize=(10, 6),
+    plot_kwargs=None,
+    font_sizes=None,
+    verbose=None,
+)
 ```
 
-调用 PyCaret 绘图，并支持中文标题等自定义。`plot_type="tree"` 与 `"tree_text"` 为决策树专属实现。
+思想：调用 PyCaret `plot_model()`，并为中文标题、坐标轴、图例做兼容。`plot_type="tree"` 和 `"tree_text"` 使用 HappyMath 自定义决策树输出。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Optional[Any]` | `None` | 待绘图模型；默认使用 `current_model`。 |
-| `plot_type` | `str` | `"auc"` | 图表类型。 |
-| `scale` | `float` | `1.0` | 图像缩放比例。 |
-| `save` | `bool` | `False` | 是否保存图像；决策树可视化中可传入路径字符串。 |
-| `title` | `Optional[str]` | `None` | 图表标题。 |
-| `xlabel` | `Optional[str]` | `None` | X 轴标签。 |
-| `ylabel` | `Optional[str]` | `None` | Y 轴标签。 |
-| `legend_title` | `Optional[str]` | `None` | 图例标题。 |
-| `legend_labels` | `Optional[List[str]]` | `None` | 图例标签。 |
-| `figsize` | `Tuple[int, int]` | `(10, 6)` | 图像尺寸。 |
-| `plot_kwargs` | `Optional[Dict[str, Any]]` | `None` | 透传给 PyCaret plot 的额外参数。 |
-| `font_sizes` | `Optional[Dict[str, Union[int, float]]]` | `None` | 各文字元素字号。 |
-| `verbose` | `Optional[bool]` | `None` | 是否打印详细输出。 |
+参数：
 
-### scores
+| 参数 | 功能 |
+|---|---|
+| `estimator` | 待绘图模型；不传时使用 `current_model`。 |
+| `plot_type` | 图类型，例如分类 `auc`、`confusion_matrix`、`feature`，回归 `residuals`、`error`，聚类 `cluster`，时序 `ts` 等。 |
+| `scale` | 图像缩放。 |
+| `save` | 是否保存图像；PyCaret 图通常保存为文件，树文本可返回文本或写入文件。 |
+| `title` / `xlabel` / `ylabel` | 标题和坐标轴文字。 |
+| `legend_title` / `legend_labels` | 图例文字。 |
+| `figsize` | 图像尺寸。 |
+| `plot_kwargs` | 透传给底层绘图库。 |
+| `font_sizes` | 中文图中各元素字号。 |
+| `verbose` | 是否输出过程信息。 |
+
+输出：
+
+- PyCaret 图：通常返回图对象、文件路径或 `None`，取决于 PyCaret 图类型与 `save`。
+- `plot_type="tree_text"`：`save=False` 时返回文本树结构；`save=True` 时返回 `.txt` 路径。
+- `plot_type="tree"`：返回 Graphviz Source 或保存后的 `.png` 路径。
+
+## scores
 
 ```python
 scores(
-    mode: str = "auto",
-    metrics: Union[str, List[str]] = "all",
-    test_data: Optional[DataLike] = None,
-    train_size: Optional[float] = None,
-    fold: Optional[int] = None,
+    mode="auto",
+    metrics="all",
+    test_data=None,
+    train_size=None,
+    fold=None,
 ) -> pd.DataFrame
 ```
 
-使用当前模型按不同切分方式评估性能，返回 DataFrame。
+思想：将当前模型在不同数据切分方式下的表现整理为可直接写入报告的 DataFrame。它不训练新模型，主要用当前模型进行预测和指标计算；时序任务会复用 PyCaret 的回测结果。
 
-| 参数 | 类型 | 默认值 | 说明 |
+参数：
+
+| 参数 | 功能 |
+|---|---|
+| `mode` | 评估方式：`auto`、`holdout`、`kfold`、`leaveout`、`custom`、`train-only`。 |
+| `metrics` | `"all"`、单个指标名或指标名列表；大小写不敏感。 |
+| `test_data` | 自定义测试集；监督学习中必须包含目标列。 |
+| `train_size` | `holdout` 模式训练集比例。 |
+| `fold` | `kfold` 模式折数。 |
+
+### scores mode 设计
+
+| mode | 适用场景 | 支持任务 | 输出形式 |
 |---|---|---|---|
-| `mode` | `str` | `"auto"` | 评估模式：`auto`、`holdout`、`kfold`、`leaveout`、`custom`、`train-only`。 |
-| `metrics` | `Union[str, List[str]]` | `"all"` | 指标选择：`"all"`、单个指标名或指标名列表。 |
-| `test_data` | `Optional[DataLike]` | `None` | 自定义测试集；仅在 `custom` / `train-only` 模式下使用。 |
-| `train_size` | `Optional[float]` | `None` | `holdout` 模式训练集比例；默认依次为传入值、`setup_kwargs` 中的 `train_size`、0.7。 |
-| `fold` | `Optional[int]` | `None` | `kfold` 模式折数；默认依次为传入值、`setup_kwargs` 中的 `fold`、5。 |
+| `auto` | 不确定评估方式，交给 HappyMath 根据测试集和样本量选择 | 监督、时序、聚类 | 有测试集时转 `custom`；监督小样本转 `leaveout`，中等样本转 `kfold`，大样本转 `holdout`；聚类转 `train-only`。 |
+| `holdout` | 需要一次训练/测试划分对比 | 监督、时序 | index 为 `train`、`test`。 |
+| `kfold` | 需要 K 折表格 | 监督、时序 | 监督任务每折一行并追加 `mean`；时序任务每个 cutoff 一行并追加 `mean`。 |
+| `leaveout` | 极小样本监督学习 | 监督 | index 为 `train_mean`、`test_mean`。 |
+| `custom` | 已有独立测试集 | 监督、时序 | index 为 `train`、`test`。 |
+| `train-only` | 只评估训练集，或聚类内部指标 | 监督、时序、聚类 | 至少 `train` 一行；若存在测试集也包含 `test`。 |
 
-### get_best_model
+### scores 输出列
+
+| 任务 | 输出列特点 |
+|---|---|
+| 分类/回归 `holdout/custom/train-only` | 指标列名与 PyCaret 展示名一致，如 `Accuracy`、`F1`、`MAE`、`RMSE`。 |
+| 分类/回归 `kfold` | 每个指标拆成 `<metric>_train` 和 `<metric>_test`，例如 `Accuracy_train`、`Accuracy_test`。 |
+| 分类/回归 `leaveout` | 指标列名保持原名，行表示 LOO 平均训练/测试结果。 |
+| 时序 | 指标列通常为 `MASE`、`RMSSE`、`MAE`、`RMSE`、`MAPE`、`SMAPE` 等。 |
+| 聚类 | 内部指标，如 `Silhouette`。 |
+
+异常检测当前不支持 `scores()`；建议使用 `assign()` 后结合人工标签或业务规则评价。
+
+## get_best_model
 
 ```python
 get_best_model() -> Tuple[Any, Dict[str, Any]]
 ```
 
-根据 `primary_metric` 从已保存模型中挑选最优模型，返回 `(model, metrics)` 二元组。
+思想：从 HappyMath 已保存模型中按 `primary_metric` 选出最佳模型。
 
-### get_results
+输出：`(model, metrics)`。`model` 是模型对象，`metrics` 是从最近评分表抽取的指标字典。如果没有模型包含主指标，会返回最近保存的模型并打印提示。
+
+## get_results
 
 ```python
 get_results() -> pd.DataFrame
 ```
 
-获取最近一次结果表；若不存在则调用 PyCaret `pull()`。
+思想：读取最近一次训练、比较、调参、融合或预测后的 PyCaret 评分表。
 
-### get_leaderboard
+输出：`pd.DataFrame`。如果 `results` 为空，会尝试调用底层 `pull()`；仍为空则报错。
+
+## get_leaderboard
 
 ```python
 get_leaderboard() -> pd.DataFrame
 ```
 
-获取模型排行榜。优先调用 PyCaret `get_leaderboard()`，否则回退到 `results` 或 `pull()`。
+思想：读取 PyCaret leaderboard；若底层任务不提供，则回退到 `results` 或 `pull()`。
 
-### get_metrics
+输出：`pd.DataFrame`，通常包含 `Model` 和指标列。
+
+## get_metrics
 
 ```python
 get_metrics() -> Any
 ```
 
-返回当前任务支持的指标列表。通常返回 pandas DataFrame，列包含 `ID` 与 `Display Name`。
+思想：查看当前任务支持的指标，帮助选择 `compare(sort=...)`、`tune(optimize=...)` 和 `scores(metrics=...)`。
 
-### get_models
+输出：通常为 `pd.DataFrame`，包含 `ID`、`Name` 或 `Display Name` 等列，取决于 PyCaret 版本和任务类型。
+
+## get_models
 
 ```python
 get_models() -> Iterable[str]
 ```
 
-返回已存储模型的名称列表。
+输出：HappyMath 内部已保存模型名称列表，例如 `["compare_best", "create_LogisticRegression", "tuned"]`。
 
-### save
-
-```python
-save(model_name: str, model: Optional[Any] = None) -> None
-```
-
-将模型保存到磁盘。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `model_name` | `str` | 必填 | 保存路径或文件名。 |
-| `model` | `Optional[Any]` | `None` | 待保存模型；默认使用 `current_model`。 |
-
-### load
+## save
 
 ```python
-load(model_name: str) -> Any
+save(model_name, model=None) -> None
 ```
 
-从磁盘加载模型。
+思想：调用 PyCaret `save_model()` 保存完整 pipeline 和模型对象。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `model_name` | `str` | 必填 | 保存路径或文件名。 |
+参数：`model_name` 是保存路径或文件名前缀；`model` 不传时保存 `current_model`。
 
-### get_config
+输出：无 Python 返回值；底层会在磁盘写入模型文件，通常扩展名为 `.pkl`。
+
+## load
 
 ```python
-get_config(key: Optional[str] = None) -> Any
+load(model_name) -> Any
 ```
 
-读取 PyCaret 实验配置。
+思想：调用 PyCaret `load_model()` 加载已保存 pipeline。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `key` | `Optional[str]` | `None` | 配置项名称；`None` 返回全部配置。 |
+输出：模型或 pipeline 对象，并不会自动设置为 `current_model`；如需作为当前模型，可手动赋值或传给 `predict(estimator=loaded, ...)`。
 
----
-
-## ClassificationML
+## get_config
 
 ```python
-ClassificationML(
-    data: Any,
-    target: Any = None,
-    test_data: Optional[Any] = None,
-    train_size: float = 0.7,
-    fold: int = 5,
-    seed: int = 42,
-    n_jobs: int = -1,
-    verbose: bool = False,
-    html: bool = False,
-    primary_metric: Optional[str] = None,
-    **setup_kwargs: Any,
-)
+get_config(key=None) -> Any
 ```
 
-分类任务封装类，继承自 `AutoMLBase`。默认主指标为 `Accuracy`。
+思想：读取 PyCaret experiment 配置。适合调试数据拆分、预处理后特征、pipeline 等。
 
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | `Any` | 必填 | 训练数据。 |
-| `target` | `Any` | `None` | 目标列。 |
-| `test_data` | `Optional[Any]` | `None` | 外部测试集。 |
-| `train_size` | `float` | `0.7` | 训练集比例。 |
-| `fold` | `int` | `5` | 交叉验证折数。 |
-| `seed` | `int` | `42` | 随机种子。 |
-| `n_jobs` | `int` | `-1` | 并行作业数。 |
-| `verbose` | `bool` | `False` | 是否输出详细日志。 |
-| `html` | `bool` | `False` | 是否启用 PyCaret HTML 输出。 |
-| `primary_metric` | `Optional[str]` | `None` | 主指标，默认 `Accuracy`。 |
-| `**setup_kwargs` | `Any` | - | 透传给 `pycaret.classification.setup`。 |
+输出：
 
-### 方法
+- `key=None` 时返回可用配置或配置集合，取决于 PyCaret 版本。
+- 指定 `key` 时返回对应配置，例如 `get_config("X_train")`、`get_config("pipeline")`。
 
-继承 `AutoMLBase` 的全部方法。`plot` 默认 `plot_type="auc"`；若传入非典型回归图类型，`RegressionML.plot` 会给出提示，而 `ClassificationML` 直接使用基类 `plot`。
+## 指标方向
 
----
+HappyMath 内部根据指标名判断“越大越好”或“越小越好”，用于 `get_best_model()`。
 
-## RegressionML
+| 越小越好 | 示例 |
+|---|---|
+| 误差 / 损失类 | `MAE`, `MSE`, `RMSE`, `RMSLE`, `MAPE`, `MASE`, `RMSSE`, `SMAPE`, `Log Loss`, `FNR`, `FPR` |
 
-```python
-RegressionML(
-    data: Any,
-    target: Any = None,
-    test_data: Optional[Any] = None,
-    train_size: float = 0.7,
-    fold: int = 5,
-    seed: int = 42,
-    n_jobs: int = -1,
-    verbose: bool = False,
-    html: bool = False,
-    primary_metric: Optional[str] = None,
-    **setup_kwargs: Any,
-)
-```
+| 越大越好 | 示例 |
+|---|---|
+| 分类/拟合/聚类质量类 | `Accuracy`, `AUC`, `Recall`, `Prec.`, `F1`, `Kappa`, `MCC`, `R2`, `TPR`, `TNR`, `PPV`, `NPV`, `Silhouette` |
 
-回归任务封装类，继承自 `AutoMLBase`。默认主指标为 `MAE`。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | `Any` | 必填 | 训练数据。 |
-| `target` | `Any` | `None` | 目标列。 |
-| `test_data` / `train_size` / `fold` / `seed` / `n_jobs` / `verbose` / `html` | 同上 | 同上 | 同上。 |
-| `primary_metric` | `Optional[str]` | `None` | 主指标，默认 `MAE`。 |
-| `**setup_kwargs` | `Any` | - | 透传给 `pycaret.regression.setup`。 |
-
-### plot
-
-重写了基类 `plot`，默认 `plot_type="residuals"`，并在传入非回归典型图类型时打印警告。支持的回归图类型包括：`residuals`、`error`、`cooks`、`feature`、`learning`、`tree`、`tree_text`。
-
----
-
-## ClusteringML
-
-```python
-ClusteringML(
-    data: Any,
-    test_data: Optional[Any] = None,
-    seed: int = 42,
-    n_jobs: int = -1,
-    verbose: bool = False,
-    html: bool = False,
-    primary_metric: Optional[str] = None,
-    **setup_kwargs: Any,
-)
-```
-
-聚类任务封装类，继承自 `AutoMLBase`。默认主指标为 `Silhouette`，不需要 `target`。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | `Any` | 必填 | 训练数据。 |
-| `test_data` | `Optional[Any]` | `None` | 外部测试集。 |
-| `seed` / `n_jobs` / `verbose` / `html` | 同上 | 同上 | 同上。 |
-| `primary_metric` | `Optional[str]` | `None` | 主指标，默认 `Silhouette`。 |
-| `**setup_kwargs` | `Any` | - | 透传给 `pycaret.clustering.setup`。 |
-
-### create
-
-```python
-create(
-    model: str = "kmeans",
-    num_clusters: int = 4,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
-) -> Any
-```
-
-创建聚类模型。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `model` | `str` | `"kmeans"` | 聚类算法 ID，如 `"kmeans"`、`"hclust"`、`"dbscan"` 等。 |
-| `num_clusters` | `int` | `4` | 聚类簇数。 |
-| `verbose` | `Optional[bool]` | `None` | 是否输出详细日志。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `create_model`。 |
-
-### assign
-
-```python
-assign(model: Optional[Any] = None)
-```
-
-为数据分配簇标签。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `model` | `Optional[Any]` | `None` | 聚类模型；默认使用 `current_model`。 |
-
-返回的 DataFrame 会新增 `Cluster` 列。
-
----
-
-## AnomalyML
-
-```python
-AnomalyML(
-    data: Any,
-    test_data: Optional[Any] = None,
-    fraction: float = 0.05,
-    seed: int = 42,
-    n_jobs: int = -1,
-    verbose: bool = False,
-    html: bool = False,
-    primary_metric: Optional[str] = None,
-    **setup_kwargs: Any,
-)
-```
-
-异常检测任务封装类，继承自 `AutoMLBase`。默认主指标为 `AUC`，不需要 `target`。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | `Any` | 必填 | 训练数据。 |
-| `test_data` | `Optional[Any]` | `None` | 外部测试集。 |
-| `fraction` | `float` | `0.05` | 预期异常样本比例。 |
-| `seed` / `n_jobs` / `verbose` / `html` | 同上 | 同上 | 同上。 |
-| `primary_metric` | `Optional[str]` | `None` | 主指标，默认 `AUC`。 |
-| `**setup_kwargs` | `Any` | - | 透传给 `pycaret.anomaly.setup`。 |
-
-### create
-
-```python
-create(
-    model: str = "iforest",
-    fraction: Optional[float] = None,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
-) -> Any
-```
-
-创建异常检测模型。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `model` | `str` | `"iforest"` | 异常检测算法 ID，如 `"iforest"`、`"lof"`、`"abod"` 等。 |
-| `fraction` | `Optional[float]` | `None` | 异常比例；默认使用初始化时的 `self.fraction`。 |
-| `verbose` | `Optional[bool]` | `None` | 是否输出详细日志。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `create_model`。 |
-
-### assign
-
-```python
-assign(model: Optional[Any] = None)
-```
-
-为数据标记异常。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `model` | `Optional[Any]` | `None` | 异常检测模型；默认使用 `current_model`。 |
-
-返回的 DataFrame 会新增 `Anomaly` 与 `Anomaly_Score` 列。
-
----
-
-## TimeSeriesML
-
-```python
-TimeSeriesML(
-    data: Any,
-    target: Any = None,
-    test_data: Optional[Any] = None,
-    fh: int = 12,
-    fold: int = 3,
-    seasonal_period: Optional[int] = None,
-    seed: int = 42,
-    n_jobs: int = -1,
-    verbose: bool = False,
-    html: bool = False,
-    primary_metric: Optional[str] = None,
-    **setup_kwargs: Any,
-)
-```
-
-时序预测任务封装类，继承自 `AutoMLBase`。默认主指标为 `MASE`。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | `Any` | 必填 | 训练数据，通常需要日期索引或单变量序列。 |
-| `target` | `Any` | `None` | 目标列名称。 |
-| `test_data` | `Optional[Any]` | `None` | 外部测试集。 |
-| `fh` | `int` | `12` | 预测步长（forecast horizon）。 |
-| `fold` | `int` | `3` | 交叉验证折数。 |
-| `seasonal_period` | `Optional[int]` | `None` | 季节周期，例如月度数据可设为 `12`。 |
-| `seed` / `n_jobs` / `verbose` / `html` | 同上 | 同上 | 同上。 |
-| `primary_metric` | `Optional[str]` | `None` | 主指标，默认 `MASE`。 |
-| `**setup_kwargs` | `Any` | - | 透传给 `pycaret.time_series.setup`。 |
-
-### predict
-
-```python
-predict(
-    estimator: Optional[Any] = None,
-    fh: Optional[int] = None,
-    X: Optional[Any] = None,
-    return_pred_int: bool = False,
-    verbose: Optional[bool] = None,
-    **kwargs: Any,
-)
-```
-
-时序预测。
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `estimator` | `Optional[Any]` | `None` | 用于预测的模型；默认使用 `current_model`。 |
-| `fh` | `Optional[int]` | `None` | 预测步长；默认使用初始化时的 `self.fh`。 |
-| `X` | `Optional[Any]` | `None` | 外生变量。 |
-| `return_pred_int` | `bool` | `False` | 是否返回预测区间。 |
-| `verbose` | `Optional[bool]` | `None` | 是否输出详细日志。 |
-| `**kwargs` | `Any` | - | 透传给 PyCaret `predict_model`。 |
-
-> 注意：`TimeSeriesML` 继承自 `AutoMLBase`，因此同样可以使用 `compare`、`create`、`tune`、`scores` 等通用接口，但时序任务对数据格式与 PyCaret 版本较为敏感，建议先在小样本数据上验证路径可行性。
+未知指标会默认按“越大越好”处理，并打印提示。因此自定义指标进入生产流程前，应确认指标方向。

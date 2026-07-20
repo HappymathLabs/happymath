@@ -2,7 +2,6 @@
 name: happymath-skill
 description: "当用户提出以下任务时必须调用本技能：使用 happymath、HappyMath 或 HappyMathLabs/happymath；自动化机器学习、分类、回归、聚类、异常检测、时间序列预测；多准则决策分析、指标赋权、TOPSIS/VIKOR/AHP/熵权法/CRITIC 等决策方法；常微分方程或偏微分方程求解；数学优化、线性规划、非线性规划、多目标优化、最优控制；数学建模竞赛代码实现；科研或工作中的建模求解；安装、配置、更新、排查或验证 happymath 环境；基于 happymath 生成可运行代码、案例代码、课程示例、文档示例或建模流程；数学建模相关内容撰写（如整篇论文或部分章节）。"
 ---
-
 # HappyMath 使用技能
 
 本技能用于帮助 AI 快速安装、配置、更新、学习和使用 `happymath` 库。若任务涉及数学建模相关的内容撰写（如完整论文或部分章节），请按下方「数学建模写作」部分的指引，访问专用论文写作 Skill。
@@ -15,7 +14,7 @@ description: "当用户提出以下任务时必须调用本技能：使用 happy
 
 当前已知的核心模块包括：
 
-```text id="xbda4i"
+```text
 AutoML
 Decision
 DiffEq
@@ -30,28 +29,28 @@ Opt
 
 ## 项目地址
 
-优先使用 GitHub 地址：
+优先使用 Gitee 地址：
 
-```text id="g4nrih"
-https://github.com/HappyMathLabs/happymath
-```
-
-当 GitHub 无法访问、访问失败或速度较慢时，使用 Gitee 兜底地址：
-
-```text id="ykoyw2"
+```text
 https://gitee.com/HappymathLabs/happymath
 ```
 
-访问文档或源码时，优先读取 GitHub；如果失败，再将相同路径映射到 Gitee。
+当 Gitee 无法访问、访问失败或速度较慢时，使用 GitHub 兜底地址：
+
+```text
+https://github.com/HappyMathLabs/happymath
+```
+
+访问文档或源码时，优先读取 Gitee；如果失败，再将相同路径映射到 GitHub。
 
 例如：
 
-```text id="jsypi0"
-GitHub:
-https://github.com/HappyMathLabs/happymath/blob/main/docs/modules/automl.md
-
+```text
 Gitee:
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/modules/automl.md
+https://gitee.com/HappymathLabs/happymath/blob/main/happymath/AutoML/docs/README.md
+
+GitHub:
+https://github.com/HappyMathLabs/happymath/blob/main/happymath/AutoML/docs/README.md
 ```
 
 ---
@@ -83,8 +82,8 @@ https://gitee.com/HappymathLabs/happymath/blob/main/docs/modules/automl.md
 
 选择模块后，必须读取该模块对应的文档内容，包括：
 
-1. `docs/modules/<module>.md`
-2. `docs/api/<module>.md`
+1. `happymath/<Module>/docs/README.md`（模块文档入口，包含阅读顺序说明）
+2. 按 README 指引继续阅读该目录下的 `quickstart.md`、`api.md` 和 `examples.md`
 3. 必要时读取对应源码目录
 4. 必要时读取 `tests` 目录中的测试样例
 
@@ -92,9 +91,8 @@ https://gitee.com/HappymathLabs/happymath/blob/main/docs/modules/automl.md
 
 如果找不到对应模块文档，不能直接放弃，需要继续检查：
 
-```text id="ret4jl"
-docs/modules/
-docs/api/
+```text
+happymath/<Module>/docs/
 happymath/
 tests/
 ```
@@ -111,13 +109,13 @@ tests/
 
 安装 `happymath` 时，必须优先使用 conda：
 
-```bash id="l551ji"
+```bash
 conda install -c conda-forge happymath
 ```
 
 只有在 conda 安装失败、conda-forge 暂无对应版本、依赖解析失败或用户明确要求 pip 时，才允许使用 pip：
 
-```bash id="u5fssb"
+```bash
 pip install happymath
 ```
 
@@ -129,8 +127,9 @@ pip install happymath
 
 当用户任务涉及数学建模相关的内容撰写时，不直接在本 Skill 中实现写作逻辑，而是访问以下专用数学建模论文写作 Skill：
 
-```text id="math-modeling-paper-writer"
-https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/SKILL.md
+```text
+https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/SKILL.md
+https://github.com/HappyMathLabs/happymath/blob/main/skills/math-modeling-paper-writer/SKILL.md
 ```
 
 触发场景包括但不限于：
@@ -154,13 +153,13 @@ https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-
 
 优先使用以下命令：
 
-```bash id="601ir8"
+```bash
 conda --version
 ```
 
 或：
 
-```bash id="in17k0"
+```bash
 command -v conda
 ```
 
@@ -176,7 +175,7 @@ command -v conda
 
 安装前需要判断操作系统：
 
-```bash id="mecqz3"
+```bash
 uname -s
 uname -m
 ```
@@ -190,7 +189,7 @@ uname -m
 
 安装完成后，必须重新加载 shell 配置或重新打开终端，并再次执行：
 
-```bash id="sec3kv"
+```bash
 conda --version
 ```
 
@@ -202,13 +201,13 @@ conda --version
 
 执行：
 
-```bash id="ni418j"
+```bash
 conda env list
 ```
 
 或：
 
-```bash id="wpjpnp"
+```bash
 conda info --envs
 ```
 
@@ -216,7 +215,7 @@ conda info --envs
 
 可以用如下方式逐个环境检查：
 
-```bash id="8nwwg1"
+```bash
 conda run -n <env_name> python -c "import importlib.metadata as m; print(m.version('happymath'))"
 ```
 
@@ -228,31 +227,31 @@ conda run -n <env_name> python -c "import importlib.metadata as m; print(m.versi
 
 如果所有 conda 环境都没有安装 `happymath`，则创建名为 `happymath` 的新环境：
 
-```bash id="a0l9lt"
+```bash
 conda create -n happymath python=3.11 -y
 ```
 
 激活环境：
 
-```bash id="c8uhoy"
+```bash
 conda activate happymath
 ```
 
 安装 `happymath`：
 
-```bash id="6op1py"
+```bash
 conda install -c conda-forge happymath -y
 ```
 
 安装完成后验证：
 
-```bash id="avye6p"
+```bash
 python -c "import happymath; print(happymath.__version__ if hasattr(happymath, '__version__') else 'happymath imported successfully')"
 ```
 
 如果 `happymath.__version__` 不存在，则使用：
 
-```bash id="yg2fiq"
+```bash
 python -c "import importlib.metadata as m; print(m.version('happymath'))"
 ```
 
@@ -268,7 +267,7 @@ python -c "import importlib.metadata as m; print(m.version('happymath'))"
 
 在安装了 `happymath` 的 conda 环境中执行：
 
-```bash id="58hxth"
+```bash
 python -c "import importlib.metadata as m; print(m.version('happymath'))"
 ```
 
@@ -278,7 +277,7 @@ python -c "import importlib.metadata as m; print(m.version('happymath'))"
 
 执行：
 
-```bash id="mq3cys"
+```bash
 python - <<'PY'
 import json
 import urllib.request
@@ -299,25 +298,25 @@ PY
 
 优先尝试 conda 更新：
 
-```bash id="h85qnn"
+```bash
 conda update -c conda-forge happymath -y
 ```
 
 更新后再次检查版本：
 
-```bash id="mhtv7d"
+```bash
 python -c "import importlib.metadata as m; print(m.version('happymath'))"
 ```
 
 如果 conda-forge 版本落后于 PyPI，或 conda 更新失败，可以在当前 conda 环境内使用 pip 更新：
 
-```bash id="dq6m07"
+```bash
 python -m pip install -U happymath
 ```
 
 更新后再次检查：
 
-```bash id="2t381r"
+```bash
 python -c "import importlib.metadata as m; print(m.version('happymath'))"
 ```
 
@@ -329,20 +328,20 @@ python -c "import importlib.metadata as m; print(m.version('happymath'))"
 
 如果环境名为 `happymath`，推荐：
 
-```bash id="4ue6af"
+```bash
 conda run -n happymath python your_script.py
 ```
 
 或者先激活环境：
 
-```bash id="oj5hfy"
+```bash
 conda activate happymath
 python your_script.py
 ```
 
 不要在未确认环境的情况下直接运行：
 
-```bash id="dtxmol"
+```bash
 python your_script.py
 ```
 
@@ -354,7 +353,7 @@ python your_script.py
 
 `happymath` 当前已知包含四个核心模块：
 
-```text id="30d6gm"
+```text
 happymath.AutoML
 happymath.Decision
 happymath.DiffEq
@@ -380,31 +379,27 @@ happymath.Opt
 
 动态确认时，必须依次检查：
 
-```text id="9o07jo"
-https://github.com/HappyMathLabs/happymath/tree/main/docs/modules
-https://github.com/HappyMathLabs/happymath/tree/main/docs/api
-https://github.com/HappyMathLabs/happymath/tree/main/happymath
-https://github.com/HappyMathLabs/happymath/tree/main/tests
-```
-
-如果 GitHub 无法访问，则切换到：
-
-```text id="6907ib"
-https://gitee.com/HappymathLabs/happymath/tree/main/docs/modules
-https://gitee.com/HappymathLabs/happymath/tree/main/docs/api
+```text
 https://gitee.com/HappymathLabs/happymath/tree/main/happymath
 https://gitee.com/HappymathLabs/happymath/tree/main/tests
 ```
 
+如果 Gitee 无法访问，则切换到：
+
+```text
+https://github.com/HappyMathLabs/happymath/tree/main/happymath
+https://github.com/HappyMathLabs/happymath/tree/main/tests
+```
+
 如果在线项目中存在相关模块或接口，但本地环境中不存在，则优先更新 `happymath`：
 
-```bash id="i3sqhd"
+```bash
 conda update -c conda-forge happymath -y
 ```
 
 如果 conda 更新后仍不存在，检查 PyPI 最新版本，并在当前 conda 环境中尝试：
 
-```bash id="j54j1y"
+```bash
 python -m pip install -U happymath
 ```
 
@@ -418,7 +413,7 @@ python -m pip install -U happymath
 
 如果最终确认 `happymath` 中确实没有对应模块或接口，必须向用户明确说明：
 
-```text id="yozumj"
+```text
 我已经检查了当前安装版本、项目文档、源码目录和测试样例，happymath 当前没有找到能够直接完成该任务的对应模块或接口。
 ```
 
@@ -441,7 +436,7 @@ python -m pip install -U happymath
 
 ### 模块路径
 
-```python id="zejdir"
+```python
 happymath.AutoML
 ```
 
@@ -481,28 +476,21 @@ happymath.AutoML
 
 ### 文档地址
 
-模块说明文档：
+模块文档入口（README，内含 `quickstart.md`、`api.md`、`examples.md` 的阅读顺序和编码前置要求）：
 
-```text id="hgtg8e"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/modules/automl.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/modules/automl.md
-```
-
-API 文档：
-
-```text id="73dlih"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/api/automl.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/api/automl.md
+```text
+https://gitee.com/HappymathLabs/happymath/blob/main/happymath/AutoML/docs/README.md
+https://github.com/HappyMathLabs/happymath/blob/main/happymath/AutoML/docs/README.md
 ```
 
 源码目录：
 
-```text id="vmczmr"
-https://github.com/HappyMathLabs/happymath/tree/main/happymath/AutoML
+```text
 https://gitee.com/HappymathLabs/happymath/tree/main/happymath/AutoML
+https://github.com/HappyMathLabs/happymath/tree/main/happymath/AutoML
 ```
 
-使用 `AutoML` 前，必须阅读对应模块说明文档和 API 文档。
+使用 `AutoML` 前，必须先阅读模块文档入口 README，并按其指引读完该目录下全部文档。
 
 ---
 
@@ -510,7 +498,7 @@ https://gitee.com/HappymathLabs/happymath/tree/main/happymath/AutoML
 
 ### 模块路径
 
-```python id="s6mxb4"
+```python
 happymath.Decision
 ```
 
@@ -567,28 +555,21 @@ happymath.Decision
 
 ### 文档地址
 
-模块说明文档：
+模块文档入口（README，内含 `quickstart.md`、`api.md`、`examples.md` 的阅读顺序和编码前置要求）：
 
-```text id="x6yo7c"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/modules/decision.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/modules/decision.md
-```
-
-API 文档：
-
-```text id="22hmwn"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/api/decision.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/api/decision.md
+```text
+https://gitee.com/HappymathLabs/happymath/blob/main/happymath/Decision/docs/README.md
+https://github.com/HappyMathLabs/happymath/blob/main/happymath/Decision/docs/README.md
 ```
 
 源码目录：
 
-```text id="urth2n"
-https://github.com/HappyMathLabs/happymath/tree/main/happymath/Decision
+```text
 https://gitee.com/HappymathLabs/happymath/tree/main/happymath/Decision
+https://github.com/HappyMathLabs/happymath/tree/main/happymath/Decision
 ```
 
-使用 `Decision` 前，必须阅读对应模块说明文档和 API 文档。
+使用 `Decision` 前，必须先阅读模块文档入口 README，并按其指引读完该目录下全部文档。
 
 ---
 
@@ -596,7 +577,7 @@ https://gitee.com/HappymathLabs/happymath/tree/main/happymath/Decision
 
 ### 模块路径
 
-```python id="wf9k7u"
+```python
 happymath.DiffEq
 ```
 
@@ -633,28 +614,21 @@ happymath.DiffEq
 
 ### 文档地址
 
-模块说明文档：
+模块文档入口（README，内含 `quickstart.md`、`api.md`、`examples.md` 的阅读顺序和编码前置要求）：
 
-```text id="m0dlv9"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/modules/diffeq.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/modules/diffeq.md
-```
-
-API 文档：
-
-```text id="xhp3t8"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/api/diffeq.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/api/diffeq.md
+```text
+https://gitee.com/HappymathLabs/happymath/blob/main/happymath/DiffEq/docs/README.md
+https://github.com/HappyMathLabs/happymath/blob/main/happymath/DiffEq/docs/README.md
 ```
 
 源码目录：
 
-```text id="wjv025"
-https://github.com/HappyMathLabs/happymath/tree/main/happymath/DiffEq
+```text
 https://gitee.com/HappymathLabs/happymath/tree/main/happymath/DiffEq
+https://github.com/HappyMathLabs/happymath/tree/main/happymath/DiffEq
 ```
 
-使用 `DiffEq` 前，必须阅读对应模块说明文档和 API 文档。
+使用 `DiffEq` 前，必须先阅读模块文档入口 README，并按其指引读完该目录下全部文档。
 
 ---
 
@@ -662,7 +636,7 @@ https://gitee.com/HappymathLabs/happymath/tree/main/happymath/DiffEq
 
 ### 模块路径
 
-```python id="mm1jjq"
+```python
 happymath.Opt
 ```
 
@@ -701,81 +675,66 @@ happymath.Opt
 
 ### 文档地址
 
-模块说明文档：
+模块文档入口（README，内含 `quickstart.md`、`api.md`、`examples.md` 的阅读顺序和编码前置要求）：
 
-```text id="hqaee5"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/modules/opt.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/modules/opt.md
-```
-
-API 文档：
-
-```text id="t17ikm"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/api/opt.md
-https://gitee.com/HappymathLabs/happymath/blob/main/docs/api/opt.md
+```text
+https://gitee.com/HappymathLabs/happymath/blob/main/happymath/Opt/docs/README.md
+https://github.com/HappyMathLabs/happymath/blob/main/happymath/Opt/docs/README.md
 ```
 
 源码目录：
 
-```text id="348q78"
-https://github.com/HappyMathLabs/happymath/tree/main/happymath/Opt
+```text
 https://gitee.com/HappymathLabs/happymath/tree/main/happymath/Opt
+https://github.com/HappyMathLabs/happymath/tree/main/happymath/Opt
 ```
 
-使用 `Opt` 前，必须阅读对应模块说明文档和 API 文档。
+使用 `Opt` 前，必须先阅读模块文档入口 README，并按其指引读完该目录下全部文档。
 
 ---
-
 
 ## 通用文档入口
 
 项目首页：
 
-```text id="aib88n"
-https://github.com/HappyMathLabs/happymath
+```text
 https://gitee.com/HappymathLabs/happymath
+https://github.com/HappyMathLabs/happymath
 ```
 
 安装文档：
 
-```text id="4nt540"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/installation.md
+```text
 https://gitee.com/HappymathLabs/happymath/blob/main/docs/installation.md
+https://github.com/HappyMathLabs/happymath/blob/main/docs/installation.md
 ```
 
 快速开始：
 
-```text id="gdu9f0"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/quickstart.md
+```text
 https://gitee.com/HappymathLabs/happymath/blob/main/docs/quickstart.md
+https://github.com/HappyMathLabs/happymath/blob/main/docs/quickstart.md
 ```
 
 文档首页：
 
-```text id="dymmtc"
-https://github.com/HappyMathLabs/happymath/blob/main/docs/index.md
+```text
 https://gitee.com/HappymathLabs/happymath/blob/main/docs/index.md
+https://github.com/HappyMathLabs/happymath/blob/main/docs/index.md
 ```
 
-模块文档目录：
+各模块文档入口（docs/README.md）所在目录：
 
-```text id="8ozp6w"
-https://github.com/HappyMathLabs/happymath/tree/main/docs/modules
-https://gitee.com/HappymathLabs/happymath/tree/main/docs/modules
-```
-
-API 文档目录：
-
-```text id="l6xwbd"
-https://github.com/HappyMathLabs/happymath/tree/main/docs/api
-https://gitee.com/HappymathLabs/happymath/tree/main/docs/api
+```text
+https://gitee.com/HappymathLabs/happymath/tree/main/happymath
+https://github.com/HappyMathLabs/happymath/tree/main/happymath
 ```
 
 测试样例目录：
 
-```text id="43x1p1"
-https://github.com/HappyMathLabs/happymath/tree/main/tests
+```text
 https://gitee.com/HappymathLabs/happymath/tree/main/tests
+https://github.com/HappyMathLabs/happymath/tree/main/tests
 ```
 
 ---
@@ -811,14 +770,14 @@ https://gitee.com/HappymathLabs/happymath/tree/main/tests
 
 根据任务类型优先选择模块：
 
-| 任务类型                  | 优先模块       |
-| --------------------- | ---------- |
-| 分类、回归、聚类、异常检测、时序预测    | `AutoML`   |
-| 指标赋权、综合评价、多准则决策、排序    | `Decision` |
-| ODE、PDE、动力系统、微分方程求解   | `DiffEq`   |
+| 任务类型                                   | 优先模块     |
+| ------------------------------------------ | ------------ |
+| 分类、回归、聚类、异常检测、时序预测       | `AutoML`   |
+| 指标赋权、综合评价、多准则决策、排序       | `Decision` |
+| ODE、PDE、动力系统、微分方程求解           | `DiffEq`   |
 | 线性规划、非线性规划、多目标优化、最优控制 | `Opt`      |
 
-如果无法确定模块，先阅读 `docs/index.md`、`docs/quickstart.md`、`docs/modules/`、`docs/api/` 和源码目录，再判断。
+如果无法确定模块，先阅读 `docs/index.md`、`docs/quickstart.md`、各模块 `happymath/<Module>/docs/README.md` 和源码目录，再判断。
 
 如果四个已知模块都不适合当前任务，必须继续检查项目中是否存在新增模块或其他相关接口。
 
@@ -828,18 +787,24 @@ https://gitee.com/HappymathLabs/happymath/tree/main/tests
 
 ### 第三步：读取模块文档
 
-确定模块后，必须读取：
+确定模块后，必须读取该模块 docs 目录下的文档入口 README：
 
-```text id="p6gv70"
-docs/modules/<module>.md
-docs/api/<module>.md
+```text
+happymath/<Module>/docs/README.md
+```
+
+并按 README 中的推荐阅读顺序，继续读完该目录下的：
+
+```text
+happymath/<Module>/docs/quickstart.md
+happymath/<Module>/docs/api.md
+happymath/<Module>/docs/examples.md
 ```
 
 例如使用 `Decision` 时，需要读取：
 
-```text id="1w0ijv"
-docs/modules/decision.md
-docs/api/decision.md
+```text
+happymath/Decision/docs/README.md
 ```
 
 读取文档时重点关注：
@@ -864,7 +829,7 @@ docs/api/decision.md
 
 优先读取：
 
-```text id="w8yiz6"
+```text
 happymath/<Module>/
 tests/
 ```
@@ -895,7 +860,7 @@ tests/
 
 示例验证代码：
 
-```python id="i52hrz"
+```python
 import importlib.metadata as metadata
 import happymath
 
@@ -905,7 +870,7 @@ print("happymath imported successfully")
 
 根据模块进一步验证：
 
-```python id="r8w0a6"
+```python
 from happymath import AutoML
 from happymath import Decision
 from happymath import DiffEq
@@ -943,7 +908,7 @@ from happymath import Opt
 
 推荐：
 
-```bash id="lfqavd"
+```bash
 conda run -n happymath python script.py
 ```
 
@@ -985,19 +950,19 @@ conda run -n happymath python script.py
 
 ### 1. 更新 conda
 
-```bash id="s9qiqo"
+```bash
 conda update -n base -c defaults conda -y
 ```
 
 ### 2. 尝试使用 conda-forge
 
-```bash id="ss8h2v"
+```bash
 conda install -c conda-forge happymath -y
 ```
 
 ### 3. 尝试创建干净环境
 
-```bash id="zj2qs8"
+```bash
 conda create -n happymath python=3.11 -y
 conda activate happymath
 conda install -c conda-forge happymath -y
@@ -1005,7 +970,7 @@ conda install -c conda-forge happymath -y
 
 ### 4. 如果 conda 仍失败，在 conda 环境内使用 pip
 
-```bash id="lbdlj1"
+```bash
 conda activate happymath
 python -m pip install -U happymath
 ```
@@ -1016,7 +981,7 @@ python -m pip install -U happymath
 
 常见可选依赖可以优先尝试：
 
-```bash id="r3tqfi"
+```bash
 conda install -c conda-forge ipopt lightgbm -y
 ```
 
@@ -1024,41 +989,45 @@ conda install -c conda-forge ipopt lightgbm -y
 
 ---
 
-## GitHub 访问失败处理
+## Gitee 访问失败处理
 
-如果 GitHub 访问失败，必须自动切换到 Gitee。
+优先使用 Gitee 访问；如果 Gitee 访问失败，必须自动切换到 GitHub。
 
 路径映射规则：
 
-```text id="6xbtih"
-https://github.com/HappyMathLabs/happymath/blob/main/<path>
+```text
+https://gitee.com/HappymathLabs/happymath/blob/main/<path>
 ```
 
 替换为：
 
-```text id="0r9e1e"
-https://gitee.com/HappymathLabs/happymath/blob/main/<path>
+```text
+https://github.com/HappyMathLabs/happymath/blob/main/<path>
 ```
 
 源码目录映射：
 
-```text id="34wywx"
-https://github.com/HappyMathLabs/happymath/tree/main/<path>
+```text
+https://gitee.com/HappymathLabs/happymath/tree/main/<path>
 ```
 
 替换为：
 
-```text id="n8bom0"
-https://gitee.com/HappymathLabs/happymath/tree/main/<path>
+```text
+https://github.com/HappyMathLabs/happymath/tree/main/<path>
 ```
 
-如果需要读取 raw 文件，优先使用 GitHub raw 地址：
+如果需要读取 raw 文件，优先使用 Gitee raw 地址：
 
-```text id="78vnt7"
+```text
+https://gitee.com/HappymathLabs/happymath/raw/main/<path>
+```
+
+如果 Gitee raw 失败，则使用 GitHub raw 地址尝试读取相同路径：
+
+```text
 https://raw.githubusercontent.com/HappyMathLabs/happymath/main/<path>
 ```
-
-如果 GitHub raw 失败，则使用 Gitee 页面地址或 Gitee raw 地址尝试读取相同路径。
 
 ---
 
@@ -1087,18 +1056,17 @@ https://raw.githubusercontent.com/HappyMathLabs/happymath/main/<path>
 
 应优先使用：
 
-```text id="c7mpo5"
+```text
 AutoML
 ```
 
 需要阅读：
 
-```text id="fh7iht"
-docs/modules/automl.md
-docs/api/automl.md
+```text
+happymath/AutoML/docs/README.md
 ```
 
-然后根据文档确认分类任务类、参数和预测结果字段。
+然后根据 README 指引读完该目录下全部文档，确认分类任务类、参数和预测结果字段。
 
 ---
 
@@ -1106,18 +1074,17 @@ docs/api/automl.md
 
 应优先使用：
 
-```text id="bci2q2"
+```text
 Decision
 ```
 
 需要阅读：
 
-```text id="q8mg0q"
-docs/modules/decision.md
-docs/api/decision.md
+```text
+happymath/Decision/docs/README.md
 ```
 
-然后确认客观赋权类、排序决策类、权重提取方式和排名提取方式。
+然后按 README 指引读完该目录下全部文档，确认客观赋权类、排序决策类、权重提取方式和排名提取方式。
 
 ---
 
@@ -1125,18 +1092,17 @@ docs/api/decision.md
 
 应优先使用：
 
-```text id="v04uym"
+```text
 DiffEq
 ```
 
 需要阅读：
 
-```text id="ks4uww"
-docs/modules/diffeq.md
-docs/api/diffeq.md
+```text
+happymath/DiffEq/docs/README.md
 ```
 
-然后确认 ODE 或 PDE 当前推荐调用方式。
+然后按 README 指引读完该目录下全部文档，确认 ODE 或 PDE 当前推荐调用方式。
 
 ---
 
@@ -1144,18 +1110,17 @@ docs/api/diffeq.md
 
 应优先使用：
 
-```text id="c2diid"
+```text
 Opt
 ```
 
 需要阅读：
 
-```text id="dozdm1"
-docs/modules/opt.md
-docs/api/opt.md
+```text
+happymath/Opt/docs/README.md
 ```
 
-然后确认目标函数、约束、求解模式和结果对象的当前格式。
+然后按 README 指引读完该目录下全部文档，确认目标函数、约束、求解模式和结果对象的当前格式。
 
 ---
 
@@ -1165,10 +1130,9 @@ docs/api/opt.md
 
 此时不能直接回答 `happymath` 不支持，而应先检查：
 
-```text id="e7joyo"
-docs/modules/
-docs/api/
+```text
 happymath/
+happymath/<Module>/docs/
 tests/
 ```
 
@@ -1206,7 +1170,7 @@ tests/
 3. 把本技能中的旧示例当作最新 API 依据。
 4. 在系统 Python 中直接安装或运行 `happymath`。
 5. 明明 conda 可用，却优先使用 pip。
-6. GitHub 访问失败后直接放弃，不尝试 Gitee。
+6. Gitee 访问失败后直接放弃，不尝试 GitHub。
 7. 文档不足时不看源码。
 8. 代码报错后不根据报错重新检查文档和源码。
 9. 使用未确认存在的函数、类或参数。
@@ -1221,7 +1185,7 @@ tests/
 
 可以创建 `check_happymath_env.py`：
 
-```python id="xdjcl5"
+```python
 import importlib.metadata as metadata
 
 try:
@@ -1250,7 +1214,7 @@ for module_name in modules:
 
 运行方式：
 
-```bash id="jx38vc"
+```bash
 conda run -n happymath python check_happymath_env.py
 ```
 
@@ -1260,7 +1224,7 @@ conda run -n happymath python check_happymath_env.py
 
 每次使用本技能时，按以下顺序执行：
 
-```text id="ug6wfl"
+```text
 1. 判断用户任务是否需要 happymath
 2. 检查 conda 是否存在
 3. 如果没有 conda，则配置 conda
@@ -1271,8 +1235,8 @@ conda run -n happymath python check_happymath_env.py
 8. 判断任务对应模块
 9. 优先在 AutoML、Decision、DiffEq、Opt 中匹配模块
 10. 如果四个已知模块不适合，则检查项目是否有新增模块或相关接口
-11. 阅读对应 docs/modules 文档
-12. 阅读对应 docs/api 文档
+11. 阅读对应模块 happymath/<Module>/docs/README.md
+12. 按 README 指引阅读该目录下的 quickstart.md、api.md、examples.md
 13. 必要时阅读源码和 tests
 14. 如果预期模块不存在，则访问项目链接确认是否真的不存在
 15. 如果确认 happymath 没有对应模块或接口，则向用户说明，并使用其他方式继续完成任务

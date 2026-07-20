@@ -1,106 +1,50 @@
 # HappyMath AutoML 快速开始
 
-`happymath.AutoML` 是基于 [PyCaret](https://pycaret.org/) 封装的一套低代码自动化机器学习接口，覆盖分类、回归、聚类、异常检测和时序预测等常见任务。它的目标是让你用几行代码完成数据准备、模型训练、调优、集成、评估与保存。
+`happymath.AutoML` 是对 PyCaret 的任务化封装，适合用少量代码完成分类、回归、聚类、异常检测和时序预测。使用时要先明确一个核心原则：`compare()` 只做候选模型横向比较，`tune()` 才做超参数搜索；模型融合、堆叠也不是默认步骤，只有当题目或实验目的明确要求集成学习时再调用。
+
+## 推荐工作流
+
+| 问题目标 | 推荐接口 | 是否需要继续调参或集成 |
+|---|---|---|
+| 快速判断哪类模型效果较好 | `compare(include=..., sort=...)` | 通常不需要，直接查看排行榜和最佳模型即可。 |
+| 已经选定模型，希望优化超参数 | `create(...)` 或 `compare(...)` 后接 `tune(...)` | 需要。调大 `n_iter` 会增加搜索深度和耗时。 |
+| 题目明确要求 Bagging / Boosting | `ensemble(...)` | 只对单个基模型做集成，先有 `current_model`。 |
+| 题目明确要求投票 / 平均融合 | 至少创建两个模型后 `blend(...)` | 分类可用 `method="soft"` 或 `"hard"`，`auto` 会自动回退。 |
+| 题目明确要求 Stacking | 至少创建两个模型后 `stack(...)` | 需要选择或默认使用元模型，耗时高于普通比较。 |
+| 需要论文或报告中的泛化评估表 | `scores(mode=..., metrics=...)` | 根据数据量和测试集情况选择 mode。 |
+| 需要部署或复现实验结果 | `finalize(...)` 后 `save(...)` | `finalize` 只在全量数据上重新拟合，不会改变超参数。 |
+
+PyCaret 官方示例的基本顺序也是 `setup -> compare_models`，需要调参时才执行 `create_model/compare_models -> tune_model`，需要融合或堆叠时才执行 `blend_models/stack_models`。在 HappyMath 中，`setup` 已经由任务类初始化自动完成。
+
+## compare 和 tune 的关系
+
+- `compare()` 对应 PyCaret 的 `compare_models()`：训练并用交叉验证评估候选模型，按 `sort` 或 `primary_metric` 选择最佳模型。它不会自动调用 `tune_model()`，也不会做轻量调参。
+- `tune()` 对应 PyCaret 的 `tune_model()`：对一个已训练模型做超参数搜索，默认 `n_iter=10`。这是一个独立步骤，搜索强度主要由 `n_iter`、`custom_grid`、`search_library`、`search_algorithm` 等参数决定。
+- 因此，`compare()` 得到最佳模型后是否继续 `tune()` 取决于需求：如果只是快速比较模型效果，停止在 `compare()` 即可；如果需要更充分优化某个入选模型，再调用 `tune(best, n_iter=...)`。
+- `tune(choose_better=True)` 默认在调参结果变差时保留输入模型，适合自动脚本；但调参仍可能耗时明显增加。
 
 ## 主要类
 
 | 类 | 任务类型 | 默认主指标 |
 |---|---|---|
-| `ClassificationML` | 分类 | Accuracy |
-| `RegressionML` | 回归 | MAE |
-| `ClusteringML` | 聚类 | Silhouette |
-| `AnomalyML` | 异常检测 | AUC |
-| `TimeSeriesML` | 时序预测 | MASE |
-| `AutoMLBase` | 所有任务公共基类 | 由子类决定 |
+| `ClassificationML` | 分类 | `Accuracy` |
+| `RegressionML` | 回归 | `MAE` |
+| `ClusteringML` | 聚类 | `Silhouette` |
+| `AnomalyML` | 异常检测 | `AUC` |
+| `TimeSeriesML` | 时序预测 | `MASE` |
 
-## 常用方法
+## 分类：只做模型比较
 
-- `compare(...)`：比较多个基线模型，返回表现最好的模型。
-- `create(estimator, ...)`：使用指定算法创建模型。
-- `tune(estimator, n_iter, ...)`：对模型做超参数调优。
-- `ensemble(method, n_estimators, ...)`：对当前模型做 Bagging / Boosting 集成。
-- `blend(...)`：将多个模型按投票 / 平均方式融合。
-- `stack(...)`：构建两层 Stacking 集成。
-- `predict(data, ...)`：使用当前或指定模型进行预测。
-- `get_best_model()`：从已训练模型中挑选主指标最优的模型。
-- `scores(mode, metrics, ...)`：按指定切分方式评估当前模型。
-- `save(model_name, model)` / `load(model_name)`：保存 / 加载模型。
-- `get_results()` / `get_leaderboard()` / `get_metrics()`：获取结果表、排行榜和指标列表。
-- `plot(plot_type, ...)`：调用 PyCaret 绘图，支持中文标题。
-
-## 关键参数说明
-
-### `ClassificationML` / `RegressionML`
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | Any | 必填 | 训练数据，支持 pandas DataFrame 等格式。 |
-| `target` | Any | `None` | 目标列名称。 |
-| `test_data` | Optional[Any] | `None` | 外部测试集。 |
-| `train_size` | float | `0.7` | 训练集比例。 |
-| `fold` | int | `5` | 交叉验证折数。 |
-| `seed` | int | `42` | 随机种子，对应 PyCaret 的 `session_id`。 |
-| `n_jobs` | int | `-1` | 并行作业数。 |
-| `verbose` | bool | `False` | 是否输出详细日志。 |
-| `html` | bool | `False` | 是否启用 PyCaret 的 HTML 输出。 |
-| `primary_metric` | Optional[str] | `None` | 主指标，分类默认 `Accuracy`，回归默认 `MAE`。 |
-
-### `ClusteringML`
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | Any | 必填 | 训练数据。 |
-| `test_data` | Optional[Any] | `None` | 外部测试集。 |
-| `seed` | int | `42` | 随机种子。 |
-| `n_jobs` | int | `-1` | 并行作业数。 |
-| `verbose` | bool | `False` | 是否输出详细日志。 |
-| `html` | bool | `False` | 是否启用 HTML 输出。 |
-| `primary_metric` | Optional[str] | `None` | 默认 `Silhouette`。 |
-
-### `AnomalyML`
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | Any | 必填 | 训练数据。 |
-| `test_data` | Optional[Any] | `None` | 外部测试集。 |
-| `fraction` | float | `0.05` | 异常样本预期比例。 |
-| `seed` / `n_jobs` / `verbose` / `html` | 同上 | 同上 | 同上。 |
-| `primary_metric` | Optional[str] | `None` | 默认 `AUC`。 |
-
-### `TimeSeriesML`
-
-| 参数 | 类型 | 默认值 | 说明 |
-|---|---|---|---|
-| `data` | Any | 必填 | 训练数据。 |
-| `target` | Any | `None` | 目标列名称。 |
-| `test_data` | Optional[Any] | `None` | 外部测试集。 |
-| `fh` | int | `12` | 预测步长（forecast horizon）。 |
-| `fold` | int | `3` | 交叉验证折数。 |
-| `seasonal_period` | Optional[int] | `None` | 季节周期。 |
-| `seed` / `n_jobs` / `verbose` / `html` | 同上 | 同上 | 同上。 |
-| `primary_metric` | Optional[str] | `None` | 默认 `MASE`。 |
-
-## ⚠️ 已知限制与注意事项
-
-1. **PyCaret 首次运行**：首次调用任一任务类时，PyCaret 会进行环境初始化与依赖检查，耗时可能较长（数十秒到数分钟），请耐心等待。
-2. **LightGBM 依赖缺失**：如果环境未安装 `lightgbm`，在 `compare` 默认包含 LightGBM 相关模型时会跳过或报错。建议显式通过 `include=[...]` 限制模型列表，例如 `include=["lr", "dt"]`。
-3. **时序预测（`TimeSeriesML`）**：当前实现较为基础，`predict` 接口与 PyCaret time_series 模块深度绑定，部分模型或参数组合可能出现兼容性问题。建议在简单场景下使用，并优先验证可行路径。
-4. **绘图（`plot`）**：`plot_type="tree"` 需要系统安装 Graphviz 可执行文件以及 `graphviz` Python 包；其他部分 plot 类型依赖 PyCaret 版本，可能在某些环境下失效。
-5. **CatBoost**：模块已设置 `CATBOOST_ALLOW_WRITING_FILES=0` 以避免生成临时文件，但在某些系统上仍可能出现权限或版本相关警告。
-6. **集成与融合**：`blend` / `stack` 要求内部至少保存了两个模型；`ensemble` 仅对单个基模型生效，具体支持的 `method` 取决于 PyCaret 对应任务模块。
-
-## 最小可运行示例：Iris 分类
+适用场景：题目只要求选择一个分类模型，或你处在建模初筛阶段。此时按照 PyCaret 的 `compare_models()` 思路，只需要输出比较结果，不必自动调参、融合或堆叠。
 
 ```python
 from sklearn.datasets import load_iris
 from happymath.AutoML import ClassificationML
 
-# 加载数据
 iris = load_iris(as_frame=True)
 data = iris.data.copy()
 data["target"] = iris.target
 
-# 初始化并自动完成 PyCaret setup
 clf = ClassificationML(
     data=data,
     target="target",
@@ -111,15 +55,173 @@ clf = ClassificationML(
     html=False,
 )
 
-# 比较模型（仅比较逻辑回归与决策树，避免 LightGBM 等依赖问题）
 best = clf.compare(include=["lr", "dt"], sort="Accuracy", verbose=False)
-print("Best model:", best)
-
-# 预测
-predictions = clf.predict(data=data.head())
-print(predictions[["target", "prediction_label"]])
-
-# 获取最优模型
-model, metrics = clf.get_best_model()
-print("Metrics:", metrics)
+print("Best:", best.__class__.__name__)
+print(clf.get_results()[["Model", "Accuracy", "AUC", "F1"]])
 ```
+
+运行输出示例：
+
+```text
+Best: LogisticRegression
+                       Model  Accuracy     AUC      F1
+lr       Logistic Regression    0.9667  0.0000  0.9666
+dt  Decision Tree Classifier    0.9500  0.9625  0.9499
+```
+
+## 回归：比较后按需调参
+
+适用场景：先用 `compare()` 找到较好的回归模型；如果论文或业务目标要求进一步降低误差，再对最佳模型调用 `tune()`。
+
+```python
+from sklearn.datasets import load_diabetes
+from happymath.AutoML import RegressionML
+
+diabetes = load_diabetes(as_frame=True)
+data = diabetes.data.copy()
+data["target"] = diabetes.target
+
+reg = RegressionML(
+    data=data,
+    target="target",
+    train_size=0.8,
+    fold=2,
+    seed=42,
+    verbose=False,
+    html=False,
+)
+
+best = reg.compare(include=["lr", "dt"], sort="MAE", verbose=False)
+print("Compare best:", best.__class__.__name__)
+print(reg.get_results()[["Model", "MAE", "RMSE", "R2"]])
+
+tuned = reg.tune(estimator=best, n_iter=5, optimize="MAE", verbose=False, tuner_verbose=False)
+print("Tuned:", tuned.__class__.__name__)
+print(reg.get_results()[["MAE", "RMSE", "R2"]])
+```
+
+运行输出示例：
+
+```text
+Compare best: LinearRegression
+                      Model      MAE     RMSE      R2
+lr        Linear Regression  45.6885  56.4420  0.4711
+dt  Decision Tree Regressor  66.2042  83.7161 -0.1661
+Tuned: LinearRegression
+          MAE     RMSE      R2
+Mean  45.6885  56.4420  0.4711
+```
+
+## 分类：需要概率或阈值时
+
+适用场景：二分类任务更关心召回率、F1、AUC 或预测概率。比较阶段可以改 `sort`；预测阶段可用 `raw_score=True` 输出各类别概率。二分类阈值调整由底层 PyCaret 支持，可通过 `probability_threshold` 透传。
+
+```python
+best = clf.compare(include=["lr", "dt"], sort="F1", verbose=False)
+pred = clf.predict(
+    estimator=best,
+    data=data.head(),
+    raw_score=True,
+    verbose=False,
+)
+print(pred.filter(regex="target|prediction").head())
+```
+
+## 只有明确需要时才融合或堆叠
+
+PyCaret 官方示例会把 `compare_models(n_select=3)` 的结果传入 `blend_models()` 或 `stack_models()`。HappyMath 当前 `compare()` 固定返回一个最佳模型，因此如果需要融合或堆叠，应显式创建多个基模型。
+
+```python
+lr = clf.create("lr", verbose=False)
+dt = clf.create("dt", verbose=False)
+nb = clf.create("nb", verbose=False)
+
+blended = clf.blend(estimator_list=[lr, dt, nb], method="soft", verbose=False)
+print("Blended:", blended.__class__.__name__)
+
+stacked = clf.stack(estimator_list=[lr, dt, nb], meta_model_fold=2, verbose=False)
+print("Stacked:", stacked.__class__.__name__)
+```
+
+如果只是要回答“哪个基础模型效果最好”，不要默认执行 `blend()` 或 `stack()`，否则会增加解释成本和计算成本。
+
+## scores 应该怎么选
+
+`scores()` 用于把当前模型按不同数据切分方式重新整理成评估表，适合报告和论文输出。
+
+| mode | 适用情况 | 输出形式 |
+|---|---|---|
+| `auto` | 不确定用哪种评估方式 | 有外部测试集时等价 `custom`；监督学习小样本用 `leaveout`，中等样本用 `kfold`，大样本用 `holdout`。 |
+| `holdout` | 需要一次训练/测试划分对比 | index 为 `train`、`test`。 |
+| `kfold` | 需要 K 折评估表 | 每折一行，最后一行为 `mean`。 |
+| `leaveout` | 监督学习极小样本 | index 为 `train_mean`、`test_mean`。 |
+| `custom` | 已有独立测试集 | index 为 `train`、`test`；监督学习测试集必须含目标列。 |
+| `train-only` | 只想看训练集，或聚类任务 | 至少包含 `train`；若有测试集也会给出 `test`。 |
+
+```python
+scores = clf.scores(mode="kfold", metrics=["Accuracy", "F1"], fold=3)
+print(scores)
+```
+
+## 聚类和异常检测
+
+无监督任务没有 `target`，通常不调用 `compare()`。先 `create()`，再用 `assign()` 把簇标签或异常标签写回数据。
+
+```python
+import numpy as np
+import pandas as pd
+from happymath.AutoML import ClusteringML, AnomalyML
+
+rng = np.random.default_rng(42)
+cluster_df = pd.DataFrame(
+    np.vstack([
+        rng.normal([0, 0], 0.5, size=(30, 2)),
+        rng.normal([4, 4], 0.5, size=(30, 2)),
+        rng.normal([-4, 4], 0.5, size=(30, 2)),
+    ]),
+    columns=["x1", "x2"],
+)
+
+clu = ClusteringML(cluster_df, seed=42, verbose=False, html=False)
+clu.create(model="kmeans", num_clusters=3, verbose=False)
+assigned = clu.assign()
+print(assigned["Cluster"].value_counts().sort_index())
+
+normal = rng.normal(0, 1, size=(80, 2))
+outliers = rng.normal(5, 0.5, size=(8, 2))
+anomaly_df = pd.DataFrame(np.vstack([normal, outliers]), columns=["x", "y"])
+
+ano = AnomalyML(anomaly_df, fraction=0.1, seed=42, verbose=False, html=False)
+ano.create(model="iforest", verbose=False)
+labeled = ano.assign()
+print(labeled["Anomaly"].value_counts().sort_index())
+```
+
+## 时序预测
+
+时序任务先指定预测步长 `fh`。快速建模时用 `compare()` 选择候选预测器；需要未来预测时调用 `predict(fh=...)`。
+
+```python
+import numpy as np
+import pandas as pd
+from happymath.AutoML import TimeSeriesML
+
+series = pd.Series(
+    np.sin(np.arange(48) / 4) + np.arange(48) * 0.02,
+    index=pd.date_range("2020-01-01", periods=48, freq="MS"),
+    name="value",
+)
+
+ts = TimeSeriesML(series, fh=3, fold=2, seed=42, verbose=False, html=False)
+best = ts.compare(include=["naive", "arima"], sort="MASE", verbose=False)
+forecast = ts.predict(estimator=best, fh=3, verbose=False)
+print(forecast)
+```
+
+## 常见问题处理
+
+- LightGBM、XGBoost、CatBoost 或 Optuna 等可选依赖不可用时，先用 `include=[...]` 限定基础模型，例如 `["lr", "dt", "rf"]`；需要特定算法时再安装对应依赖。
+- 调参结果不如默认模型时，保留 `choose_better=True`；需要研究调参过程时，可降低 `n_iter` 快速试跑，再逐步增大。
+- 指标不符合题目目标时，分类用 `sort="F1"`、`sort="AUC"` 等，回归用 `sort="MAE"`、`sort="RMSE"`、`sort="R2"` 等；`tune(optimize=...)` 要与 `compare(sort=...)` 保持一致。
+- 预测新数据时，监督学习的新数据可以不含目标列；做 `scores(custom)` 时，测试集必须含目标列才能计算指标。
+- 最终提交模型前先 `finalize()`，再 `save()`；`finalize()` 只是用全量数据重新拟合当前模型，不会重新比较模型，也不会自动调参。

@@ -51,6 +51,24 @@ def test_classification_create_tune_blend_predict():
     assert "Accuracy" in metrics
 
 
+def test_multiclass_auc_uses_probabilities():
+    data = _prepare_classification_data()
+    clf = ClassificationML(
+        data=data,
+        target="target",
+        train_size=0.8,
+        fold=2,
+        seed=42,
+        verbose=False,
+        html=False,
+        n_jobs=1,
+    )
+
+    clf.create("lr", verbose=False)
+    auc = float(clf.get_results().loc["Mean", "AUC"])
+    assert auc > 0.99
+
+
 def test_regression_compare_ensemble_predict():
     data = _prepare_regression_data()
     reg = RegressionML(

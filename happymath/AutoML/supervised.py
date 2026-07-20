@@ -66,9 +66,34 @@ class ClassificationML(AutoMLBase):
 
         self.experiment = ClassificationExperiment()
         self.experiment.setup(**setup_params)
+        self._patch_multiclass_auc_scorer()
         self.is_setup = True
-        # 延迟导入，确保环境变量已设置避免日志文件生成
-        from pycaret.classification import ClassificationExperiment
+
+    def _patch_multiclass_auc_scorer(self) -> None:
+        """Force multiclass AUC to use probabilities instead of raw margins."""
+        try:
+            from sklearn.metrics import make_scorer, roc_auc_score
+        except Exception:
+            return
+
+        metrics = getattr(self.experiment, "_all_metrics", None)
+        if not isinstance(metrics, dict):
+            return
+
+        auc_metric = metrics.get("auc")
+        if auc_metric is None or not getattr(auc_metric, "is_multiclass", False):
+            return
+
+        scorer = make_scorer(
+            roc_auc_score,
+            response_method="predict_proba",
+            average="weighted",
+            multi_class="ovr",
+        )
+        try:
+            auc_metric.scorer = scorer
+        except Exception:
+            return
 
 
 class RegressionML(AutoMLBase):

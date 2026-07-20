@@ -801,9 +801,19 @@ class ClusteringScoresStrategy(ScoresStrategy):
         except Exception as exc:
             raise ValueError("Cannot get clustering preprocessing pipeline from experiment configuration") from exc
 
-        X_trans = pipeline.transform(X)
-
         model = self.current_model
+        X_trans = pipeline.transform(X)
+        # PyCaret may fit clustering estimators on float32 even when the
+        # pipeline later returns float64. sklearn's KMeans requires the
+        # prediction input dtype to match the fitted centers dtype.
+        fitted_centers = getattr(model, "cluster_centers_", None)
+        fitted_dtype = getattr(fitted_centers, "dtype", None)
+        if hasattr(X_trans, "to_numpy"):
+            X_trans = X_trans.to_numpy(dtype=fitted_dtype, copy=True)
+        else:
+            X_trans = np.asarray(X_trans, dtype=fitted_dtype)
+        X_trans = np.ascontiguousarray(X_trans)
+
         labels = model.predict(X_trans)
 
         metrics_containers = getattr(self.experiment, "_all_metrics", {})
