@@ -130,10 +130,10 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 ### A.1 阅读完整论文模板
 
-根据语言选择阅读对应模板参考：
-- 中文：`references/cn_full_paper_template_guide.md`
-- 英文：`references/en_full_paper_template_guide.md`
-- 获奖论文风格参考：`references/prized_paper_style_guide.md`
+根据语言选择阅读「参考文档索引」中的对应在线文档：
+- 中文：国赛完整论文模板。
+- 英文：美赛完整论文模板。
+- 获奖论文风格参考。
 
 模板参考明确：
 - 论文章节安排（摘要、问题重述、问题分析、模型假设、符号说明、模型的建立与求解、模型评价、参考文献、附录等）。
@@ -144,9 +144,7 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 ### A.2 阅读问题撰写规范
 
-阅读对应语言的问题撰写规范：
-- 中文：`references/cn_problem_writing_guide.md`
-- 英文：`references/en_problem_writing_guide.md`
+阅读「参考文档索引」中对应语言的问题撰写规范。
 
 该规范明确：
 - 每个问题拆分为 **理论内容** 与 **结果内容** 两部分。
@@ -156,11 +154,11 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 ### A.3 阅读图表绘制参考
 
 - 理论部分图表：
-  - 中文：`references/cn_theory_chart_guide.md`
-  - 英文：`references/en_theory_chart_guide.md`
+  - 中文：国赛理论部分图表绘制参考。
+  - 英文：美赛理论部分图表绘制参考。
 - 结果部分图表：
-  - 中文：`references/cn_result_chart_guide.md`
-  - 英文：`references/en_result_chart_guide.md`
+  - 中文：国赛结果部分图表绘制参考。
+  - 英文：美赛结果部分图表绘制参考。
 
 绘制任何图表前，必须先阅读对应参考。流程图、算法流程图、结构图和示意图应先保存 Mermaid 源文件，再渲染为图片并放入 markdown 同级 `images/` 目录，在 md 中用标准 markdown 图片语法引用。算法文字图优先写成 markdown 表格，由转换脚本输出三线表。
 
@@ -211,7 +209,7 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 | 用户请求 | 处理方式 |
 |----------|----------|
-| 撰写论文结构中的某部分（摘要、问题重述、模型假设、符号说明、参考文献、附录等） | 阅读对应语言的部分内容撰写参考 `references/cn_partial_sections_guide.md` 或 `references/en_partial_sections_guide.md`，并阅读 `references/prized_paper_style_guide.md` 中对应语言示例路径，按该参考撰写。 |
+| 撰写论文结构中的某部分（摘要、问题重述、模型假设、符号说明、参考文献、附录等） | 阅读「参考文档索引」中对应语言的部分内容撰写参考及获奖论文风格参考，并按其要求撰写。 |
 | 撰写某个问题的完整内容 | 按「模式 A」中单个问题的流程（理论 + 结果）撰写，阅读问题撰写规范与两类图表绘制参考。 |
 | 只撰写某个问题的理论部分 | 阅读问题撰写规范 + 理论部分图表绘制参考，只输出理论内容。 |
 | 只撰写某个问题的结果部分 | 阅读问题撰写规范 + 结果部分图表绘制参考，只输出结果内容（仍需要知道理论配套关系，因此也要快速浏览问题撰写规范）。 |
@@ -228,7 +226,7 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 ## 模式 C：单纯格式转换
 
 1. 确认源文件路径与目标路径。
-2. 阅读 `references/md_to_docx_guide.md`。
+2. 阅读「参考文档索引」中的 md 转 docx 详细说明。
 3. 若 markdown 中有 Mermaid 代码块，先要求生成或补齐对应 `.mmd` 源文件并用 `scripts/render_mermaid.js` 渲染为图片；不要让 Mermaid 原始代码块进入转换。
 4. 运行 `scripts/preflight_md.js`。
 5. 根据文件语言选择国赛或美赛 docx 模板参数，调用 `scripts/convert_md_to_docx.js` 转换。
@@ -276,31 +274,33 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 ## 参考文档索引
 
-| 文档 | 用途 |
-|------|------|
-| `references/cn_full_paper_template_guide.md` | 国赛完整论文模板（章节、排版、格式） |
-| `references/en_full_paper_template_guide.md` | 美赛完整论文模板（章节、排版、格式） |
-| `references/cn_problem_writing_guide.md` | 国赛单个问题撰写规范（理论+结果） |
-| `references/en_problem_writing_guide.md` | 美赛单个问题撰写规范（理论+结果） |
-| `references/cn_theory_chart_guide.md` | 国赛理论部分图表绘制参考 |
-| `references/en_theory_chart_guide.md` | 美赛理论部分图表绘制参考 |
-| `references/cn_result_chart_guide.md` | 国赛结果部分图表绘制参考 |
-| `references/en_result_chart_guide.md` | 美赛结果部分图表绘制参考 |
-| `references/cn_partial_sections_guide.md` | 国赛论文结构各部分撰写参考（摘要、参考文献等） |
-| `references/en_partial_sections_guide.md` | 美赛论文结构各部分撰写参考（Summary、References 等） |
-| `references/prized_paper_style_guide.md` | 国赛/美赛获奖论文示例路径与模块风格参考规则 |
-| `references/md_to_docx_guide.md` | md 转 docx 的详细说明与脚本使用 |
+在线阅读参考文档时，优先访问 Gitee；Gitee 无法访问、访问失败或速度较慢时，再访问对应的 GitHub 链接。
+
+| 文档 | Gitee | GitHub | 用途 |
+|------|-------|--------|------|
+| 国赛完整论文模板 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_full_paper_template_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_full_paper_template_guide.md) | 国赛完整论文模板（章节、排版、格式） |
+| 美赛完整论文模板 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_full_paper_template_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_full_paper_template_guide.md) | 美赛完整论文模板（章节、排版、格式） |
+| 国赛问题撰写规范 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_problem_writing_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_problem_writing_guide.md) | 国赛单个问题撰写规范（理论+结果） |
+| 美赛问题撰写规范 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_problem_writing_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_problem_writing_guide.md) | 美赛单个问题撰写规范（理论+结果） |
+| 国赛理论图表参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_theory_chart_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_theory_chart_guide.md) | 国赛理论部分图表绘制参考 |
+| 美赛理论图表参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_theory_chart_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_theory_chart_guide.md) | 美赛理论部分图表绘制参考 |
+| 国赛结果图表参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_result_chart_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_result_chart_guide.md) | 国赛结果部分图表绘制参考 |
+| 美赛结果图表参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_result_chart_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_result_chart_guide.md) | 美赛结果部分图表绘制参考 |
+| 国赛部分内容撰写参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_partial_sections_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_partial_sections_guide.md) | 国赛论文结构各部分撰写参考（摘要、参考文献等） |
+| 美赛部分内容撰写参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_partial_sections_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_partial_sections_guide.md) | 美赛论文结构各部分撰写参考（Summary、References 等） |
+| 获奖论文风格参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md) | 国赛/美赛获奖论文示例路径与模块风格参考规则 |
+| md 转 docx 详细说明 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md) | md 转 docx 的详细说明与脚本使用 |
 
 ---
 
 ## 脚本清单
 
-| 脚本 | 用途 |
-|------|------|
-| `scripts/convert_md_to_docx.js` | 将 markdown 论文转换为 docx，支持国赛/美赛两种排版 |
-| `scripts/mathml-to-docx.js` | MathML → Word 原生公式（被 convert 脚本依赖） |
-| `scripts/render_mermaid.js` | 将 `.mmd` Mermaid 源文件渲染为 PNG/SVG/PDF 图片 |
-| `scripts/preflight_md.js` | 转换前检查 markdown 中的图片、Mermaid、公式分隔符和引用 |
+| 脚本 | Gitee | GitHub | 用途 |
+|------|-------|--------|------|
+| `convert_md_to_docx.js` | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/convert_md_to_docx.js) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/convert_md_to_docx.js) | 将 markdown 论文转换为 docx，支持国赛/美赛两种排版 |
+| `mathml-to-docx.js` | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/mathml-to-docx.js) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/mathml-to-docx.js) | MathML → Word 原生公式（被 convert 脚本依赖） |
+| `render_mermaid.js` | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/render_mermaid.js) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/render_mermaid.js) | 将 `.mmd` Mermaid 源文件渲染为 PNG/SVG/PDF 图片 |
+| `preflight_md.js` | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/preflight_md.js) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/preflight_md.js) | 转换前检查 markdown 中的图片、Mermaid、公式分隔符和引用 |
 
 ---
 
@@ -331,8 +331,4 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 ## 示例文件
 
-| 文件 | 说明 |
-|------|------|
-| `examples/cn_sample.md` | 中文论文 markdown 示例 |
-| `examples/en_sample.md` | 英文论文 markdown 示例 |
-| `examples/images/problem1_flow.png` | 示例图片 |
+本 Skill 当前未随仓库发布独立示例文件；请以「参考文档索引」中的完整论文模板、部分内容撰写参考和获奖论文风格参考作为在线示例来源。
