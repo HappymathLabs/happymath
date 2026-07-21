@@ -361,6 +361,26 @@ python your_script.py
 
 ---
 
+## Jupyter Notebook 构建与运行
+
+当用户要求构建 Jupyter Notebook、在 Jupyter Notebook 中运行代码，或需要将代码执行结果直接保留在 `.ipynb` 文件中时，必须使用命令行原地执行 Notebook；不要为此构建额外的运行脚本。
+
+默认使用已安装 `happymath` 的 conda 环境，并执行：
+
+```bash
+conda run -n happymath jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=600 your_notebook.ipynb
+```
+
+其中：
+
+* `--inplace` 必须保留，它会将每个代码单元格的执行结果、标准输出和错误信息直接写回原 Notebook。
+* 执行完成后，直接在 JupyterLab、Notebook 或 VS Code 打开同一个 `.ipynb` 文件即可查看结果。
+* 不要用重定向终端输出、导出为另一个 Notebook 或额外 Python/Bash 脚本替代此命令。
+* `600` 秒是默认单元格超时；仅在任务确实需要更长时间时才调整 `--ExecutePreprocessor.timeout`。
+* 执行前应确保 Notebook 选择了 `Python (happymath)` 内核；若该内核尚未注册，先按本 Skill 的环境配置流程注册它。
+
+---
+
 ## 模块总览
 
 `happymath` 当前已知包含四个核心模块：
