@@ -28,11 +28,9 @@ https://github.com/HappymathLabs/happymath
 路径映射规则：
 
 ```text
-Gitee:
-https://gitee.com/HappymathLabs/happymath/blob/main/<path>
-
-GitHub:
-https://github.com/HappymathLabs/happymath/blob/main/<path>
+在仓库的 main 分支中打开相对路径 <path>：
+- Gitee：进入 https://gitee.com/HappymathLabs/happymath 后选择 main 分支和 <path>。
+- GitHub：进入 https://github.com/HappymathLabs/happymath 后选择 main 分支和 <path>。
 ```
 
 例如，本 Skill 的中文完整论文模板对应：
@@ -168,11 +166,37 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 ---
 
+## 强制参考阅读门禁（所有模式）
+
+**这是开始任何撰写或转换任务之前的硬性前置条件，优先级高于快速开始、用户的立即产出要求及下文各模式的步骤。**
+
+1. 先根据已锁定的语言、模式和用户所需内容，从下方「模式参考清单」建立本次任务的逐项清单。仅选择对应语言的参考；未列入本次任务的另一语言参考无需阅读。
+2. 对清单中的每一项，按「双站访问规则」完整阅读：先完整读取 Gitee 文件；仅当 Gitee 无法访问、访问失败或速度较慢时，完整读取同一路径的 GitHub 文件。阅读标题、链接文字、本 Skill 的摘要、本地文件名、历史对话或模型记忆均不算完成阅读。
+3. 只有清单的每一项都已完整读取后，才可开始撰写。开始撰写包括输出大纲、章节标题、正文、公式、表格、图表说明、伪代码、Markdown 文件和 docx 中的任何论文内容。不得边阅读边起草，也不得以占位内容绕过门禁。
+4. 若一个规定参考的 Gitee 与 GitHub 链接均无法读取，停止撰写或转换，向用户报告具体参考项和失败情况；不得依据猜测、缓存摘要或其他非指定材料继续产出。
+5. 在最终交付前，复核本次清单逐项完成。后续若用户把请求切换到另一种内容类型、语言或模式，重新建立并完成新清单后再继续。
+
+### 模式参考清单
+
+| 模式与请求类型 | 必须完整阅读的参考内容 | 允许开始的条件 |
+|---|---|---|
+| 模式 A：完整论文（中文） | 国赛完整论文模板；获奖论文风格参考；两篇国赛获奖论文示例；国赛问题撰写规范；国赛理论图表参考；国赛结果图表参考 | 以上 7 项全部完成 |
+| 模式 A：完整论文（英文） | 美赛完整论文模板；获奖论文风格参考；两篇美赛获奖论文示例；美赛问题撰写规范；美赛理论图表参考；美赛结果图表参考 | 以上 7 项全部完成 |
+| 模式 B：论文结构中的某部分（中文/英文） | 对应语言的部分内容撰写参考；获奖论文风格参考；对应语言的两篇获奖论文示例 | 以上 4 项全部完成 |
+| 模式 B：某个问题的完整内容（中文/英文） | 对应语言的问题撰写规范；对应语言的理论图表参考；对应语言的结果图表参考 | 以上 3 项全部完成 |
+| 模式 B：某个问题的理论部分（中文/英文） | 对应语言的问题撰写规范；对应语言的理论图表参考 | 以上 2 项全部完成 |
+| 模式 B：某个问题的结果部分（中文/英文） | 对应语言的问题撰写规范；对应语言的结果图表参考 | 以上 2 项全部完成 |
+| 模式 C：单纯格式转换 | md 转 docx 详细说明 | 完整读取后才可运行脚本、预检或转换 |
+
+「两篇获奖论文示例」是获奖论文风格参考中按语言指定的两篇完整 `.md` 示例，必须与该索引一并读取，不得只读索引而跳过示例。若完整论文或部分内容任务需要生成 docx，还必须在执行转换前完成模式 C 的阅读门禁。
+
+---
+
 ## 模式 A：撰写完整论文
 
 ### A.1 阅读完整论文模板
 
-根据语言选择阅读对应模板参考：
+先完成「强制参考阅读门禁」中模式 A 对应语言的全部 7 项，再根据语言选择并阅读对应模板参考：
 - 中文：[Gitee：国赛完整论文模板](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_full_paper_template_guide.md)；[GitHub：国赛完整论文模板](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_full_paper_template_guide.md)
 - 英文：[Gitee：美赛完整论文模板](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_full_paper_template_guide.md)；[GitHub：美赛完整论文模板](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_full_paper_template_guide.md)
 - 获奖论文风格参考：[Gitee：获奖论文风格参考](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md)；[GitHub：获奖论文风格参考](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md)
@@ -182,7 +206,7 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 - 字体、字号、行距、页边距、标题样式、图表标题位置、页码等排版要求。
 - 问题章节以「问题一 / 问题二 / Problem 1 / Problem 2」形式组织。
 
-获奖论文示例只用于参考各模块写作形式与风格，不复制内容；PDF 转 md 造成的格式错误可以忽略。模板参考**不涉及**每个章节的具体撰写风格，因此继续阅读以下参考文档。
+获奖论文示例只用于参考各模块写作形式与风格，不复制内容；PDF 转 md 造成的格式错误可以忽略。模板参考**不涉及**每个章节的具体撰写风格，因此继续阅读以下参考文档。未完成 A.2、A.3 及获奖论文示例的全部阅读前，不得开始 A.4。
 
 ### A.2 阅读问题撰写规范
 
@@ -209,6 +233,8 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 同一张 Mermaid 图只能维护一份源代码：如果写作说明中展示 Mermaid 代码，就把同一段代码保存为 `.mmd` 文件并渲染；如果最终 markdown 只引用图片，也必须保留对应 `.mmd` 源文件。禁止 markdown 预览图和 `.mmd` 渲染图使用不同结构。
 
 ### A.4 分问题循环撰写
+
+仅在模式 A 阅读门禁完成后执行本节。
 
 对每个问题依次执行：
 
@@ -251,6 +277,8 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 ### B.1 判断用户想要的内容类型
 
+先按「强制参考阅读门禁」确定并完成该行规定的全部参考阅读，再执行下表对应的撰写工作。
+
 | 用户请求 | 处理方式 |
 |----------|----------|
 | 撰写论文结构中的某部分（摘要、问题重述、模型假设、符号说明、参考文献、附录等） | 阅读对应语言的部分内容撰写参考：[Gitee：国赛](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_partial_sections_guide.md)；[GitHub：国赛](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_partial_sections_guide.md)；或 [Gitee：美赛](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_partial_sections_guide.md)；[GitHub：美赛](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_partial_sections_guide.md)。并阅读 [Gitee：获奖论文风格参考](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md)；[GitHub：获奖论文风格参考](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md) 中对应语言示例路径，按该参考撰写。 |
@@ -269,8 +297,8 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 
 ## 模式 C：单纯格式转换
 
-1. 确认源文件路径与目标路径。
-2. 阅读 [Gitee：md 转 docx 详细说明](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md)；[GitHub：md 转 docx 详细说明](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md)。
+1. 完成模式 C 的阅读门禁：完整阅读 [Gitee：md 转 docx 详细说明](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md)；仅当 Gitee 无法读取时，完整阅读 [GitHub：md 转 docx 详细说明](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md)。在此之前不得运行脚本、预检或转换。
+2. 确认源文件路径与目标路径。
 3. 若 markdown 中有 Mermaid 代码块，先要求生成或补齐对应 `.mmd` 源文件并用 [Gitee：`render_mermaid.js`](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/render_mermaid.js) 或 [GitHub：`render_mermaid.js`](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/render_mermaid.js) 渲染为图片；不要让 Mermaid 原始代码块进入转换。
 4. 运行 [Gitee：`preflight_md.js`](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/preflight_md.js) 或 [GitHub：`preflight_md.js`](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/preflight_md.js)。
 5. 根据文件语言选择国赛或美赛 docx 模板参数，调用 [Gitee：`convert_md_to_docx.js`](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/convert_md_to_docx.js) 或 [GitHub：`convert_md_to_docx.js`](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/scripts/convert_md_to_docx.js) 转换。
@@ -333,6 +361,10 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 | 国赛部分内容撰写参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_partial_sections_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/cn_partial_sections_guide.md) | 国赛论文结构各部分撰写参考（摘要、参考文献等） |
 | 美赛部分内容撰写参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_partial_sections_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/en_partial_sections_guide.md) | 美赛论文结构各部分撰写参考（Summary、References 等） |
 | 获奖论文风格参考 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/prized_paper_style_guide.md) | 国赛/美赛获奖论文示例路径与模块风格参考规则 |
+| 国赛获奖论文示例 1 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_B_B226/CUMCM_2023_B_B226.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_B_B226/CUMCM_2023_B_B226.md) | 国赛获奖论文完整示例 |
+| 国赛获奖论文示例 2 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_C_C228/CUMCM_2023_C_C228.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_C_C228/CUMCM_2023_C_C228.md) | 国赛获奖论文完整示例 |
+| 美赛获奖论文示例 1 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_A_2500836/MCM_ICM_2025_A_2500836.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_A_2500836/MCM_ICM_2025_A_2500836.md) | 美赛获奖论文完整示例 |
+| 美赛获奖论文示例 2 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_C_2507817/MCM_ICM_2025_C_2507817.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_C_2507817/MCM_ICM_2025_C_2507817.md) | 美赛获奖论文完整示例 |
 | md 转 docx 详细说明 | [Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md) | [GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/md_to_docx_guide.md) | md 转 docx 的详细说明与脚本使用 |
 
 ---
@@ -362,6 +394,7 @@ Write an MCM paper for Problem C. Here is the problem and our results: ...
 | 8 | 虚构引用或结果 | 所有引用和结果必须基于用户提供的材料 |
 | 9 | 使用占位流程图 | 必须渲染真实 Mermaid 源文件，并通过 preflight |
 | 10 | 最终 markdown 残留 Mermaid 代码块 | 先渲染为图片，再用图片语法引用 |
+| 11 | 未完成本模式全部参考阅读就开始输出 | 先完成「强制参考阅读门禁」的逐项清单，再撰写、预检或转换 |
 
 ---
 
