@@ -55,6 +55,67 @@ https://github.com/HappyMathLabs/happymath/blob/main/happymath/AutoML/docs/READM
 
 ---
 
+## 第零步：Skill 自更新检查（每次使用本 Skill 前必须执行）
+
+在使用本 Skill 执行任何任务之前，必须先检查当前正在使用的 Skill 文件夹是否与线上项目中 `skills/happymath_skill/` 目录的最新内容一致。
+
+**本地 Skill 文件夹的定位规则**：本地 Skill 文件夹（下称 `<skill_root>`）就是当前环境中第一次读取到本 `SKILL.md` 文件时所在的目录路径，即本文件自身的所在目录。该目录的文件夹名称不固定为 `happymath_skill`：如果用户重命名了 Skill 文件夹，一律以用户实际的文件夹路径和名称为准，不得假设或硬编码文件夹名称，也不得在线上项目中寻找与用户文件夹同名的目录——线上比对路径始终是 `skills/happymath_skill/`，只有本地目标路径按用户实际命名。
+
+线上项目地址优先 Gitee，GitHub 兜底：
+
+```text
+https://gitee.com/HappymathLabs/happymath/tree/main/skills/happymath_skill
+https://github.com/HappyMathLabs/happymath/tree/main/skills/happymath_skill
+```
+
+检查与更新流程如下：
+
+1. **克隆项目到临时路径**
+
+   在临时目录中浅克隆整个项目（优先 Gitee，失败后换 GitHub）：
+
+   ```bash
+   TMP_DIR=$(mktemp -d)
+   git clone --depth 1 https://gitee.com/HappymathLabs/happymath.git "$TMP_DIR/happymath" \
+     || git clone --depth 1 https://github.com/HappyMathLabs/happymath.git "$TMP_DIR/happymath"
+   ```
+
+2. **比对本地 Skill 与线上最新内容**
+
+   ```bash
+   diff -rq "<skill_root>" "$TMP_DIR/happymath/skills/happymath_skill"
+   ```
+
+   - 如果 `diff` 无输出，说明本地 Skill 已是最新，删除临时目录（`rm -rf "$TMP_DIR"`）后继续阅读本文件并执行任务。
+   - 如果 `diff` 有输出，说明本地 Skill 与线上不一致，执行第 3 步更新。
+
+3. **用线上最新内容替换本地 Skill 文件夹**
+
+   替换目标为上文定位规则确定的 `<skill_root>`（即本 `SKILL.md` 实际所在的本地目录，无论其文件夹名称是什么）：
+
+   ```bash
+   rsync -a --delete "$TMP_DIR/happymath/skills/happymath_skill/" "<skill_root>/"
+   ```
+
+   注意：`rsync` 的源路径固定为线上项目中的 `skills/happymath_skill/`，目标路径为用户本地的实际 Skill 文件夹；`--delete` 会删除本地文件夹中线上已不存在的文件，确保替换后内容与线上完全一致。
+
+4. **删除临时克隆内容**
+
+   ```bash
+   rm -rf "$TMP_DIR"
+   ```
+
+5. **重新阅读更新后的 Skill**
+
+   更新完成后，必须重新完整阅读 `<skill_root>/SKILL.md` 及任务所需的相关文件，以更新后的内容为准继续完成任务，不得沿用更新前已阅读的旧内容。
+
+兜底规则：
+
+- 如果 Gitee 与 GitHub 均无法克隆（网络不可用等原因），不得中断任务；向用户说明 Skill 更新检查失败，然后继续使用本地现有版本的 Skill 完成任务。
+- 每次会话首次使用本 Skill 时执行一次上述检查即可，同一会话内无需重复执行。
+
+---
+
 ## 核心工作原则
 
 ### 1. 不依赖本地过时记忆
@@ -1265,6 +1326,7 @@ conda run -n happymath python check_happymath_env.py
 每次使用本技能时，按以下顺序执行：
 
 ```text
+0. 执行「第零步：Skill 自更新检查」，确认本地 Skill 与线上一致（不一致则更新后重新阅读）
 1. 判断用户任务是否需要 happymath
 2. 检查 conda 是否存在
 3. 如果没有 conda，则配置 conda
