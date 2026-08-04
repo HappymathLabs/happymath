@@ -199,8 +199,6 @@ math-modeling-paper-writer/references/
 math-modeling-paper-writer/scripts/
 ```
 
-所有参考文档（如完整论文模板、问题撰写规范、图表绘制参考、获奖论文示例、md 转 docx 说明等）和脚本（如 `render_mermaid.js`、`preflight_md.js`、`convert_md_to_docx.js`）都直接从上述本地目录读取和调用，不需要联网访问 Gitee 或 GitHub。
-
 触发场景包括但不限于：
 
 - 撰写完整数学建模论文（国赛、美赛、MCM/ICM 等）。

@@ -6,8 +6,8 @@
 
 ## 国赛示例
 
-- [国赛示例 1：Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_B_B226/CUMCM_2023_B_B226.md)；[GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_B_B226/CUMCM_2023_B_B226.md)
-- [国赛示例 2：Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_C_C228/CUMCM_2023_C_C228.md)；[GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/CUMCM_Prized_Papers/CUMCM_2023_C_C228/CUMCM_2023_C_C228.md)
+- 国赛示例 1：`references/CUMCM_Prized_Papers/CUMCM_2023_B_B226/CUMCM_2023_B_B226.md`
+- 国赛示例 2：`references/CUMCM_Prized_Papers/CUMCM_2023_C_C228/CUMCM_2023_C_C228.md`
 
 参考重点：
 - 摘要如何按问题概括方法、结果和关键数据，且不放公式、图表或引用。
@@ -17,8 +17,8 @@
 
 ## 美赛示例
 
-- [美赛示例 1：Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_A_2500836/MCM_ICM_2025_A_2500836.md)；[GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_A_2500836/MCM_ICM_2025_A_2500836.md)
-- [美赛示例 2：Gitee](https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_C_2507817/MCM_ICM_2025_C_2507817.md)；[GitHub](https://github.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/references/MCM_ICM_Prized_Papers/MCM_ICM_2025_C_2507817/MCM_ICM_2025_C_2507817.md)
+- 美赛示例 1：`references/MCM_ICM_Prized_Papers/MCM_ICM_2025_A_2500836/MCM_ICM_2025_A_2500836.md`
+- 美赛示例 2：`references/MCM_ICM_Prized_Papers/MCM_ICM_2025_C_2507817/MCM_ICM_2025_C_2507817.md`
 
 参考重点：
 - Summary 如何以自然段凝练问题、方法、结果和结论，避免公式、图表和引用。
