@@ -1,0 +1,17 @@
+{
+  "name": "math-modeling-paper-writer",
+  "version": "1.0.0",
+  "description": "Math modeling competition paper writing skill (CUMCM/MCM/ICM)",
+  "private": true,
+  "scripts": {
+    "convert": "node scripts/convert_md_to_docx.js",
+    "preflight": "node scripts/preflight_md.js",
+    "render:mermaid": "node scripts/render_mermaid.js"
+  },
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.2",
+    "docx": "^8.5.0",
+    "fast-xml-parser": "^4.4.0",
+    "temml": "^0.10.25"
+  }
+}

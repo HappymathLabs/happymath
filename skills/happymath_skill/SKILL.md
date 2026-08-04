@@ -125,12 +125,20 @@ pip install happymath
 
 ## 数学建模写作
 
-当用户任务涉及数学建模相关的内容撰写时，不直接在本 Skill 中实现写作逻辑，而是访问以下专用数学建模论文写作 Skill：
+当用户任务涉及数学建模相关的内容撰写时，不直接在本 Skill 中实现写作逻辑，也不访问网络，而是直接查看本 Skill 目录内部的专用数学建模论文写作 Skill：
 
 ```text
-https://gitee.com/HappymathLabs/happymath/blob/main/skills/math-modeling-paper-writer/SKILL.md
-https://github.com/HappyMathLabs/happymath/blob/main/skills/math-modeling-paper-writer/SKILL.md
+math-modeling-paper-writer/SKILL.md
 ```
+
+即先完整阅读本 Skill 目录下的 `math-modeling-paper-writer/SKILL.md`，再按其内部流程完成写作任务。该写作 Skill 的参考文档、示例论文和脚本均位于本 Skill 目录内部：
+
+```text
+math-modeling-paper-writer/references/
+math-modeling-paper-writer/scripts/
+```
+
+所有参考文档（如完整论文模板、问题撰写规范、图表绘制参考、获奖论文示例、md 转 docx 说明等）和脚本（如 `render_mermaid.js`、`preflight_md.js`、`convert_md_to_docx.js`）都直接从上述本地目录读取和调用，不需要联网访问 Gitee 或 GitHub。
 
 触发场景包括但不限于：
 
